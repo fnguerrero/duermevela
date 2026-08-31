@@ -322,6 +322,19 @@
     });
   }
 
+  /* El cartel dice lo que se esta viendo, no en que paso va la partida.
+
+     La figura pasa a ser la nueva apenas termina la transformacion, pero el
+     nombre se ponia recien al avanzar de paso. Antes ese hueco duraba unos
+     segundos; desde que el relato espera al jugador, dura lo que el tarde en
+     leer — y en el medio la pantalla muestra un lugar con el nombre de otro. */
+  function ponerRotulo(clave) {
+    var l = Guion.lugar(clave);
+    if (!l) return;
+    if (elRotulo.textContent !== l.nombre) elRotulo.textContent = l.nombre;
+    elRotulo.classList.add('ver');
+  }
+
   /* Bel aparece en el lugar donde está. `primera` distingue el arranque del
      sueño de los pasos siguientes. */
   function llegar(primera) {
@@ -347,8 +360,7 @@
        la marca se movia, y volvia — el ida y vuelta que se veia en cada carta. */
     if (primera) J.belX = -.15;
 
-    elRotulo.textContent = l.nombre;
-    elRotulo.classList.add('ver');
+    ponerRotulo(J.lugar);
     elMarcador.classList.add('ver');
     actualizarRestan();
     Audio2.entrada();
@@ -849,7 +861,10 @@
   var anterior = performance.now();
   var sinBucle = false;
 
+  var cuadrosDibujados = 0;
+
   function cuadro(ahora, deRespaldo) {
+    cuadrosDibujados++;
     var dt = sinBucle ? 0 : Math.min(.05, (ahora - anterior) / 1000);
     anterior = ahora; t += dt;
 
@@ -882,6 +897,8 @@
         J.lugar = J.destino.figura;
         J.color = J.destino.color;
         J.destino = null;
+        // El cartel viaja con la figura, no con el paso.
+        ponerRotulo(J.lugar);
       }
     }
     if (J.fogonazo > 0) J.fogonazo = Math.max(0, J.fogonazo - dt * .5 * RITMO);
@@ -1299,7 +1316,8 @@
       paso: J.paso, lugar: J.lugar, belX: +J.belX.toFixed(4),
       belMeta: +J.belMeta.toFixed(4), andando: J.andando,
       indicios: J.indicios.length, perdidos: J.perdidos.length,
-      u: +J.u.toFixed(3), jugando: J.jugando
+      u: +J.u.toFixed(3), jugando: J.jugando,
+      destino: J.destino, cuadros: cuadrosDibujados
     };
   };
 
@@ -1469,6 +1487,37 @@
   };
 
   /* Recorre lugares y cartas y avisa si falta algo. */
+  /* Corre una partida y vigila que el cartel diga siempre lo que se esta
+     dibujando. Este desajuste no lo caza ninguna otra prueba: el juego
+     funciona, no tira errores y las figuras estan bien — simplemente en
+     pantalla se lee un nombre que no es el de lo que se ve. */
+  window.verificarRotulo = function () {
+    var NOMBRE = {};
+    ['montania','platillo','calesita','laguna','faro','casa','arbol','reloj',
+     'luna','puerta','ruina','bandada','barca','cama'].forEach(function (k) {
+      var l = Guion.lugar(k);
+      if (l) NOMBRE[l.nombre] = k;
+    });
+    var malos = [];
+    window.pruebaPartida({ mirar: true });
+    return new Promise(function (resolver) {
+      var vueltas = 0;
+      var reloj = setInterval(function () {
+        vueltas++;
+        var e = window.estadoJuego();
+        var esperado = NOMBRE[elRotulo.textContent];
+        if (elRotulo.classList.contains('ver') && esperado && esperado !== e.lugar) {
+          malos.push({ rotulo: elRotulo.textContent, dibujando: e.lugar, u: e.u });
+        }
+        if (elCierre.classList.contains('ver') || vueltas > 400) {
+          clearInterval(reloj);
+          resolver({ desajustes: malos.length, muestra: malos.slice(0, 3),
+                     ok: malos.length === 0 });
+        }
+      }, 60);
+    });
+  };
+
   window.auditar = function () {
     var faltan = [], sinPintor = [], sinBase = [], cartasACama = [];
     Object.keys(Guion.LUGARES).forEach(function (k) {
