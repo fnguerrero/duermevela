@@ -6551,6 +6551,7 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
   function frenarRelojes() {
     if (typeof cancelarEspera === 'function') cancelarEspera();
     colaPrueba = [];
+    J.congelado = false;
     relojes.forEach(clearTimeout);
     relojes = [];
   }
@@ -6564,6 +6565,8 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     indicios: [],           // lo que llegó a ver
     perdidos: [],           // lo que estuvo ahí y no llegó a ver
     jugando: false,         // hay una jugada en curso: no aceptar otra
+    congelado: false,       // la transformacion frenada mientras se lee un indicio
+    seguirPaso: null,       // como sigue el paso cuando termine de leerse
     guias: {},              // que avisos de la primera partida ya salieron
     errosSeguidos: 0,       // tres seguidos y la ventana se agranda
     ultimoTic: -1,          // para no repetir el tic del anillo
@@ -6648,8 +6651,13 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
 
   function avanzar() {
     if (!esperando) return;
-    // Con la ventana del instante abierta, el toque es para el anillo.
-    if (mirada && mirada.activo) return;
+    /* Con la ventana del instante abierta el toque es para el anillo — pero
+       solo si todavia no se resolvio. Con la guarda puesta a secas se trababa
+       el juego: al acertar, el mundo se congela para leer el indicio, y la
+       ventana no se cierra hasta que la transformacion termine, cosa que no
+       pasa porque justamente esta congelada. El toque quedaba bloqueado contra
+       una ventana que esperaba ese mismo toque. */
+    if (mirada && mirada.activo && !mirada.resuelto) return;
     var fn = esperando;
     esperando = null;
     elSeguir.classList.remove('ver');
@@ -6878,6 +6886,7 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     J.destino = null;
     J.pares = null;
     J.jugando = false;
+    J.congelado = false;
     mirada.activo = false;
 
     /* Bel se queda donde esta, siempre. La figura se transforma delante de
@@ -7093,12 +7102,14 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
        escondia. La guia dice las dos cosas: que hay algo, y como agarrarlo. */
     guiar('anillo', 'mientras se transforma, este lugar muestra lo que esconde · tocá cuando el anillo llegue a la marca', 6400);
 
-    // El texto entra cuando la transformación ya se ve.
-    luego(2400, function () {
-      // Si vio lo que el lugar escondía, eso es lo que cuenta; si no, la acción.
-      var dicho = J.vioAhora || c.accion;
-      J.vioAhora = null;
-      decir(dicho, function () {
+    /* Como sigue el paso una vez que se dijo todo lo que habia que decir.
+       Puede llamarlo el reloj —cuando no se encontro nada— o el indicio, si
+       se encontro: por eso la guarda, para que no corra dos veces. */
+    var yaSiguio = false;
+    J.seguirPaso = function () {
+      if (yaSiguio) return;
+      yaSiguio = true;
+      decir(c.accion, function () {
         // decir() ya espero lo que se tarda en leerlo; esto es el respiro.
         luego(1100, function () {
           /* Normalmente el bucle de dibujo ya lo movio, apenas termino la
@@ -7112,6 +7123,13 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
           else llegar(false);
         });
       });
+    };
+
+    // El texto entra cuando la transformación ya se ve — salvo que se haya
+    // encontrado algo, y entonces el indicio va primero y manda el.
+    luego(2400, function () {
+      if (J.congelado || J.vioAhora) return;
+      J.seguirPaso();
     });
   }
 
@@ -7313,6 +7331,21 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
       J.errosSeguidos = 0;
       mostrarAviso('encontraste algo que no cierra', 'bien');
       Audio2.acierto();
+
+      /* El mundo se frena y se dice lo que este lugar escondia, con la figura
+         vieja todavia delante. Antes esto se mostraba despues de la
+         transformacion, cuando el lugar ya era otro: se leia el secreto de la
+         luna con el arbol en pantalla y el cartel diciendo EL ARBOL. */
+      if (J.vioAhora) {
+        var visto = J.vioAhora;
+        J.congelado = true;
+        decir(visto, function () {
+          J.congelado = false;
+          J.vioAhora = null;
+          // Lo que falte de transformacion, y despues el texto de la carta.
+          luego(1300, function () { if (J.seguirPaso) J.seguirPaso(); });
+        });
+      }
       luego(1400, function () {
         guiar('marcador', 'eso queda anotado arriba · cuántas encuentres decide el final', 5200);
       });
@@ -7420,7 +7453,11 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
       bel.vx = 0;
     }
 
-    if (J.u < 1) {
+    /* Mientras se lee lo que el lugar escondia, la transformacion se queda
+       quieta: el indicio es de la figura que TODAVIA esta ahi, y si el mundo
+       sigue mutando mientras se lee, el texto termina hablando de un lugar
+       que ya no esta en pantalla. */
+    if (J.u < 1 && !J.congelado) {
       J.u = Math.min(1, J.u + dt * .42 * RITMO);
       if (J.u >= 1 && J.destino) {
         J.destello = 1;
@@ -7812,7 +7849,7 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
 
   window.instante = function (figura, nombre, opciones) {
     opciones = opciones || {};
-    if (figura) { J.lugar = figura; J.u = 1; J.destino = null; }
+    if (figura) { J.lugar = figura; J.u = 1; J.destino = null; J.congelado = false; }
     if (opciones.destino) {
       J.pares = Figuras.preparar(J.lugar, opciones.destino);
       J.destino = { figura: opciones.destino, color: opciones.color || '200,200,255' };
