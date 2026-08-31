@@ -240,7 +240,87 @@ var Cielo = (function () {
       : tipo === 'formacion' ? 8 : 11;
   }
 
-  return { crear: crear, actualizar: actualizar, dibujar: dibujar, forzar: forzar, TIPOS: TIPOS };
+  /* La luna del hilo.
+
+     No es un evento como los demas: esta siempre, en el mismo rincon, y su
+     fase no es decorativa — crece con lo que la jugadora va encontrando. De
+     luna nueva, cuando no vio nada, a llena cuando vio casi todo. Al final, la
+     fase que quedo en el cielo es la misma que la del arcano que le toca, asi
+     que la carta no le dice nada que no estuviera arriba toda la partida.
+
+     `ilum` va de 0 a 1. `visible` se apaga cuando el lugar del recorrido ES la
+     luna: dos lunas en el mismo cuadro se leen como un error de dibujo. */
+  function luna(cx, W, H, t, ilum, visible, glifo) {
+    if (!visible) return;
+    var R = Math.max(13, Math.min(W, H) * .036);
+    var lx = W * .135, ly = H * .148;
+    ilum = Math.max(0, Math.min(1, ilum));
+
+    cx.save();
+
+    // El halo crece con la fase: una luna nueva casi no ilumina nada.
+    var halo = cx.createRadialGradient(lx, ly, R * .7, lx, ly, R * (3.4 + ilum * 2.2));
+    halo.addColorStop(0, 'rgba(214,222,255,' + (.05 + ilum * .13).toFixed(3) + ')');
+    halo.addColorStop(1, 'rgba(214,222,255,0)');
+    cx.fillStyle = halo;
+    cx.beginPath(); cx.arc(lx, ly, R * (3.4 + ilum * 2.2), 0, 6.2832); cx.fill();
+
+    /* El disco entero, muy tenue: la parte a oscuras de la luna igual se ve
+       un poco — es la luz de la Tierra rebotando, y sin eso la luna nueva
+       seria simplemente nada. */
+    cx.fillStyle = 'rgba(150,158,196,.13)';
+    cx.beginPath(); cx.arc(lx, ly, R, 0, 6.2832); cx.fill();
+
+    /* La parte iluminada. Se dibuja el disco claro y se le come una elipse
+       oscura: es como se ve una fase de verdad, y con una elipse en vez de un
+       circulo el terminador queda curvo en el sentido correcto. */
+    if (ilum > .012) {
+      cx.save();
+      cx.beginPath(); cx.arc(lx, ly, R, 0, 6.2832); cx.clip();
+      cx.fillStyle = 'rgba(238,242,255,.90)';
+      cx.beginPath(); cx.arc(lx, ly, R, 0, 6.2832); cx.fill();
+      if (ilum < .985) {
+        // De 0 a .5 la sombra es una elipse encima; de .5 a 1 se va achicando.
+        var k = 1 - 2 * ilum;                 // 1 = nueva, 0 = media, -1 = llena
+        cx.globalCompositeOperation = 'destination-out';
+        cx.beginPath();
+        cx.ellipse(lx - R * k * 0, ly, R * Math.abs(k), R, 0, 0, 6.2832);
+        if (k > 0) {
+          // Creciente: la sombra tapa el lado izquierdo mas la mitad oscura.
+          cx.rect(lx - R * 1.05, ly - R * 1.05, R * 1.05, R * 2.1);
+        } else {
+          cx.rect(lx, ly - R * 1.05, R * 1.05, R * 2.1);
+          cx.rect(lx - R * 1.05, ly - R * 1.05, R * 1.05, R * 2.1);
+          cx.beginPath();
+          cx.ellipse(lx, ly, R * Math.abs(k), R, 0, 0, 6.2832);
+          cx.rect(lx - R * 1.05, ly - R * 1.05, R * 1.05, R * 2.1);
+        }
+        cx.fill();
+        cx.globalCompositeOperation = 'source-over';
+      }
+      cx.restore();
+    }
+
+    // El borde, siempre, para que el disco se lea aunque este a oscuras.
+    cx.strokeStyle = 'rgba(206,214,250,.20)';
+    cx.lineWidth = Math.max(1, R * .045);
+    cx.beginPath(); cx.arc(lx, ly, R, 0, 6.2832); cx.stroke();
+
+    /* El signo en el que esta la luna esta noche, de verdad, calculado con las
+       efemerides. Nadie que no sepa de esto lo va a mirar dos veces. */
+    if (glifo) {
+      cx.globalAlpha = .34;
+      cx.fillStyle = 'rgba(214,222,255,1)';
+      cx.font = Math.round(R * .62) + 'px "Segoe UI Symbol","Apple Symbols",serif';
+      cx.textAlign = 'center';
+      cx.textBaseline = 'middle';
+      cx.fillText(glifo, lx, ly + R * 1.75);
+    }
+    cx.restore();
+  }
+
+  return { crear: crear, actualizar: actualizar, dibujar: dibujar, forzar: forzar,
+           luna: luna, TIPOS: TIPOS };
 })();
 
 if (typeof module !== 'undefined' && module.exports) { module.exports = Cielo; }
