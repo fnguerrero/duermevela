@@ -1032,6 +1032,19 @@
        quieta: el indicio es de la figura que TODAVIA esta ahi, y si el mundo
        sigue mutando mientras se lee, el texto termina hablando de un lugar
        que ya no esta en pantalla. */
+    /* Con el mundo frenado, la figura vuelve a armarse.
+
+       Congelar el vuelo a mitad de camino dejaba las piezas desparramadas en
+       el aire, y eso no se lee como un momento suspendido: se lee como que el
+       juego se colgo. Ademas el texto habla del lugar que se esta yendo, asi
+       que lo que tiene que estar en pantalla es ese lugar, entero.
+
+       Al soltar, la transformacion arranca de nuevo desde el principio y se ve
+       completa. */
+    if (J.congelado && J.u > 0) {
+      J.u = Math.max(0, J.u - dt * 1.7 * RITMO);
+    }
+
     if (J.u < 1 && !J.congelado) {
       J.u = Math.min(1, J.u + dt * .42 * RITMO);
       if (J.u >= 1 && J.destino) {
