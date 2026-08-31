@@ -251,8 +251,13 @@
   var _techoMano = 0;
   function medirMano() {
     var r = elMano.getBoundingClientRect();
-    // Con la mano fuera (cierre, carta final) vale su posicion de reposo.
-    _techoMano = (r.height > 4) ? r.top : H * .78;
+    /* Una mano sin cartas igual mide alto: el alto sale del CSS, no del
+       contenido. Preguntar solo por la altura daba por buena una mano que no
+       existia y el piso se subia media pantalla — se veia mientras el relato
+       espera, que es justo cuando todavia no se reparte nada. Lo que decide es
+       si hay cartas y si no se fueron. */
+    var hay = elMano.children.length > 0 && !elMano.classList.contains('fuera');
+    _techoMano = (hay && r.height > 4) ? r.top : H * .78;
     return _techoMano;
   }
   function techoMano() {
@@ -441,6 +446,7 @@
     elMano.innerHTML = '';
     naipes = [];
     elMano.classList.remove('fuera');
+    medirMano();
 
     claves.forEach(function (clave, i) {
       var c = Guion.carta(clave);
@@ -511,6 +517,7 @@
     // La elegida sale hacia la figura; las otras dos caen.
     if (elCarta) elCarta.classList.add('elegida');
     elMano.classList.add('fuera');
+    medirMano();
     elRelato.classList.remove('ver');
     actualizarRestan();
 
@@ -567,6 +574,7 @@
     elRelato.classList.remove('ver');
     elMarcador.classList.remove('ver');
     elMano.classList.add('fuera');
+    medirMano();
     ocultarAviso();
 
     var f = Guion.final(J.indicios, J.recorrido);
