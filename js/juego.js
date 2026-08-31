@@ -148,7 +148,7 @@
     fogonazo: 0,
     destello: 0,            // el golpe de luz al terminar una mutacion
     // Bel entra caminando en cada paso.
-    belX: -.15,
+    belX: .18,                // en el cuadro desde el arranque, no fuera
     belMeta: .26,
     ultimaFy: 0,
     corrimientoMano: 0,     // cuanto se corre la mano para centrarla en la escena
@@ -433,15 +433,19 @@
     J.jugando = false;
     mirada.activo = false;
 
-    /* Bel entra caminando UNA sola vez, al principio del sueno. Despues se
-       queda donde esta: la figura se transforma delante de ella, no cambia el
-       lugar de plano. Hacerla salir y volver a entrar por la izquierda en cada
-       paso se veia como un salto, no como un viaje. */
-    /* La marca NO se fija aca. La calcula el bucle, que es el unico que sabe
+    /* Bel se queda donde esta, siempre. La figura se transforma delante de
+       ella; no cambia el lugar de plano.
+
+       Antes, al empezar la partida se la mandaba fuera de cuadro para que
+       entrara caminando desde la izquierda. Pero la portada ya la muestra
+       parada en su sitio: al tocar ENTRAR se veia un instante nitida, despues
+       desaparecia del todo y recien entonces volvia caminando. Se leia como un
+       error, no como una entrada.
+
+       La marca NO se fija aca. La calcula el bucle, que es el unico que sabe
        donde termino quedando la figura. Fijandola en los dos lados, llegar()
        ponia una y el cuadro siguiente la corregia: Bel caminaba hacia un punto,
        la marca se movia, y volvia — el ida y vuelta que se veia en cada carta. */
-    if (primera) J.belX = -.15;
 
     ponerRotulo(J.lugar);
     elMarcador.classList.add('ver');
@@ -1482,6 +1486,10 @@
       llegar(true);
 
       var vueltas = 0, jugados = 0;
+      /* Por donde anduvo Bel. Que se vaya del cuadro y vuelva caminando ya
+         aparecio tres veces por causas distintas, asi que conviene que
+         quede medido en cada partida y no depender de que alguien mire. */
+      var belMin = J.belX, belMax = J.belX;
       var reloj = pruebaEnCurso = setInterval(function () {
         vueltas++;
         /* El navegador frena los timers de una pestana oculta a uno por
@@ -1496,6 +1504,8 @@
         for (var f = 0; f < 120; f++) {
           cuadro(anterior + 16, true);
           avanzarRelojPrueba(16);
+          if (J.belX < belMin) belMin = J.belX;
+          if (J.belX > belMax) belMax = J.belX;
           if (mirada.activo && !mirada.resuelto) {
             var q = (typeof mirar === 'function') ? mirar(jugados) : mirar;
             if (q) window.forzarMirada(true);
@@ -1528,6 +1538,8 @@
           textoCierre: (elCierre.textContent || '').slice(0, 80),
           // La cama solo puede ser el ultimo eslabon del recorrido.
           camaTemprana: J.recorrido.slice(0, -1).indexOf('cama') !== -1,
+          belMin: +belMin.toFixed(4), belMax: +belMax.toFixed(4),
+          belSeFue: belMin < 0 || belMax > 1,
           errores: errores,
           motivo: motivo
         });
