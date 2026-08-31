@@ -7432,7 +7432,14 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
 
   function cuadro(ahora, deRespaldo) {
     cuadrosDibujados++;
-    var dt = sinBucle ? 0 : Math.min(.05, (ahora - anterior) / 1000);
+    /* dt nunca puede ser negativo. El respaldo por reloj y el adelanto de
+       cuadros de las pruebas mueven `anterior` mas alla del tiempo real, y
+       cuando despues entra un cuadro normal la resta da negativa. Con dt
+       negativo, las interpolaciones del tipo v += (objetivo - v) * (1 -
+       pow(k, dt)) invierten el signo del factor y en vez de acercarse al
+       objetivo se alejan: asi es como la cabeza de Bel se ponia a girar
+       sola, cada vez mas, sin nada que la frenara. */
+    var dt = sinBucle ? 0 : Math.max(0, Math.min(.05, (ahora - anterior) / 1000));
     anterior = ahora; t += dt;
 
     // Si la ventana cambio de tamano, reajustar antes de dibujar nada.
@@ -7655,6 +7662,12 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
       cx.scale(1, -1);
       cx.filter = 'blur(2px)';
       Pintores.pintar(cx, J.lugar, fx, fy, E, t, extra);
+      /* Bel tambien se refleja. Reflejar la figura y a ella no la reflejaba
+         era peor que no tener reflejo: se veia una mancha en el medio del
+         suelo, sin nada de este lado que la explicara, y quien mira supone
+         que el reflejo es de la persona porque es lo unico vivo en cuadro. */
+      Bel.dibujar(cx, bel, W * J.belX, piso,
+                  (H * (vertical ? .20 : .255)) / 176, 1);
       cx.filter = 'none';
       cx.restore();
     }
@@ -7722,6 +7735,9 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     // En modo captura dt es 0 y la interpolación no avanzaría nunca.
     if (sinBucle) bel.alza = objetivoAlza;
     else bel.alza += (objetivoAlza - bel.alza) * (1 - Math.pow(.02, dt));
+    // Cinturon: la cabeza gira -alza*.46 radianes, y fuera de 0..1 eso deja
+    // de ser un gesto y pasa a ser una cabeza dada vuelta.
+    bel.alza = Math.max(0, Math.min(1, bel.alza));
 
     // Sombra bajo Bel: sin esto flota sobre la linea del piso.
     var altoBel = H * (vertical ? .20 : .255);
@@ -7736,27 +7752,15 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     cx.fill();
     cx.restore();
 
-    /* Las cartas se alinean con el centro de la escena, no con el de la
-       pantalla. Bel esta a la izquierda de la figura, asi que el conjunto queda
-       corrido: centrar la mano en W/2 la deja visiblemente desfasada respecto
-       de lo que se esta mirando.
-
-       Va aca y no antes porque necesita `belPantalla` ya calculada: mas arriba
-       vale undefined, el centro da NaN, y la comparacion contra NaN siempre es
-       falsa — el centrado no se aplicaba nunca y no habia error que lo delatara.
-
-       Se escribe solo cuando cambia de verdad: tocar el style en cada cuadro
-       obliga al navegador a recalcular el layout sesenta veces por segundo. */
-    /* Con la MARCA de Bel, no con donde esta parada ahora: mientras entra
-       caminando su posicion cambia cuadro a cuadro y la mano se deslizaba con
-       ella. Y el corrimiento se aplica a medias — centrar del todo contra la
-       escena deja las cartas visiblemente corridas de la pantalla, que es lo
-       primero que ve el ojo. */
-    var centroEscena = (J.belMeta * W + fx + E) / 2;
-    var corrimiento = Math.round((centroEscena - W / 2) * .5);
-    if (isFinite(corrimiento) && Math.abs(corrimiento - J.corrimientoMano) > 1) {
-      J.corrimientoMano = corrimiento;
-      elMano.style.transform = 'translateX(' + corrimiento + 'px)';
+    /* La mano no se corre. Antes se la desplazaba para alinearla con el
+       conjunto Bel + figura, que estaba corrido a la derecha porque la figura
+       vivia en el 0,56 del ancho. Desde que la figura se centro, ese
+       corrimiento es justo lo que descentra las cartas: quedaban ochenta y
+       cuatro pixeles a la izquierda de la figura y del texto, que estan los dos
+       en el centro exacto. */
+    if (J.corrimientoMano !== 0) {
+      J.corrimientoMano = 0;
+      elMano.style.transform = '';
     }
 
     Bel.actualizar(bel, dt, J.andando);
@@ -7913,6 +7917,7 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
       u: +J.u.toFixed(3), jugando: J.jugando,
       destino: J.destino, cuadros: cuadrosDibujados,
       faseLuna: +faseLuna().toFixed(3),
+      belAlza: +bel.alza.toFixed(3),   // fuera de 0..1 la cabeza queda dada vuelta
       lunaSigno: lunaReal ? lunaReal.signoNombre : null
     };
   };
