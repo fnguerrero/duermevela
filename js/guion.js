@@ -68,7 +68,7 @@ var Guion = (function () {
       accion: 'Se murió, y en el mismo lugar me creció otra cosa.' },
 
     { clave: 'loco', num: '0', nombre: 'El Loco', glifo: '✧',
-      figura: 'bandada', tono: 'luz', color: '255,220,160',
+      figura: 'platillo', tono: 'luz', color: '255,220,160',
       astro: '♅', astroNombre: 'Urano',
       lectura: 'Salir sin saber a dónde.',
       accion: 'Se soltó en pedazos y los pedazos se me fueron volando.' },
@@ -148,7 +148,7 @@ var Guion = (function () {
       esconde: 'Las vías no terminan en ningún lado. Suben, bajan, y en la punta ' +
                'se cortan en el aire, como si nadie se hubiera tomado el trabajo ' +
                'de imaginarles un final.',
-      revela: 'platillo'
+      revela: 'calesita'
     },
     platillo: {
       nombre: 'El platillo',
@@ -160,7 +160,7 @@ var Guion = (function () {
       esconde: 'Adentro de la cúpula no hay nadie, y sin embargo me está ' +
                'esperando. Me doy cuenta de que espera que yo le preste ' +
                'atención. Acá todo espera eso.',
-      revela: 'luna'
+      revela: 'faro'
     },
     calesita: {
       nombre: 'La calesita',
@@ -171,7 +171,7 @@ var Guion = (function () {
       esconde: 'La música no sale de la calesita: me llega de todos lados a la ' +
                'vez, igual de fuerte lejos que cerca. Me tapo un oído y la sigo ' +
                'escuchando igual.',
-      revela: 'reloj'
+      revela: 'arbol'
     },
     laguna: {
       nombre: 'El agua',
@@ -182,7 +182,7 @@ var Guion = (function () {
       esconde: 'Me asomo y el agua no me copia. Devuelve la orilla, la luz, ' +
                'todo — menos a mí. Me quedo un rato mirando el lugar donde ' +
                'tendría que estar mi cara.',
-      revela: 'barca'
+      revela: 'luna'
     },
     faro: {
       nombre: 'El faro',
@@ -204,7 +204,7 @@ var Guion = (function () {
       esconde: 'Las ventanas están prendidas pero adentro no hay lámparas. La ' +
                'luz no sale de ningún artefacto: la casa está iluminada de la ' +
                'manera en que uno se acuerda de las casas.',
-      revela: 'arbol'
+      revela: 'puerta'
     },
     arbol: {
       nombre: 'El árbol',
@@ -214,7 +214,7 @@ var Guion = (function () {
               'última vez fue hace un minuto.',
       esconde: 'No tiene sombra. Busco la sombra en el piso y no está, y ahí me ' +
                'doy cuenta de que la mía tampoco.',
-      revela: 'casa'
+      revela: 'luna'
     },
     reloj: {
       nombre: 'El reloj',
@@ -225,7 +225,7 @@ var Guion = (function () {
       esconde: 'Intento leer la hora y no puedo. Los números están, los veo ' +
                'perfecto, pero no significan nada. Como cuando mirás una palabra ' +
                'tanto rato que deja de ser una palabra.',
-      revela: 'luna'
+      revela: 'casa'
     },
     luna: {
       nombre: 'La luna',
@@ -235,7 +235,7 @@ var Guion = (function () {
               'poco más cerca.',
       esconde: 'Los cráteres se mueven. Despacio, pero se mueven, y se acomodan ' +
                'como se acomoda una cara que está por decir algo.',
-      revela: 'faro'
+      revela: 'laguna'
     },
     puerta: {
       nombre: 'La puerta',
@@ -267,7 +267,7 @@ var Guion = (function () {
       esconde: 'Ninguno bate las alas al mismo tiempo que otro, salvo cuando los ' +
                'miro. Cuando los miro, se sincronizan. Cuando aflojo, se ' +
                'desordenan otra vez.',
-      revela: 'laguna'
+      revela: 'casa'
     },
     barca: {
       nombre: 'La barca',
@@ -291,6 +291,44 @@ var Guion = (function () {
 
   /* El lugar donde arranca. Algo raro pero terrestre: nada que delate de
      entrada que esto no está pasando. */
+  /* Los tres tramos del sueno.
+
+     El recorrido dejo de ser suelto. Hay un tramo donde se elige libre, uno
+     donde NO se puede elegir — la mano viene con una sola carta — y uno donde
+     se vuelve a elegir pero con menos mazo. Eso no se explica en ningun texto:
+     se entiende jugando, y es lo unico que el juego dice sobre lo que le toco
+     a quien lo juega.
+
+     `hasta` es el numero de paso hasta el que rige el tramo, inclusive. */
+  var TRAMOS = [
+    // Lo que fue. Los recuerdos: se elige con el mazo entero del tramo.
+    { nombre: 'fue', hasta: 3, libre: true,
+      lugares: ['arbol', 'calesita', 'laguna', 'luna'] },
+    // Lo que paso. En orden y sin alternativa: la tormenta y lo que quedo.
+    { nombre: 'paso', hasta: 5, libre: false,
+      orden: ['barca', 'ruina'] },
+    // Lo que queda. Se vuelve a elegir, con lo que sobro del mazo.
+    { nombre: 'queda', hasta: 7, libre: true,
+      lugares: ['faro', 'platillo', 'casa', 'reloj', 'puerta'] }
+  ];
+
+  /* En que tramo cae un paso. `paso` es el que se esta por jugar, contando
+     desde 0. El ultimo siempre es la cama y no pertenece a ningun tramo. */
+  function tramoDe(paso) {
+    for (var i = 0; i < TRAMOS.length; i++) {
+      if (paso < TRAMOS[i].hasta) return TRAMOS[i];
+    }
+    return null;
+  }
+
+  /* Cuando el tramo es forzado, cual es el lugar que toca. */
+  function forzado(paso) {
+    var t = tramoDe(paso);
+    if (!t || t.libre) return null;
+    var desde = t.hasta - t.orden.length;
+    return t.orden[paso - desde] || null;
+  }
+
   var ARRANQUE = 'montania';
 
   function lugar(clave) { return LUGARES[clave]; }
@@ -521,6 +559,7 @@ var Guion = (function () {
 
   return {
     PASOS: PASOS, ARRANQUE: ARRANQUE,
+    TRAMOS: TRAMOS, tramoDe: tramoDe, forzado: forzado,
     CARTAS: CARTAS, LUGARES: LUGARES, CARTA_PARA_BEL: CARTA_PARA_BEL,
     carta: carta, lugar: lugar, destino: destino,
     final: final, cartaDeElla: cartaDeElla

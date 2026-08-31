@@ -284,8 +284,37 @@
      mas adelante, con el sueno ya en marcha, se lee distinto. */
   var NO_AL_ARRANQUE = ['muerte'];
 
+  /* La mano.
+
+     El reparto es lo que hace sentir la estructura del sueno sin explicarla.
+     En los tramos libres se ofrecen las cartas que llevan a los lugares de ese
+     tramo, priorizando las que abren lugar nuevo. En el tramo forzado se
+     reparte UNA sola carta: la que lleva a donde hay que ir. El jugador
+     estira la mano para elegir y descubre que no hay nada que elegir.
+
+     Eso no lleva ningun texto. Se entiende jugandolo. */
   function repartir(n) {
     var todas = mezclar(J.mazo);
+
+    // El tramo sin eleccion: una carta, la que toca, y si no esta en el mazo
+    // se busca igual — la estructura no puede depender de la suerte del mazo.
+    var obligado = Guion.forzado(J.paso);
+    if (obligado) {
+      var laQueVa = todas.filter(function (k) {
+        return Guion.destino(k, J.lugar) === obligado;
+      });
+      if (!laQueVa.length) {
+        laQueVa = Guion.CARTAS.filter(function (c) {
+          return c.figura === obligado;
+        }).map(function (c) { return c.clave; });
+        // Vuelve al mazo: se saco de ahi y jugar() la va a querer sacar.
+        laQueVa.forEach(function (k) {
+          if (J.mazo.indexOf(k) === -1) J.mazo.push(k);
+        });
+      }
+      return laQueVa.slice(0, 1);
+    }
+
     if (J.paso === 0) {
       var guardadas = todas.filter(function (k) {
         return NO_AL_ARRANQUE.indexOf(k) !== -1;
@@ -299,20 +328,32 @@
     // En el ultimo paso da igual: todas llevan al mismo lado.
     if (J.paso >= Guion.PASOS - 1) return todas.slice(0, n);
 
-    var nuevas = [], repetidas = [], inutiles = [];
+    /* Las del tramo primero. Sin esto, una carta del tramo del dolor podria
+       salir entre los recuerdos y el arco se desarma. */
+    var tramo = Guion.tramoDe(J.paso);
+    var delTramo = [], deOtro = [];
     todas.forEach(function (k) {
       var d = Guion.destino(k, J.lugar);
-      if (!d || d === J.lugar) inutiles.push(k);
-      else if (J.visitados[d]) repetidas.push(k);
-      else nuevas.push(k);
+      if (tramo && tramo.lugares && tramo.lugares.indexOf(d) !== -1) delTramo.push(k);
+      else deOtro.push(k);
     });
-    // Primero las que abren lugar nuevo; despues las repetidas; las que no
-    // cambian nada, solo si no quedo otra.
-    var mano = nuevas.concat(repetidas).concat(inutiles);
+
+    function ordenar(lista) {
+      var nuevas = [], repetidas = [], inutiles = [];
+      lista.forEach(function (k) {
+        var d = Guion.destino(k, J.lugar);
+        if (!d || d === J.lugar) inutiles.push(k);
+        else if (J.visitados[d]) repetidas.push(k);
+        else nuevas.push(k);
+      });
+      // Primero las que abren lugar nuevo; despues las repetidas; las que no
+      // cambian nada, solo si no quedo otra.
+      return nuevas.concat(repetidas).concat(inutiles);
+    }
+
+    var mano = ordenar(delTramo).concat(ordenar(deOtro));
     return mano.slice(0, Math.min(n, mano.length));
   }
-
-  /* ---------- el hilo ---------- */
 
   function empezar() {
     document.getElementById('portada').classList.add('ido');
@@ -1386,6 +1427,11 @@
       var vueltas = 0, jugados = 0;
       var reloj = pruebaEnCurso = setInterval(function () {
         vueltas++;
+        /* El navegador frena los timers de una pestana oculta a uno por
+           segundo, y con eso la mutacion tarda una eternidad en completarse.
+           En cada vuelta se adelantan cuadros a mano, con dt sintetico, para
+           que el estado avance aunque el reloj del navegador este frenado. */
+        for (var f = 0; f < 40; f++) cuadro(anterior + 16, true);
         if (vueltas > 6000) { cerrar('agoto el tiempo'); return; }
         if (elCierre.classList.contains('ver')) { cerrar(null); return; }
 
@@ -1515,6 +1561,48 @@
                      ok: malos.length === 0 });
         }
       }, 60);
+    });
+  };
+
+  /* Corre varias partidas y comprueba que el arco se cumpla siempre: que los
+     recuerdos vengan primero, que el tramo del medio sea el que toca y en el
+     orden que toca, y que lo que queda venga despues. Sin esto, una carta mal
+     ubicada desarma la estructura sin romper nada — el juego sigue andando y
+     nadie se entera. */
+  window.verificarTramos = function (cuantas) {
+    cuantas = cuantas || 5;
+    var mal = [], recorridos = [];
+
+    function una(i) {
+      return window.pruebaPartida({
+        mirar: i % 2 === 0,
+        elegir: function (j, n) { return (i + j) % n; }
+      }).then(function (r) {
+        recorridos.push(r.recorrido.join(' '));
+        for (var paso = 0; paso < Guion.PASOS; paso++) {
+          var lugar = r.recorrido[paso + 1];
+          if (!lugar) { mal.push({ paso: paso, motivo: 'falta lugar' }); continue; }
+          if (paso === Guion.PASOS - 1) {
+            if (lugar !== 'cama') mal.push({ paso: paso, lugar: lugar, motivo: 'el ultimo no es la cama' });
+            continue;
+          }
+          var t = Guion.tramoDe(paso);
+          if (!t) { mal.push({ paso: paso, lugar: lugar, motivo: 'sin tramo' }); continue; }
+          if (t.libre) {
+            if (t.lugares.indexOf(lugar) === -1) {
+              mal.push({ paso: paso, lugar: lugar, tramo: t.nombre, motivo: 'fuera del tramo' });
+            }
+          } else if (lugar !== Guion.forzado(paso)) {
+            mal.push({ paso: paso, lugar: lugar, esperado: Guion.forzado(paso), motivo: 'forzado incumplido' });
+          }
+        }
+      });
+    }
+
+    var cadena = Promise.resolve();
+    for (var i = 0; i < cuantas; i++) cadena = cadena.then(una.bind(null, i));
+    return cadena.then(function () {
+      return { fallos: mal.length, mal: mal.slice(0, 4), recorridos: recorridos, ok: mal.length === 0 };
     });
   };
 

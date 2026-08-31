@@ -5590,7 +5590,7 @@ var Guion = (function () {
       accion: 'Se murió, y en el mismo lugar me creció otra cosa.' },
 
     { clave: 'loco', num: '0', nombre: 'El Loco', glifo: '✧',
-      figura: 'bandada', tono: 'luz', color: '255,220,160',
+      figura: 'platillo', tono: 'luz', color: '255,220,160',
       astro: '♅', astroNombre: 'Urano',
       lectura: 'Salir sin saber a dónde.',
       accion: 'Se soltó en pedazos y los pedazos se me fueron volando.' },
@@ -5670,7 +5670,7 @@ var Guion = (function () {
       esconde: 'Las vías no terminan en ningún lado. Suben, bajan, y en la punta ' +
                'se cortan en el aire, como si nadie se hubiera tomado el trabajo ' +
                'de imaginarles un final.',
-      revela: 'platillo'
+      revela: 'calesita'
     },
     platillo: {
       nombre: 'El platillo',
@@ -5682,7 +5682,7 @@ var Guion = (function () {
       esconde: 'Adentro de la cúpula no hay nadie, y sin embargo me está ' +
                'esperando. Me doy cuenta de que espera que yo le preste ' +
                'atención. Acá todo espera eso.',
-      revela: 'luna'
+      revela: 'faro'
     },
     calesita: {
       nombre: 'La calesita',
@@ -5693,7 +5693,7 @@ var Guion = (function () {
       esconde: 'La música no sale de la calesita: me llega de todos lados a la ' +
                'vez, igual de fuerte lejos que cerca. Me tapo un oído y la sigo ' +
                'escuchando igual.',
-      revela: 'reloj'
+      revela: 'arbol'
     },
     laguna: {
       nombre: 'El agua',
@@ -5704,7 +5704,7 @@ var Guion = (function () {
       esconde: 'Me asomo y el agua no me copia. Devuelve la orilla, la luz, ' +
                'todo — menos a mí. Me quedo un rato mirando el lugar donde ' +
                'tendría que estar mi cara.',
-      revela: 'barca'
+      revela: 'luna'
     },
     faro: {
       nombre: 'El faro',
@@ -5726,7 +5726,7 @@ var Guion = (function () {
       esconde: 'Las ventanas están prendidas pero adentro no hay lámparas. La ' +
                'luz no sale de ningún artefacto: la casa está iluminada de la ' +
                'manera en que uno se acuerda de las casas.',
-      revela: 'arbol'
+      revela: 'puerta'
     },
     arbol: {
       nombre: 'El árbol',
@@ -5736,7 +5736,7 @@ var Guion = (function () {
               'última vez fue hace un minuto.',
       esconde: 'No tiene sombra. Busco la sombra en el piso y no está, y ahí me ' +
                'doy cuenta de que la mía tampoco.',
-      revela: 'casa'
+      revela: 'luna'
     },
     reloj: {
       nombre: 'El reloj',
@@ -5747,7 +5747,7 @@ var Guion = (function () {
       esconde: 'Intento leer la hora y no puedo. Los números están, los veo ' +
                'perfecto, pero no significan nada. Como cuando mirás una palabra ' +
                'tanto rato que deja de ser una palabra.',
-      revela: 'luna'
+      revela: 'casa'
     },
     luna: {
       nombre: 'La luna',
@@ -5757,7 +5757,7 @@ var Guion = (function () {
               'poco más cerca.',
       esconde: 'Los cráteres se mueven. Despacio, pero se mueven, y se acomodan ' +
                'como se acomoda una cara que está por decir algo.',
-      revela: 'faro'
+      revela: 'laguna'
     },
     puerta: {
       nombre: 'La puerta',
@@ -5789,7 +5789,7 @@ var Guion = (function () {
       esconde: 'Ninguno bate las alas al mismo tiempo que otro, salvo cuando los ' +
                'miro. Cuando los miro, se sincronizan. Cuando aflojo, se ' +
                'desordenan otra vez.',
-      revela: 'laguna'
+      revela: 'casa'
     },
     barca: {
       nombre: 'La barca',
@@ -5813,6 +5813,44 @@ var Guion = (function () {
 
   /* El lugar donde arranca. Algo raro pero terrestre: nada que delate de
      entrada que esto no está pasando. */
+  /* Los tres tramos del sueno.
+
+     El recorrido dejo de ser suelto. Hay un tramo donde se elige libre, uno
+     donde NO se puede elegir — la mano viene con una sola carta — y uno donde
+     se vuelve a elegir pero con menos mazo. Eso no se explica en ningun texto:
+     se entiende jugando, y es lo unico que el juego dice sobre lo que le toco
+     a quien lo juega.
+
+     `hasta` es el numero de paso hasta el que rige el tramo, inclusive. */
+  var TRAMOS = [
+    // Lo que fue. Los recuerdos: se elige con el mazo entero del tramo.
+    { nombre: 'fue', hasta: 3, libre: true,
+      lugares: ['arbol', 'calesita', 'laguna', 'luna'] },
+    // Lo que paso. En orden y sin alternativa: la tormenta y lo que quedo.
+    { nombre: 'paso', hasta: 5, libre: false,
+      orden: ['barca', 'ruina'] },
+    // Lo que queda. Se vuelve a elegir, con lo que sobro del mazo.
+    { nombre: 'queda', hasta: 7, libre: true,
+      lugares: ['faro', 'platillo', 'casa', 'reloj', 'puerta'] }
+  ];
+
+  /* En que tramo cae un paso. `paso` es el que se esta por jugar, contando
+     desde 0. El ultimo siempre es la cama y no pertenece a ningun tramo. */
+  function tramoDe(paso) {
+    for (var i = 0; i < TRAMOS.length; i++) {
+      if (paso < TRAMOS[i].hasta) return TRAMOS[i];
+    }
+    return null;
+  }
+
+  /* Cuando el tramo es forzado, cual es el lugar que toca. */
+  function forzado(paso) {
+    var t = tramoDe(paso);
+    if (!t || t.libre) return null;
+    var desde = t.hasta - t.orden.length;
+    return t.orden[paso - desde] || null;
+  }
+
   var ARRANQUE = 'montania';
 
   function lugar(clave) { return LUGARES[clave]; }
@@ -6043,6 +6081,7 @@ var Guion = (function () {
 
   return {
     PASOS: PASOS, ARRANQUE: ARRANQUE,
+    TRAMOS: TRAMOS, tramoDe: tramoDe, forzado: forzado,
     CARTAS: CARTAS, LUGARES: LUGARES, CARTA_PARA_BEL: CARTA_PARA_BEL,
     carta: carta, lugar: lugar, destino: destino,
     final: final, cartaDeElla: cartaDeElla
@@ -6339,8 +6378,37 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
      mas adelante, con el sueno ya en marcha, se lee distinto. */
   var NO_AL_ARRANQUE = ['muerte'];
 
+  /* La mano.
+
+     El reparto es lo que hace sentir la estructura del sueno sin explicarla.
+     En los tramos libres se ofrecen las cartas que llevan a los lugares de ese
+     tramo, priorizando las que abren lugar nuevo. En el tramo forzado se
+     reparte UNA sola carta: la que lleva a donde hay que ir. El jugador
+     estira la mano para elegir y descubre que no hay nada que elegir.
+
+     Eso no lleva ningun texto. Se entiende jugandolo. */
   function repartir(n) {
     var todas = mezclar(J.mazo);
+
+    // El tramo sin eleccion: una carta, la que toca, y si no esta en el mazo
+    // se busca igual — la estructura no puede depender de la suerte del mazo.
+    var obligado = Guion.forzado(J.paso);
+    if (obligado) {
+      var laQueVa = todas.filter(function (k) {
+        return Guion.destino(k, J.lugar) === obligado;
+      });
+      if (!laQueVa.length) {
+        laQueVa = Guion.CARTAS.filter(function (c) {
+          return c.figura === obligado;
+        }).map(function (c) { return c.clave; });
+        // Vuelve al mazo: se saco de ahi y jugar() la va a querer sacar.
+        laQueVa.forEach(function (k) {
+          if (J.mazo.indexOf(k) === -1) J.mazo.push(k);
+        });
+      }
+      return laQueVa.slice(0, 1);
+    }
+
     if (J.paso === 0) {
       var guardadas = todas.filter(function (k) {
         return NO_AL_ARRANQUE.indexOf(k) !== -1;
@@ -6354,20 +6422,32 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     // En el ultimo paso da igual: todas llevan al mismo lado.
     if (J.paso >= Guion.PASOS - 1) return todas.slice(0, n);
 
-    var nuevas = [], repetidas = [], inutiles = [];
+    /* Las del tramo primero. Sin esto, una carta del tramo del dolor podria
+       salir entre los recuerdos y el arco se desarma. */
+    var tramo = Guion.tramoDe(J.paso);
+    var delTramo = [], deOtro = [];
     todas.forEach(function (k) {
       var d = Guion.destino(k, J.lugar);
-      if (!d || d === J.lugar) inutiles.push(k);
-      else if (J.visitados[d]) repetidas.push(k);
-      else nuevas.push(k);
+      if (tramo && tramo.lugares && tramo.lugares.indexOf(d) !== -1) delTramo.push(k);
+      else deOtro.push(k);
     });
-    // Primero las que abren lugar nuevo; despues las repetidas; las que no
-    // cambian nada, solo si no quedo otra.
-    var mano = nuevas.concat(repetidas).concat(inutiles);
+
+    function ordenar(lista) {
+      var nuevas = [], repetidas = [], inutiles = [];
+      lista.forEach(function (k) {
+        var d = Guion.destino(k, J.lugar);
+        if (!d || d === J.lugar) inutiles.push(k);
+        else if (J.visitados[d]) repetidas.push(k);
+        else nuevas.push(k);
+      });
+      // Primero las que abren lugar nuevo; despues las repetidas; las que no
+      // cambian nada, solo si no quedo otra.
+      return nuevas.concat(repetidas).concat(inutiles);
+    }
+
+    var mano = ordenar(delTramo).concat(ordenar(deOtro));
     return mano.slice(0, Math.min(n, mano.length));
   }
-
-  /* ---------- el hilo ---------- */
 
   function empezar() {
     document.getElementById('portada').classList.add('ido');
@@ -7441,6 +7521,11 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
       var vueltas = 0, jugados = 0;
       var reloj = pruebaEnCurso = setInterval(function () {
         vueltas++;
+        /* El navegador frena los timers de una pestana oculta a uno por
+           segundo, y con eso la mutacion tarda una eternidad en completarse.
+           En cada vuelta se adelantan cuadros a mano, con dt sintetico, para
+           que el estado avance aunque el reloj del navegador este frenado. */
+        for (var f = 0; f < 40; f++) cuadro(anterior + 16, true);
         if (vueltas > 6000) { cerrar('agoto el tiempo'); return; }
         if (elCierre.classList.contains('ver')) { cerrar(null); return; }
 
@@ -7570,6 +7655,48 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
                      ok: malos.length === 0 });
         }
       }, 60);
+    });
+  };
+
+  /* Corre varias partidas y comprueba que el arco se cumpla siempre: que los
+     recuerdos vengan primero, que el tramo del medio sea el que toca y en el
+     orden que toca, y que lo que queda venga despues. Sin esto, una carta mal
+     ubicada desarma la estructura sin romper nada — el juego sigue andando y
+     nadie se entera. */
+  window.verificarTramos = function (cuantas) {
+    cuantas = cuantas || 5;
+    var mal = [], recorridos = [];
+
+    function una(i) {
+      return window.pruebaPartida({
+        mirar: i % 2 === 0,
+        elegir: function (j, n) { return (i + j) % n; }
+      }).then(function (r) {
+        recorridos.push(r.recorrido.join(' '));
+        for (var paso = 0; paso < Guion.PASOS; paso++) {
+          var lugar = r.recorrido[paso + 1];
+          if (!lugar) { mal.push({ paso: paso, motivo: 'falta lugar' }); continue; }
+          if (paso === Guion.PASOS - 1) {
+            if (lugar !== 'cama') mal.push({ paso: paso, lugar: lugar, motivo: 'el ultimo no es la cama' });
+            continue;
+          }
+          var t = Guion.tramoDe(paso);
+          if (!t) { mal.push({ paso: paso, lugar: lugar, motivo: 'sin tramo' }); continue; }
+          if (t.libre) {
+            if (t.lugares.indexOf(lugar) === -1) {
+              mal.push({ paso: paso, lugar: lugar, tramo: t.nombre, motivo: 'fuera del tramo' });
+            }
+          } else if (lugar !== Guion.forzado(paso)) {
+            mal.push({ paso: paso, lugar: lugar, esperado: Guion.forzado(paso), motivo: 'forzado incumplido' });
+          }
+        }
+      });
+    }
+
+    var cadena = Promise.resolve();
+    for (var i = 0; i < cuantas; i++) cadena = cadena.then(una.bind(null, i));
+    return cadena.then(function () {
+      return { fallos: mal.length, mal: mal.slice(0, 4), recorridos: recorridos, ok: mal.length === 0 };
     });
   };
 
