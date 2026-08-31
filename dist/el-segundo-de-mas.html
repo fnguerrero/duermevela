@@ -1811,7 +1811,8 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Bel; }
 var Cielo = (function () {
   'use strict';
 
-  var TIPOS = ['fugaz', 'viajera', 'formacion', 'pulso', 'sombra', 'satelite'];
+  var TIPOS = ['fugaz', 'viajera', 'formacion', 'pulso', 'sombra', 'satelite',
+               'nave'];
 
   function crear() {
     return {
@@ -1826,11 +1827,15 @@ var Cielo = (function () {
   function elegir(c) {
     var r = Math.random();
     var tipo;
-    if (r < .30) tipo = 'fugaz';
-    else if (r < .52) tipo = 'satelite';
-    else if (r < .70) tipo = 'viajera';
-    else if (r < .84) tipo = 'pulso';
-    else if (r < .95) tipo = 'formacion';
+    /* La nave sale seguido y a proposito. No es un guino escondido: es lo que
+       ella ve siempre, asi que tiene que estar ahi arriba varias veces por
+       partida, sin que el juego la senale nunca. */
+    if (r < .22) tipo = 'nave';
+    else if (r < .46) tipo = 'fugaz';
+    else if (r < .62) tipo = 'satelite';
+    else if (r < .76) tipo = 'viajera';
+    else if (r < .87) tipo = 'pulso';
+    else if (r < .96) tipo = 'formacion';
     else tipo = 'sombra';
 
     var haciaLaDerecha = Math.random() < .5;
@@ -1842,6 +1847,7 @@ var Cielo = (function () {
          : tipo === 'viajera' ? 9
          : tipo === 'pulso' ? 4.5
          : tipo === 'formacion' ? 8
+         : tipo === 'nave' ? 13
          : 11,                                   // sombra
       dir: haciaLaDerecha ? 1 : -1,
       x0: haciaLaDerecha ? -.12 : 1.12,
@@ -1928,6 +1934,48 @@ var Cielo = (function () {
       // Se apaga y se enciende, sin ritmo fijo.
       var late = .55 + .45 * Math.sin(e.t * 3.2 + e.semilla);
       punto(cx, vx, vy, 2.0, col, .70 * a3 * late);
+
+    } else if (e.tipo === 'nave') {
+      /* Cruza despacio, muy chica y muy tenue, y a mitad de camino se queda
+         quieta un momento antes de seguir. Eso es lo unico que la delata como
+         algo que no es un satelite: los satelites no frenan. */
+      var an = sobre(u, .16, .16);
+      // El alto: avanza, se detiene entre .42 y .58, y retoma.
+      var av = u < .42 ? u
+             : u < .58 ? .42
+             : .42 + (u - .58) * (.58 / .42);
+      var nx = W * (e.x0 + e.dir * av * 1.26);
+      var ny = H * (e.y0 + e.inclina * av);
+      var R = Math.max(4.2, Math.min(W, H) * .017);
+      var quieta = (u >= .42 && u < .58) ? 1 : 0;
+
+      cx.save();
+      cx.globalAlpha = an * (.38 + quieta * .24);
+      // El casco: una lenteja, no un circulo.
+      cx.fillStyle = 'rgba(206,222,255,.85)';
+      cx.beginPath();
+      cx.ellipse(nx, ny, R * 1.9, R * .52, e.inclina * 2, 0, 6.2832);
+      cx.fill();
+      // La cupula.
+      cx.fillStyle = 'rgba(226,238,255,.6)';
+      cx.beginPath();
+      cx.ellipse(nx, ny - R * .30, R * .78, R * .40, 0, Math.PI, 6.2832);
+      cx.fill();
+      // Tres luces abajo, latiendo desfasadas.
+      for (var ln = -1; ln <= 1; ln++) {
+        var late2 = .5 + .5 * Math.sin(e.t * 2.6 + ln * 2.1 + e.semilla);
+        punto(cx, nx + ln * R * 1.05, ny + R * .30, R * .19,
+              ln === 0 ? '255,226,170' : '170,214,255', (.5 + late2 * .5) * an);
+      }
+      // Mientras esta quieta, un halo apenas perceptible.
+      if (quieta) {
+        var gh2 = cx.createRadialGradient(nx, ny, R * .5, nx, ny, R * 5.5);
+        gh2.addColorStop(0, 'rgba(190,215,255,.16)');
+        gh2.addColorStop(1, 'rgba(190,215,255,0)');
+        cx.fillStyle = gh2;
+        cx.beginPath(); cx.arc(nx, ny, R * 5.5, 0, 6.2832); cx.fill();
+      }
+      cx.restore();
 
     } else if (e.tipo === 'formacion') {
       // Tres luces que se mueven juntas, guardando la distancia.
@@ -5674,14 +5722,14 @@ var Guion = (function () {
     },
     platillo: {
       nombre: 'El platillo',
-      llegada: 'Una cosa enorme, quieta en el aire, con una luz que baja al ' +
-               'piso. No hace ruido, y nada que pese tanto se queda quieto sin ' +
-               'hacer ruido.',
-      vuelta: 'Volvió el platillo. Está en el mismo lugar exacto del aire, ' +
-              'ni un centímetro corrido.',
-      esconde: 'Adentro de la cúpula no hay nadie, y sin embargo me está ' +
-               'esperando. Me doy cuenta de que espera que yo le preste ' +
-               'atención. Acá todo espera eso.',
+      llegada: 'Una cosa enorme, quieta en el aire, con una luz que baja hasta' +
+               'el pasto. No hace ruido, y nada que pese tanto se queda quieto' +
+               'sin hacer ruido. Igual ahí está, esperando.',
+      vuelta: 'Volvió. Está en el mismo lugar exacto del aire, ni un centímetro' +
+              'corrido, como si nunca se hubiera ido.',
+      esconde: 'No vino a llevarme. Vino a decirme algo y no sabe cómo, así que' +
+               'se queda ahí arriba hasta que yo levante la cabeza. Levanto la' +
+               'cabeza. La luz se apaga despacio, como quien asiente.',
       revela: 'faro'
     },
     calesita: {
@@ -5708,45 +5756,55 @@ var Guion = (function () {
     },
     faro: {
       nombre: 'El faro',
-      llegada: 'Un faro prendido, dando vueltas, sin mar alrededor. Le está ' +
-               'avisando algo a gente que no veo.',
-      vuelta: 'El faro otra vez. Sigue barriendo el campo vacío, con la misma ' +
-              'paciencia.',
-      esconde: 'El haz me busca. Da la vuelta entera y siempre frena un segundo ' +
-               'de más cuando me pasa por encima. No está alumbrando el campo: ' +
-               'me está alumbrando a mí.',
+      llegada: 'Un faro prendido, dando vueltas, sin mar alrededor. Le está' +
+               'avisando algo a alguien, y en todo el campo no hay nadie más que' +
+               'yo.',
+      vuelta: 'El faro otra vez. Sigue barriendo el campo vacío, con la misma' +
+              'paciencia de antes.',
+      esconde: 'El haz da la vuelta entera y siempre frena un segundo de más' +
+               'cuando me pasa por encima. No está barriendo el campo: me está' +
+               'buscando a mí. Y cada vez que me encuentra sigue de largo' +
+               'tranquilo, como quien se queda más tranquilo sabiendo dónde' +
+               'estoy.',
       revela: 'bandada'
     },
     casa: {
       nombre: 'La casa',
-      llegada: 'La casa donde crecí, con las dos ventanas prendidas. Hay ' +
-               'alguien adentro y no tiene ningún apuro.',
-      vuelta: 'La casa de nuevo. Las luces siguen prendidas. Nadie las apagó en ' +
-              'todo este tiempo.',
-      esconde: 'Las ventanas están prendidas pero adentro no hay lámparas. La ' +
-               'luz no sale de ningún artefacto: la casa está iluminada de la ' +
-               'manera en que uno se acuerda de las casas.',
+      llegada: 'La casa donde crecí, con las dos ventanas prendidas. Estuve' +
+               'mucho tiempo sin poder pasar por acá. Ahora la puerta está' +
+               'entornada.',
+      vuelta: 'La casa de nuevo. Las luces siguen prendidas y la puerta sigue' +
+              'entornada. Nadie las apagó en todo este tiempo.',
+      esconde: 'Las ventanas están prendidas pero adentro no hay lámparas. La' +
+               'luz no sale de ningún artefacto: la casa está iluminada de la' +
+               'manera en que uno se acuerda de las casas. Está así porque yo me' +
+               'acuerdo así.',
       revela: 'puerta'
     },
     arbol: {
       nombre: 'El árbol',
-      llegada: 'Un árbol grande, solo, con las puntas de las ramas encendidas. ' +
-               'Los árboles no hacen eso.',
-      vuelta: 'El mismo árbol. Le crecieron ramas desde la última vez, y la ' +
-              'última vez fue hace un minuto.',
-      esconde: 'No tiene sombra. Busco la sombra en el piso y no está, y ahí me ' +
-               'doy cuenta de que la mía tampoco.',
+      llegada: 'Un árbol grande, solo, con las puntas de las ramas encendidas.' +
+               'Me acuesto abajo y lo miro desde el pasto, y desde acá se ve lo' +
+               'que no se ve parada: cada rama repite la forma del árbol entero,' +
+               'y cada ramita repite la de la rama. Podría seguir mirando para' +
+               'adentro toda la noche.',
+      vuelta: 'El mismo árbol. Me vuelvo a acostar abajo. Le crecieron ramas' +
+              'desde la última vez, y la última vez fue hace un minuto.',
+      esconde: 'Se posa un pájaro de un color que no existe. Se queda apenas, el' +
+               'tiempo justo para que yo lo vea, y se va. No vuelve. Acá nada' +
+               'vuelve dos veces, y sin embargo yo lo vi.',
       revela: 'luna'
     },
     reloj: {
       nombre: 'El reloj',
-      llegada: 'Un reloj enorme. La aguja de los minutos va para adelante y la ' +
+      llegada: 'Un reloj enorme. La aguja de los minutos va para adelante y la' +
                'de los segundos va para atrás, y las dos me parecen tener razón.',
-      vuelta: 'El reloj otra vez. Marca una hora distinta de la de recién, y ' +
+      vuelta: 'El reloj otra vez. Marca una hora distinta de la de recién, y' +
               'ninguna de las dos es la de verdad.',
-      esconde: 'Intento leer la hora y no puedo. Los números están, los veo ' +
-               'perfecto, pero no significan nada. Como cuando mirás una palabra ' +
-               'tanto rato que deja de ser una palabra.',
+      esconde: 'Ahora entiendo de qué se trata. La culpa de todo la tiene el' +
+               'tiempo, que se empeña en transcurrir. Si se quedara quieto un' +
+               'rato, aunque sea un rato, nada de lo que pasó habría tenido que' +
+               'pasar.',
       revela: 'casa'
     },
     luna: {
@@ -5793,13 +5851,14 @@ var Guion = (function () {
     },
     barca: {
       nombre: 'La barca',
-      llegada: 'Una barca con la vela puesta, meciéndose. No hay agua abajo: se ' +
-               'mece igual.',
-      vuelta: 'La barca otra vez, meciéndose sobre nada. Ya ni me llama la ' +
-              'atención.',
-      esconde: 'Está atada, y la soga se pierde en el aire sin llegar a ningún ' +
-               'lado. La sigo con la vista y en algún punto la soga simplemente ' +
-               'deja de existir.',
+      llegada: 'Una barca con la vela puesta, meciéndose fuerte. No hay agua' +
+               'abajo: se mece igual, como si abajo hubiera una tormenta que' +
+               'solo ella siente.',
+      vuelta: 'La barca otra vez, meciéndose sobre nada. Sigue igual de' +
+              'sacudida y sigue en el mismo lugar.',
+      esconde: 'Está atada, y la soga se pierde en el aire sin llegar a ningún' +
+               'lado. Eso es lo que la salva: la sacude todo y no se va a ningún' +
+               'lado.',
       revela: 'laguna'
     },
     cama: {

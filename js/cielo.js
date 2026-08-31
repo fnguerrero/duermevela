@@ -9,7 +9,8 @@
 var Cielo = (function () {
   'use strict';
 
-  var TIPOS = ['fugaz', 'viajera', 'formacion', 'pulso', 'sombra', 'satelite'];
+  var TIPOS = ['fugaz', 'viajera', 'formacion', 'pulso', 'sombra', 'satelite',
+               'nave'];
 
   function crear() {
     return {
@@ -24,11 +25,15 @@ var Cielo = (function () {
   function elegir(c) {
     var r = Math.random();
     var tipo;
-    if (r < .30) tipo = 'fugaz';
-    else if (r < .52) tipo = 'satelite';
-    else if (r < .70) tipo = 'viajera';
-    else if (r < .84) tipo = 'pulso';
-    else if (r < .95) tipo = 'formacion';
+    /* La nave sale seguido y a proposito. No es un guino escondido: es lo que
+       ella ve siempre, asi que tiene que estar ahi arriba varias veces por
+       partida, sin que el juego la senale nunca. */
+    if (r < .22) tipo = 'nave';
+    else if (r < .46) tipo = 'fugaz';
+    else if (r < .62) tipo = 'satelite';
+    else if (r < .76) tipo = 'viajera';
+    else if (r < .87) tipo = 'pulso';
+    else if (r < .96) tipo = 'formacion';
     else tipo = 'sombra';
 
     var haciaLaDerecha = Math.random() < .5;
@@ -40,6 +45,7 @@ var Cielo = (function () {
          : tipo === 'viajera' ? 9
          : tipo === 'pulso' ? 4.5
          : tipo === 'formacion' ? 8
+         : tipo === 'nave' ? 13
          : 11,                                   // sombra
       dir: haciaLaDerecha ? 1 : -1,
       x0: haciaLaDerecha ? -.12 : 1.12,
@@ -126,6 +132,48 @@ var Cielo = (function () {
       // Se apaga y se enciende, sin ritmo fijo.
       var late = .55 + .45 * Math.sin(e.t * 3.2 + e.semilla);
       punto(cx, vx, vy, 2.0, col, .70 * a3 * late);
+
+    } else if (e.tipo === 'nave') {
+      /* Cruza despacio, muy chica y muy tenue, y a mitad de camino se queda
+         quieta un momento antes de seguir. Eso es lo unico que la delata como
+         algo que no es un satelite: los satelites no frenan. */
+      var an = sobre(u, .16, .16);
+      // El alto: avanza, se detiene entre .42 y .58, y retoma.
+      var av = u < .42 ? u
+             : u < .58 ? .42
+             : .42 + (u - .58) * (.58 / .42);
+      var nx = W * (e.x0 + e.dir * av * 1.26);
+      var ny = H * (e.y0 + e.inclina * av);
+      var R = Math.max(4.2, Math.min(W, H) * .017);
+      var quieta = (u >= .42 && u < .58) ? 1 : 0;
+
+      cx.save();
+      cx.globalAlpha = an * (.38 + quieta * .24);
+      // El casco: una lenteja, no un circulo.
+      cx.fillStyle = 'rgba(206,222,255,.85)';
+      cx.beginPath();
+      cx.ellipse(nx, ny, R * 1.9, R * .52, e.inclina * 2, 0, 6.2832);
+      cx.fill();
+      // La cupula.
+      cx.fillStyle = 'rgba(226,238,255,.6)';
+      cx.beginPath();
+      cx.ellipse(nx, ny - R * .30, R * .78, R * .40, 0, Math.PI, 6.2832);
+      cx.fill();
+      // Tres luces abajo, latiendo desfasadas.
+      for (var ln = -1; ln <= 1; ln++) {
+        var late2 = .5 + .5 * Math.sin(e.t * 2.6 + ln * 2.1 + e.semilla);
+        punto(cx, nx + ln * R * 1.05, ny + R * .30, R * .19,
+              ln === 0 ? '255,226,170' : '170,214,255', (.5 + late2 * .5) * an);
+      }
+      // Mientras esta quieta, un halo apenas perceptible.
+      if (quieta) {
+        var gh2 = cx.createRadialGradient(nx, ny, R * .5, nx, ny, R * 5.5);
+        gh2.addColorStop(0, 'rgba(190,215,255,.16)');
+        gh2.addColorStop(1, 'rgba(190,215,255,0)');
+        cx.fillStyle = gh2;
+        cx.beginPath(); cx.arc(nx, ny, R * 5.5, 0, 6.2832); cx.fill();
+      }
+      cx.restore();
 
     } else if (e.tipo === 'formacion') {
       // Tres luces que se mueven juntas, guardando la distancia.
