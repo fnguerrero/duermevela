@@ -90,6 +90,24 @@
   #relato{transform:translateY(-10px)}
   #relato.ver{opacity:1;transform:translateY(0)}
 
+  /* El relato ya no se va solo: espera. Este es el unico aviso de que la
+     pelota la tiene el jugador, asi que tiene que verse sin robarle atencion
+     al texto — de ahi que aparezca recien despues de un rato y lata despacio. */
+  #seguir{margin:0;opacity:0;transition:opacity .7s;
+    font-size:clamp(12px,1.5vw,14px);letter-spacing:.16em;text-transform:uppercase;
+    color:rgba(233,222,201,.62);text-shadow:0 1px 4px rgba(0,0,0,.9);
+    display:flex;align-items:center;gap:9px}
+  #seguir.ver{opacity:1}
+  #seguir span{animation:latir 2.4s ease-in-out infinite}
+  #seguir::after{content:"";width:0;height:0;
+    border-left:6px solid rgba(233,222,201,.62);
+    border-top:4px solid transparent;border-bottom:4px solid transparent;
+    animation:latir 2.4s ease-in-out infinite}
+  @keyframes latir{0%,100%{opacity:.45}50%{opacity:1}}
+  @media (prefers-reduced-motion:reduce){
+    #seguir span,#seguir::after{animation:none}
+  }
+
   /* ---------- la mano ---------- */
   /* La mano se mide por la ALTURA que hay, no por el ancho. La lamina lleva
      su proporcion de naipe y la lectura va debajo: si el tamano saliera del
@@ -462,6 +480,7 @@
 <p id="rotulo"></p>
 <div id="arriba">
   <p id="relato" role="status" aria-live="polite"></p>
+  <p id="seguir"><span>seguir</span></p>
   <p id="aviso" role="status" aria-live="assertive"></p>
 </div>
 <div id="mano" role="group" aria-label="Cartas para elegir"></div>

@@ -64,7 +64,9 @@
 
   /* Multiplicador de velocidad. Vale 1 jugando; una prueba automática lo sube
      para recorrer una partida entera en segundos en vez de en minutos. */
-  var RITMO = 1;
+  /* Todo el juego, un 20% mas lento. Las transformaciones, las entradas y
+     las esperas entre pasos: iba a un ritmo que no dejaba mirar nada. */
+  var RITMO = .8;
   /* Todos los temporizadores del juego pasan por aca y quedan anotados. Sin un
      registro, reiniciar una partida deja vivos los `setTimeout` de la anterior
      y el juego avanza dos veces por cada paso. */
@@ -78,7 +80,10 @@
     relojes.push(id);
     return id;
   }
+  /* Al reiniciar hay que soltar la espera igual que los relojes: si no, el
+     click de la partida nueva dispara el avance de la anterior. */
   function frenarRelojes() {
+    if (typeof cancelarEspera === 'function') cancelarEspera();
     relojes.forEach(clearTimeout);
     relojes = [];
   }
@@ -92,7 +97,7 @@
     indicios: [],           // lo que llegó a ver
     perdidos: [],           // lo que estuvo ahí y no llegó a ver
     jugando: false,         // hay una jugada en curso: no aceptar otra
-    guiaMostrada: false,    // la guia del instante se ve una sola vez
+    guias: {},              // que avisos de la primera partida ya salieron
     errosSeguidos: 0,       // tres seguidos y la ventana se agranda
     ultimoTic: -1,          // para no repetir el tic del anillo
     esconde: null,          // lo que esconde el lugar del que se está yendo
@@ -132,16 +137,60 @@
      numero fijo: los textos van de 60 a 170 caracteres y con un tiempo unico o
      el corto se eterniza o el largo no se llega a leer. Unos 52 ms por caracter
      es lectura tranquila en voz baja, mas un resto para arrancar. */
+  /* Cuanto tarda en leerse. Ya no decide cuando avanza el juego — eso lo
+     decide el jugador — pero sigue sirviendo para saber a partir de cuando
+     tiene sentido ofrecerle seguir. */
   function tiempoDeLectura(texto) {
     return Math.max(2200, Math.min(9000, 900 + texto.length * 52));
   }
 
+  /* El relato espera.
+
+     Antes se iba solo a los 15 caracteres por segundo, que es la velocidad
+     maxima a la que lee alguien concentrado y sin nada mas pasando — y aca
+     ademas hay una animacion, una mecanica que aprender y una carta que
+     elegir. Cualquier numero iba a ser rapido para uno y lento para otro, y
+     en la primera partida siempre rapido. La habilidad del juego esta en el
+     instante de mirar, no en leer contra reloj: el texto se queda hasta que
+     el jugador dice seguir. */
+  var esperando = null;
+  var elSeguir = document.getElementById('seguir');
+
+  function avanzar() {
+    if (!esperando) return;
+    // Con la ventana del instante abierta, el toque es para el anillo.
+    if (mirada && mirada.activo) return;
+    var fn = esperando;
+    esperando = null;
+    elSeguir.classList.remove('ver');
+    fn();
+  }
+
+  function pedirSeguir(fn, msLectura) {
+    /* En las partidas simuladas no hay nadie para tocar. Ahi el texto vuelve
+       a avanzar solo, porque si no las pruebas se cuelgan esperando un click
+       que nunca llega. RITMO > 1 solo pasa en simulacion. */
+    if (RITMO > 1) { luego(msLectura, fn); return; }
+    esperando = fn;
+    /* El aviso no aparece de una: si saliera junto con el texto, el ojo va
+       ahi antes de leer. Sale cuando un lector rapido ya termino. */
+    luego(900, function () {
+      if (esperando === fn) elSeguir.classList.add('ver');
+    });
+  }
+
+  function cancelarEspera() {
+    esperando = null;
+    if (elSeguir) elSeguir.classList.remove('ver');
+  }
+
   function decir(texto, alTerminar) {
     elRelato.classList.remove('ver');
+    cancelarEspera();
     luego(700, function () {
       elRelato.textContent = texto;
       elRelato.classList.add('ver');
-      if (alTerminar) luego(tiempoDeLectura(texto), alTerminar);
+      if (alTerminar) pedirSeguir(alTerminar, tiempoDeLectura(texto));
     });
   }
 
@@ -348,6 +397,23 @@
   }
   window.addEventListener('resize', pintarNaipes);
 
+  /* La guia de la primera partida.
+
+     Cada aviso sale una sola vez en la vida de la partida y se va solo. No es
+     un tutorial aparte: son tres frases sobre el juego andando, en el momento
+     exacto en que hacen falta. Alguien que ya sabe jugar no las lee porque
+     para cuando aparecen ya hizo la accion. */
+  function guiar(clave, texto, duracion) {
+    if (J.guias[clave]) return;
+    J.guias[clave] = true;
+    elGuia.textContent = texto;
+    elGuia.classList.add('ver');
+    luego(duracion || 4600, function () {
+      // Solo se apaga si sigue siendo la suya: otra guia pudo tomar el cartel.
+      if (elGuia.textContent === texto) elGuia.classList.remove('ver');
+    });
+  }
+
   function mostrarMano() {
     var claves = repartir(3);
     elMano.innerHTML = '';
@@ -380,6 +446,14 @@
     // Despues de insertarlas: recien ahi tienen tamano.
     pintarNaipes();
     medirMano();
+
+    /* Lo primero que hay que entender del juego: la carta no es una opcion de
+       diccionario, es lo que va a transformar lo que tenes delante. */
+    if (J.paso === 0) {
+      luego(1200, function () {
+        guiar('mano', 'elegí un arcano · lo que juegues transforma lo que tenés delante', 6000);
+      });
+    }
   }
 
   function jugar(c, elCarta) {
@@ -440,13 +514,9 @@
     // El aviso dice que hacer, no una palabra suelta: "mira" no le indicaba
     // a nadie que habia que tocar cuando el anillo llegara a la marca.
     mostrarAviso('tocá cuando el anillo llegue a la marca', '');
-    // La primera vez, ademas, una guia pegada al anillo. Solo la primera.
-    if (!J.guiaMostrada) {
-      J.guiaMostrada = true;
-      elGuia.textContent = 'el anillo se cierra · tocá justo cuando toque el círculo';
-      elGuia.classList.add('ver');
-      luego(4200, function () { elGuia.classList.remove('ver'); });
-    }
+    /* Mientras las piezas vuelan, el lugar deja ver por un momento lo que
+       escondia. La guia dice las dos cosas: que hay algo, y como agarrarlo. */
+    guiar('anillo', 'mientras se transforma, este lugar muestra lo que esconde · tocá cuando el anillo llegue a la marca', 6400);
 
     // El texto entra cuando la transformación ya se ve.
     luego(2400, function () {
@@ -663,6 +733,9 @@
       J.errosSeguidos = 0;
       mostrarAviso('encontraste algo que no cierra', 'bien');
       Audio2.acierto();
+      luego(1400, function () {
+        guiar('marcador', 'eso queda anotado arriba · cuántas encuentres decide el final', 5200);
+      });
     } else {
       J.errosSeguidos = (J.errosSeguidos || 0) + 1;
       /* Decir QUE se perdio. "Eso ya no lo vas a ver" hablaba de una cosa que
@@ -683,6 +756,9 @@
       }
       mostrarAviso(textoFallo, 'mal');
       Audio2.fallo();
+      luego(1400, function () {
+        guiar('marcador', 'arriba se anota lo que encontrás · cuántas sean decide el final', 5200);
+      });
     }
     actualizarRestan();
     luego(2600, ocultarAviso);
@@ -714,9 +790,11 @@
     if (elCierre.classList.contains('ver')) return;
     if (algunaCapaAbierta()) return;
     tocarInstante();
+    avanzar();
   });
   window.addEventListener('keydown', function (ev) {
-    if (ev.code !== 'Space' && ev.code !== 'Enter') return;
+    if (ev.code !== 'Space' && ev.code !== 'Enter' &&
+        ev.code !== 'ArrowRight' && ev.code !== 'KeyN') return;
     /* Con el foco en una carta o un boton, Enter y la barra le pertenecen a ese
        control: robarselos rompe la navegacion por teclado. */
     var f = document.activeElement;
@@ -726,6 +804,7 @@
     if (algunaCapaAbierta()) return;
     ev.preventDefault();
     tocarInstante();
+    avanzar();
   });
 
   /* ---------- dibujo ---------- */

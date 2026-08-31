@@ -1081,7 +1081,7 @@ var Naipes = (function () {
     cx.restore();
 
     // Cartela con el nombre.
-    var cy = Al * .772, ch = Al * .080;
+    var cy = Al * .752, ch = Al * .078;
     var gcart = cx.createLinearGradient(0, cy - ch / 2, 0, cy + ch / 2);
     gcart.addColorStop(0, '#d9c9a4');
     gcart.addColorStop(.5, CREMA2);
@@ -1108,28 +1108,44 @@ var Naipes = (function () {
     } while (cx.measureText(texto).width > An - m * 5 && cuerpo > An * .045);
     cx.fillText(texto, An / 2, cy);
 
-    // La lectura, abajo, en dos renglones como maximo.
+    /* La lectura, abajo. Es lo que le da sentido a la carta, asi que tiene
+       que leerse: antes iba a An*.072 y con tinta al 72% quedaba gris y
+       chiquita en pantalla. Ahora arranca grande y se achica sola hasta
+       entrar en dos renglones, que es el limite del hueco. */
     if (lectura) {
-      cx.fillStyle = 'rgba(43,36,29,.72)';
-      var cuerpo2 = An * .072;
-      cx.font = 'italic 400 ' + Math.round(cuerpo2) + "px 'Cormorant Garamond',Georgia,serif";
+      cx.fillStyle = 'rgba(43,36,29,.92)';
       var ancho = An - m * 4.4;
-      var palabras = lectura.split(' ');
-      var lineas = [], actual = '';
-      palabras.forEach(function (p) {
-        var probar = actual ? actual + ' ' + p : p;
-        if (cx.measureText(probar).width > ancho && actual) { lineas.push(actual); actual = p; }
-        else actual = probar;
-      });
-      if (actual) lineas.push(actual);
+      var finCartela = cy + ch / 2, pieFilete = Al - m * 1.9;
+      var cuerpo2 = An * .092, lineas;
+
+      function repartir() {
+        cx.font = 'italic 500 ' + Math.round(cuerpo2) + "px 'Cormorant Garamond',Georgia,serif";
+        var palabras = lectura.split(' '), res = [], actual = '';
+        palabras.forEach(function (p) {
+          var probar = actual ? actual + ' ' + p : p;
+          if (cx.measureText(probar).width > ancho && actual) { res.push(actual); actual = p; }
+          else actual = probar;
+        });
+        if (actual) res.push(actual);
+        return res;
+      }
+
+      /* Se achica mientras no entre: ni en mas de dos renglones, ni mas alto
+         que el hueco entre la cartela y el filete. Con dos condiciones en vez
+         de una constante magica, un texto largo no se corta ni se sale. */
+      lineas = repartir();
+      while ((lineas.length > 2 || lineas.length * cuerpo2 * 1.18 > pieFilete - finCartela) &&
+             cuerpo2 > An * .055) {
+        cuerpo2 -= .5;
+        lineas = repartir();
+      }
       lineas = lineas.slice(0, 2);
-      /* El bloque crece hacia abajo, asi que con dos renglones hay que
-         arrancar mas arriba — pero no tanto como para meterse en la cartela.
-         Con .868 y el cuerpo anterior, la primera linea quedaba a dos pixeles
-         del borde de la cartela y se veian encimadas. */
-      var y0 = Al * (lineas.length > 1 ? .855 : .880);
+
+      // Centrado en el hueco: vale igual para uno o dos renglones.
+      var salto = cuerpo2 * 1.18;
+      var y0 = finCartela + (pieFilete - finCartela) / 2 - (lineas.length - 1) * salto / 2;
       lineas.forEach(function (ln, i) {
-        cx.fillText(ln, An / 2, y0 + i * cuerpo2 * 1.15);
+        cx.fillText(ln, An / 2, y0 + i * salto);
       });
     }
   }
