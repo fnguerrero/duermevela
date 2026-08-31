@@ -335,14 +335,20 @@
     font-style:italic;color:rgba(70,56,38,.9);letter-spacing:.04em}
 
   /* ---------- la carta escrita ---------- */
+  /* La carta es larga y no entra en una pantalla: hay que poder scrollearla
+     entera. Centrarla con justify-content:center la corta ARRIBA cuando es mas
+     alta que la ventana — el scroll no llega al principio y el saludo queda
+     afuera. Con flex-start no se corta nunca, y el margin:auto de la hoja la
+     sigue centrando cuando si entra. */
   #cartaEscrita{position:fixed;inset:0;display:flex;flex-direction:column;
-    align-items:center;justify-content:center;gap:26px;padding:6vw 5vw;
+    align-items:center;justify-content:flex-start;gap:26px;padding:6vw 5vw;
     background:radial-gradient(ellipse at 50% 40%,rgba(30,26,50,.99),rgba(4,5,12,1));
     opacity:0;pointer-events:none;transition:opacity 1.8s;z-index:10;
     overflow-y:auto}
   #cartaEscrita.ver{opacity:1;pointer-events:auto}
+  #cartaEscrita .boton{flex-shrink:0;margin-top:0}
   .hoja{width:min(680px,92vw);padding:clamp(28px,4vw,52px) clamp(24px,4vw,58px);
-    border-radius:2px;
+    margin:auto;flex-shrink:0;border-radius:2px;
     background:linear-gradient(178deg,#f4ecd8,#eee3cb 70%,#e6dabe);
     box-shadow:0 24px 60px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.5);
     color:#3a3026;

@@ -459,19 +459,58 @@ var Guion = (function () {
      Es un borrador: la idea es que Nico lo reescriba con sus palabras. Está
      armado para que se pueda cambiar entero sin tocar nada más — un array de
      párrafos y la firma. */
+  /* La carta de papel. La escribio Nico, palabra por palabra: es la unica
+     parte del juego donde no habla Bel ni habla el juego. No tocar el texto —
+     ni para acortarlo, ni para emprolijarlo, ni para arreglarle la puntuacion.
+     Si algo no entra en pantalla, se agranda la hoja, no se recorta la carta. */
   var CARTA_PARA_BEL = {
     parrafos: [
       'Bel:',
-      'Te hice un juego. Te vas a dar cuenta enseguida de que no soy ' +
-      'programador de juegos, pero me pareció que era la forma más linda de ' +
-      'decirte algo que en persona me sale peor.',
-      'Todo el juego se trata de una sola cosa: mirar algo hasta que muestra lo ' +
-      'que es. Lo puse ahí porque es lo que te vi hacer siempre. Te sentás ' +
-      'enfrente de alguien, escuchás un rato, y ves lo que la persona todavía no ' +
-      'se animó a decir. No lo estudiaste en ningún lado. Lo tenés.',
-      'Y como en el juego, casi nadie se queda el segundo de más que hace falta ' +
-      'para que las cosas se rindan. Vos sí.',
-      'Ojalá te guste. Y si algo no funciona, avisame que lo arreglo.'
+
+      'Si llegaste hasta acá, significa que terminaste el juego. Espero que te ' +
+      'haya gustado jajaja.',
+
+      'Simplemente quería hacer algo distinto para alguien que, de una forma u ' +
+      'otra, sigue siendo muy importante para mí.',
+
+      'Pasaron muchas cosas desde que nos conocimos. Algunas fueron hermosas, ' +
+      'otras fueron bastante difíciles. Nos acercamos, nos alejamos y nos ' +
+      'volvimos a encontrar...',
+
+      'Sé que atravesaste cosas muy difíciles, especialmente estos últimos ' +
+      'meses. No hay casi nada que pueda decir sobre eso que realmente alcance. ' +
+      'Solamente espero que, con el tiempo, puedas encontrar un poquito de paz ' +
+      'y que los recuerdos lindos que tengas puedan pesar más que el dolor.',
+
+      'Y sobre todo, espero que de a poquito puedas volver a sonreír, disfrutar ' +
+      'de las cosas, hacer planes, reírte mucho y sentirte orgullosa de la ' +
+      'persona que sos. Que puedas seguir creciendo, cumpliendo tus sueños y ' +
+      'construyendo una vida llena de cosas lindas.',
+
+      'Porque creo que hay personas que dejan algo de ellas en nosotros que ' +
+      'merece seguir viviendo. Y quizás una de las formas más lindas de ' +
+      'llevarlas siempre con nosotros sea simplemente vivir, ser feliz, ' +
+      'disfrutar de la vida y hacer de todo eso nuestro motor.',
+
+      'Por mi parte, me quedo con las veces que nos reímos, con las cosas que ' +
+      'compartimos y con todos los recuerdos hermosos que tuvimos. Con esos ' +
+      'momentos en los que simplemente la pasamos tan lindo. Me quedo con todo ' +
+      'eso porque fue real.',
+
+      'Pero quería que supieras que hay una parte de mí que siempre va a ' +
+      'guardar un lugar lindo para vos.',
+
+      'Y si alguna vez te preguntás si todo aquello significó algo para mí...',
+
+      'Sí.',
+
+      'Significó mucho. Y fue muy especial.',
+
+      'Gracias por ser parte de mi vida, Bel.',
+
+      'Y gracias por ser vos. Por ser única y especial para mí.',
+
+      'Te quiero mucho, bbita. ❤️'
     ],
     firma: 'Nico'
   };
