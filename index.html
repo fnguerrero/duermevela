@@ -18,7 +18,12 @@
   html,body{margin:0;height:100%;overflow:hidden;background:#05060e;
     font-family:'Cormorant Garamond',Georgia,serif;color:var(--tinta);
     -webkit-font-smoothing:antialiased}
-  canvas{display:block;width:100vw;height:100vh;position:fixed;inset:0}
+  /* Solo el canvas del juego ocupa la pantalla. Escrito como `canvas` a
+     secas alcanzaba a todos los demas — los naipes de la mano y de
+     cualquier tendido — que se salvaban de casualidad, porque sus reglas
+     mas especificas lo pisaban. */
+  #c{display:block;width:100vw;height:100vh;position:fixed;inset:0}
+  canvas{display:block}
 
   .capa{position:fixed;inset:0;pointer-events:none}
 
