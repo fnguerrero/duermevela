@@ -22,11 +22,11 @@ Todos en primera persona, un poco más largos, sin nombrar nunca nada real.
 
 ## C · La luna como hilo
 
-- [~] L1 · La fase de la luna del cielo cambia con los indicios encontrados: de nueva a llena · archivos: js/luna.js, js/cielo.js, js/juego.js · verif: forzar 0, 4 y 8 indicios y capturar las tres
-- [ ] L2 · La fase que quedó al final coincide con el arcano XXII que toca · verif: correr las cuatro franjas de resultado y comparar fase contra carta
-- [ ] L3 · La luna del hilo no pisa a `luna` como lugar del recorrido · verif: partida que pase por el lugar luna con el hilo activo
+- [x] L1 · La fase de la luna del cielo cambia con los indicios encontrados: de nueva a llena · archivos: js/luna.js, js/cielo.js, js/juego.js · verif: forzar 0, 4 y 8 indicios y capturar las tres
+- [x] L2 · La fase que quedó al final coincide con el arcano XXII que toca · verif: correr las cuatro franjas de resultado y comparar fase contra carta
+- [x] L3 · La luna del hilo no pisa a `luna` como lugar del recorrido · verif: partida que pase por el lugar luna con el hilo activo
 
 ## D · Cierre
 
-- [ ] Z1 · Verificación final: bases, dibujo, auditoría, rótulo, tramos · verif: las cinco en verde
-- [ ] Z2 · Reempaquetar dist/ y escribir INFORME.md · verif: el .html suelto abre y juega
+- [x] Z1 · Verificación final: bases, dibujo, auditoría, rótulo, tramos · verif: las cinco en verde
+- [x] Z2 · Reempaquetar dist/ y escribir INFORME.md · verif: el .html suelto abre y juega

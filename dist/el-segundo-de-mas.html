@@ -21,10 +21,37 @@
 
   .capa{position:fixed;inset:0;pointer-events:none}
 
+  /* Las pantallas del final estaban ocultas solo con opacity y
+     pointer-events:none. Eso tapa el mouse pero no el teclado: sus botones
+     seguian en el orden de tabulacion y se podian activar con la barra
+     espaciadora — que es justo la tecla del instante. Apretar espacio para
+     mirar abria la carta a Bel en mitad de la partida. */
+  #cierre:not(.ver),
+  #final:not(.ver),
+  #sobre:not(.ver),
+  #cartaEscrita:not(.ver){visibility:hidden}
+  #cierre,#final,#sobre,#cartaEscrita{
+    transition-property:opacity,visibility;
+    transition-delay:0s,0s}
+  #cierre:not(.ver),#final:not(.ver),#sobre:not(.ver),#cartaEscrita:not(.ver){
+    transition-delay:0s,1.1s}
+
   /* ---------- portada ---------- */
+  /* La escena se sigue viendo detras, pero apagada. Con el velo anterior
+     —medio transparente en el centro— la montania rusa subia justo hasta el
+     titulo y le competia: las letras claras quedaban sobre las vigas claras y
+     el nombre del juego dejaba de leerse de un golpe. Ahora el centro es casi
+     opaco y la escena asoma solo en los bordes, que es donde adorna sin
+     estorbar. */
   #portada{display:flex;flex-direction:column;align-items:center;
-    justify-content:center;gap:20px;padding:6vw;background:radial-gradient(ellipse at 50% 45%,
-    rgba(24,20,44,.55),rgba(5,6,14,.96));pointer-events:auto;
+    justify-content:center;gap:20px;padding:6vw;
+    background:
+      radial-gradient(ellipse 52% 46% at 50% 38%,
+        rgba(7,6,16,.94) 0%, rgba(7,6,16,.88) 46%,
+        rgba(7,6,16,.40) 78%, rgba(7,6,16,0) 100%),
+      radial-gradient(ellipse at 50% 45%,
+        rgba(20,17,38,.86), rgba(5,6,14,.97));
+    pointer-events:auto;
     transition:opacity 1.4s;z-index:6}
   /* Al irse, la portada sale del renderizado. Con opacity:0 sola sigue estando
      y cualquier capa de fondo semitransparente la deja ver detras — que es lo
@@ -48,13 +75,19 @@
      la mecanica del instante no se deduce sola. */
   .comollo{list-style:none;counter-reset:paso;margin:6px 0 4px;padding:0;
     max-width:52ch;display:flex;flex-direction:column;gap:13px}
-  .comollo li{counter-increment:paso;position:relative;padding-left:38px;
-    font-size:clamp(15px,1.75vw,17px);line-height:1.5;
-    color:rgba(236,230,216,.76);text-align:left}
-  .comollo li::before{content:counter(paso);position:absolute;left:0;top:-1px;
-    width:24px;height:24px;border-radius:50%;display:grid;place-items:center;
-    font-size:12px;letter-spacing:.04em;
-    color:var(--oro);border:1px solid rgba(220,178,108,.42)}
+  .comollo li{counter-increment:paso;position:relative;padding-left:44px;
+    font-size:clamp(15.5px,1.8vw,17.5px);line-height:1.55;
+    color:rgba(240,234,221,.88);text-align:left}
+  /* El numero iba en la serif del titulo, a 12px y con espaciado: a ese cuerpo
+     una serif con remates se empasta y la cifra deja de leerse. Va en la
+     tipografia de sistema, mas grande, sin espaciado y con algo de fondo
+     propio para despegarse de lo que haya detras. */
+  .comollo li::before{content:counter(paso);position:absolute;left:0;top:-2px;
+    width:28px;height:28px;border-radius:50%;display:grid;place-items:center;
+    font-family:system-ui,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    font-size:14px;font-weight:600;letter-spacing:0;line-height:1;
+    color:#f2d9a8;background:rgba(220,178,108,.13);
+    border:1px solid rgba(220,178,108,.55)}
   .comollo b{color:rgba(246,226,186,.95);font-weight:600}
 
   .boton{pointer-events:auto;font-family:inherit;font-size:17px;letter-spacing:.20em;
@@ -1800,6 +1833,141 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Bel; }
 
 </script>
 <script>
+/* La luna de esta noche, de verdad.
+   Versión compacta: alcanza con la longitud del Sol y de la Luna para sacar la
+   fase y el signo. Serie lunar ELP-2000 truncada (Meeus cap. 47) y Sol por la
+   fórmula de precisión reducida del cap. 25, que da mejor de 0.01°.
+   La fase decide qué atracciones están abiertas, así que cambia cada noche. */
+var Luna = (function () {
+  'use strict';
+
+  var D2R = Math.PI / 180;
+  function norm360(x) { x = x % 360; return x < 0 ? x + 360 : x; }
+  function sind(x) { return Math.sin(x * D2R); }
+  function cosd(x) { return Math.cos(x * D2R); }
+
+  function julianDay(y, m, d, horas) {
+    horas = horas || 0;
+    if (m <= 2) { y -= 1; m += 12; }
+    var a = Math.floor(y / 100);
+    var b = 2 - a + Math.floor(a / 4);
+    return Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1))
+      + d + b - 1524.5 + horas / 24;
+  }
+
+  /* Términos principales de la serie de longitud lunar: [D, M, M', F, coef].
+     Con estos treinta el error queda muy por debajo del grado, que es todo lo
+     que hace falta para saber la fase y en qué signo está. */
+  var TERMINOS = [
+    [0,0,1,0,6288774],[2,0,-1,0,1274027],[2,0,0,0,658314],[0,0,2,0,213618],
+    [0,1,0,0,-185116],[0,0,0,2,-114332],[2,0,-2,0,58793],[2,-1,-1,0,57066],
+    [2,0,1,0,53322],[2,-1,0,0,45758],[0,1,-1,0,-40923],[1,0,0,0,-34720],
+    [0,1,1,0,-30383],[2,0,0,-2,15327],[0,0,1,2,-12528],[0,0,1,-2,10980],
+    [4,0,-1,0,10675],[0,0,3,0,10034],[4,0,-2,0,8548],[2,1,-1,0,-7888],
+    [2,1,0,0,-6766],[1,0,-1,0,-5163],[1,1,0,0,4987],[2,-1,1,0,4036],
+    [2,0,2,0,3994],[4,0,0,0,3861],[2,0,-3,0,3665],[0,1,-2,0,-2689],
+    [2,0,-1,2,-2602],[2,-1,-2,0,2390],[1,0,1,0,-2348],[2,-2,0,0,2236]
+  ];
+
+  function longitudLuna(jde) {
+    var T = (jde - 2451545.0) / 36525.0;
+    var Lp = 218.3164477 + 481267.88123421 * T - 0.0015786 * T * T + Math.pow(T, 3) / 538841;
+    var D = 297.8501921 + 445267.1114034 * T - 0.0018819 * T * T;
+    var M = 357.5291092 + 35999.0502909 * T - 0.0001536 * T * T;
+    var Mp = 134.9633964 + 477198.8675055 * T + 0.0087414 * T * T;
+    var F = 93.2720950 + 483202.0175233 * T - 0.0036539 * T * T;
+    var E = 1 - 0.002516 * T - 0.0000074 * T * T;
+    var A1 = 119.75 + 131.849 * T, A2 = 53.09 + 479264.290 * T;
+
+    var suma = 0;
+    for (var i = 0; i < TERMINOS.length; i++) {
+      var r = TERMINOS[i];
+      var arg = r[0] * D + r[1] * M + r[2] * Mp + r[3] * F;
+      var ecc = Math.abs(r[1]) === 1 ? E : (Math.abs(r[1]) === 2 ? E * E : 1);
+      suma += r[4] * ecc * sind(arg);
+    }
+    suma += 3958 * sind(A1) + 1962 * sind(Lp - F) + 318 * sind(A2);
+    return norm360(Lp + suma / 1000000);
+  }
+
+  function longitudSol(jde) {
+    var T = (jde - 2451545.0) / 36525.0;
+    var L0 = 280.46646 + 36000.76983 * T + 0.0003032 * T * T;
+    var M = 357.52911 + 35999.05029 * T - 0.0001537 * T * T;
+    var C = (1.914602 - 0.004817 * T - 0.000014 * T * T) * sind(M)
+      + (0.019993 - 0.000101 * T) * sind(2 * M)
+      + 0.000289 * sind(3 * M);
+    return norm360(L0 + C);
+  }
+
+  var SIGNOS = ['Aries', 'Tauro', 'Géminis', 'Cáncer', 'Leo', 'Virgo',
+    'Libra', 'Escorpio', 'Sagitario', 'Capricornio', 'Acuario', 'Piscis'];
+  var GLIFOS = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'];
+  var ELEMENTOS = ['fuego', 'tierra', 'aire', 'agua'];
+
+  /* Nombre de la fase según la elongación, con los cortes que se usan siempre. */
+  function nombreFase(elong) {
+    if (elong < 22.5 || elong >= 337.5) return 'luna nueva';
+    if (elong < 67.5) return 'creciente';
+    if (elong < 112.5) return 'cuarto creciente';
+    if (elong < 157.5) return 'gibosa creciente';
+    if (elong < 202.5) return 'luna llena';
+    if (elong < 247.5) return 'gibosa menguante';
+    if (elong < 292.5) return 'cuarto menguante';
+    return 'menguante';
+  }
+
+  /* Estado de la luna en una fecha. Sin argumento, ahora mismo. */
+  function estado(fecha) {
+    var f = fecha || new Date();
+    var jd = julianDay(f.getUTCFullYear(), f.getUTCMonth() + 1, f.getUTCDate(),
+      f.getUTCHours() + f.getUTCMinutes() / 60);
+    // ΔT ronda los 70 s en estas décadas: para la fase es despreciable, pero
+    // se aplica igual porque no cuesta nada.
+    var jde = jd + 70 / 86400;
+    var ll = longitudLuna(jde), ls = longitudSol(jde);
+    var elong = norm360(ll - ls);
+    var iluminacion = (1 - cosd(elong)) / 2;
+    var signo = Math.floor(ll / 30);
+    return {
+      jd: jd,
+      longitud: ll,
+      longitudSol: ls,
+      elongacion: elong,
+      iluminacion: iluminacion,
+      creciente: elong < 180,
+      fase: nombreFase(elong),
+      signo: signo,
+      signoNombre: SIGNOS[signo],
+      signoGlifo: GLIFOS[signo],
+      elemento: ELEMENTOS[signo % 4],
+      grado: ll - signo * 30,
+      // Los treinta días del ciclo, para elegir variantes con algo estable.
+      diaLunar: Math.floor(elong / 360 * 29.53)
+    };
+  }
+
+  function texto(e) {
+    var g = Math.floor(e.grado);
+    var m = Math.floor((e.grado - g) * 60);
+    return e.fase + ' · ' + g + '°' + (m < 10 ? '0' : '') + m + "' " + e.signoGlifo +
+      ' ' + e.signoNombre;
+  }
+
+  return {
+    julianDay: julianDay,
+    longitudLuna: longitudLuna,
+    longitudSol: longitudSol,
+    estado: estado,
+    texto: texto,
+    SIGNOS: SIGNOS, GLIFOS: GLIFOS
+  };
+})();
+
+if (typeof module !== 'undefined' && module.exports) { module.exports = Luna; }
+
+</script>
+<script>
 /* Lo que pasa en el cielo mientras Bel camina.
 
    Es fondo, no espectáculo: aparece cada tanto, tarda en cruzar, y si la
@@ -2042,7 +2210,81 @@ var Cielo = (function () {
       : tipo === 'formacion' ? 8 : 11;
   }
 
-  return { crear: crear, actualizar: actualizar, dibujar: dibujar, forzar: forzar, TIPOS: TIPOS };
+  /* La luna del hilo.
+
+     No es un evento como los demas: esta siempre, en el mismo rincon, y su
+     fase no es decorativa — crece con lo que la jugadora va encontrando. De
+     luna nueva, cuando no vio nada, a llena cuando vio casi todo. Al final, la
+     fase que quedo en el cielo es la misma que la del arcano que le toca, asi
+     que la carta no le dice nada que no estuviera arriba toda la partida.
+
+     `ilum` va de 0 a 1. `visible` se apaga cuando el lugar del recorrido ES la
+     luna: dos lunas en el mismo cuadro se leen como un error de dibujo. */
+  function luna(cx, W, H, t, ilum, visible, glifo) {
+    if (!visible) return;
+    var R = Math.max(13, Math.min(W, H) * .036);
+    var lx = W * .135, ly = H * .148;
+    ilum = Math.max(0, Math.min(1, ilum));
+
+    cx.save();
+
+    // El halo crece con la fase: una luna nueva casi no ilumina nada.
+    var halo = cx.createRadialGradient(lx, ly, R * .7, lx, ly, R * (3.4 + ilum * 2.2));
+    halo.addColorStop(0, 'rgba(214,222,255,' + (.05 + ilum * .13).toFixed(3) + ')');
+    halo.addColorStop(1, 'rgba(214,222,255,0)');
+    cx.fillStyle = halo;
+    cx.beginPath(); cx.arc(lx, ly, R * (3.4 + ilum * 2.2), 0, 6.2832); cx.fill();
+
+    /* El disco a oscuras. Igual se ve un poco: es la luz de la Tierra
+       rebotando en la cara nocturna, y sin eso una luna nueva seria
+       simplemente nada. */
+    cx.fillStyle = 'rgba(146,155,200,.16)';
+    cx.beginPath(); cx.arc(lx, ly, R, 0, 6.2832); cx.fill();
+
+    /* La parte iluminada, como una forma propia en vez de un recorte.
+
+       Recortando con destination-out se borraba tambien el disco de abajo y la
+       parte oscura quedaba negra dura, que no es como se ve una luna: la mitad
+       a oscuras sigue estando ahi. Esto arma el contorno de la fase — medio
+       circulo mas media elipse — y lo rellena.
+
+       La luz entra por la IZQUIERDA porque asi se ve creciendo desde el
+       hemisferio sur, que es desde donde la mira ella. */
+    if (ilum > .012) {
+      var k = 1 - 2 * ilum;              // 1 nueva · 0 media · -1 llena
+      cx.fillStyle = 'rgba(238,242,255,.92)';
+      cx.beginPath();
+      cx.arc(lx, ly, R, Math.PI / 2, -Math.PI / 2, false);
+      /* El sentido del arco es lo que decide si la fase sale fina o gibosa,
+         y estaba al reves: con k > 0 (menos de media luna) el terminador
+         tiene que curvarse hacia adentro, o sea recorrer la elipse por el
+         lado de la luz. Al reves, un indicio encontrado pintaba casi luna
+         llena y los ocho la apagaban del todo. */
+      cx.ellipse(lx, ly, R * Math.abs(k), R, 0, -Math.PI / 2, Math.PI / 2, k > 0);
+      cx.closePath();
+      cx.fill();
+    }
+
+    // El borde, siempre, para que el disco se lea aunque este a oscuras.
+    cx.strokeStyle = 'rgba(206,214,250,.20)';
+    cx.lineWidth = Math.max(1, R * .045);
+    cx.beginPath(); cx.arc(lx, ly, R, 0, 6.2832); cx.stroke();
+
+    /* El signo en el que esta la luna esta noche, de verdad, calculado con las
+       efemerides. Nadie que no sepa de esto lo va a mirar dos veces. */
+    if (glifo) {
+      cx.globalAlpha = .34;
+      cx.fillStyle = 'rgba(214,222,255,1)';
+      cx.font = Math.round(R * .62) + 'px "Segoe UI Symbol","Apple Symbols",serif';
+      cx.textAlign = 'center';
+      cx.textBaseline = 'middle';
+      cx.fillText(glifo, lx, ly + R * 1.75);
+    }
+    cx.restore();
+  }
+
+  return { crear: crear, actualizar: actualizar, dibujar: dibujar, forzar: forzar,
+           luna: luna, TIPOS: TIPOS };
 })();
 
 if (typeof module !== 'undefined' && module.exports) { module.exports = Cielo; }
@@ -5711,160 +5953,196 @@ var Guion = (function () {
   var LUGARES = {
     montania: {
       nombre: 'La montaña rusa',
-      llegada: 'La montaña rusa de la feria a la que me llevaban. Está entera, ' +
-               'y eso no puede ser: la desarmaron cuando yo tenía nueve.',
-      vuelta: 'Otra vez la montaña rusa. Está igual que hace un rato, ' +
-              'y hace un rato ya estaba mal.',
+      llegada: 'La montaña rusa de la feria a la que me llevaban de chica. Está ' +
+               'entera, y eso no puede ser: la desarmaron cuando yo tenía nueve, ' +
+               'me acuerdo del terreno pelado después. Y sin embargo acá está, ' +
+               'con las luces prendidas y el vagón esperando arriba de todo.',
+      vuelta: 'Otra vez la montaña rusa. Está igual que hace un rato, y hace un ' +
+              'rato ya estaba mal.',
       esconde: 'Las vías no terminan en ningún lado. Suben, bajan, y en la punta ' +
                'se cortan en el aire, como si nadie se hubiera tomado el trabajo ' +
-               'de imaginarles un final.',
+               'de imaginarles un final. Nadie que las mirara desde abajo lo ' +
+               'notaría. Yo las estoy mirando desde abajo.',
       revela: 'calesita'
     },
     platillo: {
       nombre: 'El platillo',
-      llegada: 'Una cosa enorme, quieta en el aire, con una luz que baja hasta' +
-               'el pasto. No hace ruido, y nada que pese tanto se queda quieto' +
+      llegada: 'Una cosa enorme, quieta en el aire, con una luz que baja hasta ' +
+               'el pasto. No hace ruido, y nada que pese tanto se queda quieto ' +
                'sin hacer ruido. Igual ahí está, esperando.',
-      vuelta: 'Volvió. Está en el mismo lugar exacto del aire, ni un centímetro' +
+      vuelta: 'Volvió. Está en el mismo lugar exacto del aire, ni un centímetro ' +
               'corrido, como si nunca se hubiera ido.',
-      esconde: 'No vino a llevarme. Vino a decirme algo y no sabe cómo, así que' +
-               'se queda ahí arriba hasta que yo levante la cabeza. Levanto la' +
+      esconde: 'No vino a llevarme. Vino a decirme algo y no sabe cómo, así que ' +
+               'se queda ahí arriba hasta que yo levante la cabeza. Levanto la ' +
                'cabeza. La luz se apaga despacio, como quien asiente.',
       revela: 'faro'
     },
     calesita: {
       nombre: 'La calesita',
-      llegada: 'Gira despacio, con la música baja. No hay un solo chico arriba ' +
-               'y va a la velocidad de cuando está llena.',
+      llegada: 'Gira despacio, con la música baja. No hay un solo chico arriba y ' +
+               'va a la velocidad de cuando está llena, que es más lento que ' +
+               'cuando está vacía. Alguien la dejó andando y se fue, o nunca ' +
+               'hubo nadie y ella sola decidió que había que seguir dando ' +
+               'vueltas.',
       vuelta: 'La calesita otra vez, con los mismos caballitos en el mismo ' +
-              'orden. Ninguno se movió de lugar.',
+              'orden. Ninguno se movió de lugar, ni siquiera los que estaban a ' +
+              'mitad de subida.',
       esconde: 'La música no sale de la calesita: me llega de todos lados a la ' +
                'vez, igual de fuerte lejos que cerca. Me tapo un oído y la sigo ' +
-               'escuchando igual.',
+               'escuchando igual. Me tapo los dos y la sigo escuchando, y ' +
+               'entiendo que no está sonando afuera.',
       revela: 'arbol'
     },
     laguna: {
       nombre: 'El agua',
-      llegada: 'Un agua quieta con una luz adentro. Arriba no hay nada que ' +
-               'pueda estar haciendo esa luz.',
+      llegada: 'Un agua quieta con una luz adentro, como si abajo hubiera algo ' +
+               'encendido. Arriba no hay nada que pueda estar haciendo esa luz: ' +
+               'ni farol, ni luna en ese lado del cielo, ni nada. La luz sale ' +
+               'del agua, no cae sobre ella.',
       vuelta: 'El agua de nuevo. El reflejo sigue ahí, todavía sin nada arriba ' +
-              'que lo explique.',
-      esconde: 'Me asomo y el agua no me copia. Devuelve la orilla, la luz, ' +
-               'todo — menos a mí. Me quedo un rato mirando el lugar donde ' +
-               'tendría que estar mi cara.',
+              'que lo explique, y a esta altura ya dejé de buscarle el origen.',
+      esconde: 'Me asomo y el agua no me copia. Devuelve la orilla, los juncos, ' +
+               'la luz, todo — menos a mí. Me quedo un rato largo mirando el ' +
+               'lugar exacto donde tendría que estar mi cara, por si aparece ' +
+               'tarde. No aparece.',
       revela: 'luna'
     },
     faro: {
       nombre: 'El faro',
-      llegada: 'Un faro prendido, dando vueltas, sin mar alrededor. Le está' +
-               'avisando algo a alguien, y en todo el campo no hay nadie más que' +
+      llegada: 'Un faro prendido, dando vueltas, sin mar alrededor. Le está ' +
+               'avisando algo a alguien, y en todo el campo no hay nadie más que ' +
                'yo.',
-      vuelta: 'El faro otra vez. Sigue barriendo el campo vacío, con la misma' +
+      vuelta: 'El faro otra vez. Sigue barriendo el campo vacío, con la misma ' +
               'paciencia de antes.',
-      esconde: 'El haz da la vuelta entera y siempre frena un segundo de más' +
-               'cuando me pasa por encima. No está barriendo el campo: me está' +
-               'buscando a mí. Y cada vez que me encuentra sigue de largo' +
-               'tranquilo, como quien se queda más tranquilo sabiendo dónde' +
+      esconde: 'El haz da la vuelta entera y siempre frena un segundo de más ' +
+               'cuando me pasa por encima. No está barriendo el campo: me está ' +
+               'buscando a mí. Y cada vez que me encuentra sigue de largo ' +
+               'tranquilo, como quien se queda más tranquilo sabiendo dónde ' +
                'estoy.',
       revela: 'bandada'
     },
     casa: {
       nombre: 'La casa',
-      llegada: 'La casa donde crecí, con las dos ventanas prendidas. Estuve' +
-               'mucho tiempo sin poder pasar por acá. Ahora la puerta está' +
+      llegada: 'La casa donde crecí, con las dos ventanas prendidas. Estuve ' +
+               'mucho tiempo sin poder pasar por acá. Ahora la puerta está ' +
                'entornada.',
-      vuelta: 'La casa de nuevo. Las luces siguen prendidas y la puerta sigue' +
+      vuelta: 'La casa de nuevo. Las luces siguen prendidas y la puerta sigue ' +
               'entornada. Nadie las apagó en todo este tiempo.',
-      esconde: 'Las ventanas están prendidas pero adentro no hay lámparas. La' +
-               'luz no sale de ningún artefacto: la casa está iluminada de la' +
-               'manera en que uno se acuerda de las casas. Está así porque yo me' +
+      esconde: 'Las ventanas están prendidas pero adentro no hay lámparas. La ' +
+               'luz no sale de ningún artefacto: la casa está iluminada de la ' +
+               'manera en que uno se acuerda de las casas. Está así porque yo me ' +
                'acuerdo así.',
       revela: 'puerta'
     },
     arbol: {
       nombre: 'El árbol',
-      llegada: 'Un árbol grande, solo, con las puntas de las ramas encendidas.' +
-               'Me acuesto abajo y lo miro desde el pasto, y desde acá se ve lo' +
-               'que no se ve parada: cada rama repite la forma del árbol entero,' +
-               'y cada ramita repite la de la rama. Podría seguir mirando para' +
+      llegada: 'Un árbol grande, solo, con las puntas de las ramas encendidas. ' +
+               'Me acuesto abajo y lo miro desde el pasto, y desde acá se ve lo ' +
+               'que no se ve parada: cada rama repite la forma del árbol entero, ' +
+               'y cada ramita repite la de la rama. Podría seguir mirando para ' +
                'adentro toda la noche.',
-      vuelta: 'El mismo árbol. Me vuelvo a acostar abajo. Le crecieron ramas' +
+      vuelta: 'El mismo árbol. Me vuelvo a acostar abajo. Le crecieron ramas ' +
               'desde la última vez, y la última vez fue hace un minuto.',
-      esconde: 'Se posa un pájaro de un color que no existe. Se queda apenas, el' +
-               'tiempo justo para que yo lo vea, y se va. No vuelve. Acá nada' +
+      esconde: 'Se posa un pájaro de un color que no existe. Se queda apenas, el ' +
+               'tiempo justo para que yo lo vea, y se va. No vuelve. Acá nada ' +
                'vuelve dos veces, y sin embargo yo lo vi.',
       revela: 'luna'
     },
     reloj: {
       nombre: 'El reloj',
-      llegada: 'Un reloj enorme. La aguja de los minutos va para adelante y la' +
+      llegada: 'Un reloj enorme. La aguja de los minutos va para adelante y la ' +
                'de los segundos va para atrás, y las dos me parecen tener razón.',
-      vuelta: 'El reloj otra vez. Marca una hora distinta de la de recién, y' +
+      vuelta: 'El reloj otra vez. Marca una hora distinta de la de recién, y ' +
               'ninguna de las dos es la de verdad.',
-      esconde: 'Ahora entiendo de qué se trata. La culpa de todo la tiene el' +
-               'tiempo, que se empeña en transcurrir. Si se quedara quieto un' +
-               'rato, aunque sea un rato, nada de lo que pasó habría tenido que' +
+      esconde: 'Ahora entiendo de qué se trata. La culpa de todo la tiene el ' +
+               'tiempo, que se empeña en transcurrir. Si se quedara quieto un ' +
+               'rato, aunque sea un rato, nada de lo que pasó habría tenido que ' +
                'pasar.',
       revela: 'casa'
     },
     luna: {
       nombre: 'La luna',
       llegada: 'La luna, bajísima, ocupando medio cielo. La puedo mirar de ' +
-               'frente sin que moleste, y eso también está mal.',
+               'frente sin que moleste, y eso también está mal: mirarla de ' +
+               'frente tendría que costarme algo. Está tan cerca que le veo el ' +
+               'borde recortado contra el aire, como si pudiera tocarla ' +
+               'estirando la mano.',
       vuelta: 'La luna de nuevo, todavía más cerca. Cada vez que vuelve está un ' +
-              'poco más cerca.',
+              'poco más cerca, y ninguna de las veces me pareció que se hubiera ' +
+              'movido.',
       esconde: 'Los cráteres se mueven. Despacio, pero se mueven, y se acomodan ' +
-               'como se acomoda una cara que está por decir algo.',
+               'como se acomoda una cara que está por decir algo y todavía busca ' +
+               'por dónde empezar. Me quedo esperando. No dice nada, pero se ' +
+               'queda mirándome.',
       revela: 'laguna'
     },
     puerta: {
       nombre: 'La puerta',
       llegada: 'Una puerta parada sola, sin pared, con luz atrás. Veo el campo ' +
-               'de los dos lados y aun así hay luz atrás.',
+               'de los dos lados y aun así hay luz atrás. La rodeo entera para ' +
+               'entender de dónde sale: desde el otro lado también hay luz ' +
+               'atrás, y atrás vuelve a ser este lado.',
       vuelta: 'La puerta otra vez. La luz de atrás sigue prendida, y del otro ' +
               'lado sigue sin haber un otro lado.',
       esconde: 'La abro y del otro lado está el mismo campo. La cierro, la ' +
                'vuelvo a abrir, y ahora hay una habitación. Cambió porque yo ' +
-               'esperaba que cambiara.',
+               'esperaba que cambiara. Cierro los ojos y pruebo esperar otra ' +
+               'cosa, a ver hasta dónde llega esto.',
       revela: 'casa'
     },
     ruina: {
       nombre: 'Lo que quedó',
-      llegada: 'Escombros, polvo todavía en el aire. Se cayó algo grande y no ' +
-               'escuché nada.',
-      vuelta: 'Otra vez los escombros. El polvo sigue sin bajar. Hace rato que ' +
-              'sigue sin bajar.',
+      llegada: 'Escombros. Se cayó algo grande y yo no escuché nada, y no puede ' +
+               'ser que no haya escuchado. El polvo todavía está en el aire, ' +
+               'quieto, sin decidirse a bajar. Camino alrededor buscando de qué ' +
+               'era esto y no encuentro una sola pieza que me lo diga.',
+      vuelta: 'Otra vez los escombros. El polvo sigue sin bajar. Hace un rato ' +
+              'larguísimo que sigue sin bajar, y ya me parece que no va a bajar ' +
+              'nunca.',
       esconde: 'Levanto un pedazo y abajo no hay tierra: hay más pedazos, y ' +
-               'abajo más. Esto no se cayó de ningún lado. Lo armaron ya roto.',
+               'abajo más. Esto no se cayó de ningún lado. Lo armaron ya roto, y ' +
+               'yo llegué después a buscarle una explicación que no tiene.',
       revela: 'arbol'
     },
     bandada: {
       nombre: 'Los pájaros',
       llegada: 'Un montón de pájaros cruzando, todos para el mismo lado. No se ' +
-               'acaban nunca: hace rato que cruzan y siguen viniendo.',
+               'acaban nunca: hace rato que cruzan y siguen viniendo desde atrás ' +
+               'del cielo, como si alguien los estuviera soltando de a puñados y ' +
+               'no se cansara.',
       vuelta: 'Los pájaros otra vez, cruzando para el mismo lado. Puede que ' +
-              'sean los mismos dando la vuelta.',
+              'sean los mismos dando la vuelta, y puede que la vuelta sea ' +
+              'cortita.',
       esconde: 'Ninguno bate las alas al mismo tiempo que otro, salvo cuando los ' +
-               'miro. Cuando los miro, se sincronizan. Cuando aflojo, se ' +
-               'desordenan otra vez.',
+               'miro. Cuando los miro, se sincronizan. Cuando aflojo la vista, ' +
+               'se desordenan otra vez. Pruebo tres veces para estar segura y ' +
+               'las tres veces me hacen caso.',
       revela: 'casa'
     },
     barca: {
       nombre: 'La barca',
-      llegada: 'Una barca con la vela puesta, meciéndose fuerte. No hay agua' +
-               'abajo: se mece igual, como si abajo hubiera una tormenta que' +
-               'solo ella siente.',
-      vuelta: 'La barca otra vez, meciéndose sobre nada. Sigue igual de' +
-              'sacudida y sigue en el mismo lugar.',
-      esconde: 'Está atada, y la soga se pierde en el aire sin llegar a ningún' +
-               'lado. Eso es lo que la salva: la sacude todo y no se va a ningún' +
-               'lado.',
+      llegada: 'Una barca con la vela puesta, meciéndose fuerte. No hay agua ' +
+               'abajo: se mece igual, como si abajo hubiera una tormenta que ' +
+               'solo ella siente. La vela está tensa de un viento que no me ' +
+               'despeina.',
+      vuelta: 'La barca otra vez, meciéndose sobre nada. Sigue igual de ' +
+              'sacudida y sigue en el mismo lugar, que es lo raro de todo esto.',
+      esconde: 'Está atada, y la soga se pierde en el aire sin llegar a ningún ' +
+               'lado. La sigo con la vista y en algún punto la soga simplemente ' +
+               'deja de existir. Eso es lo que la salva: la sacude todo y no se ' +
+               'va a ningún lado.',
       revela: 'laguna'
     },
     cama: {
       nombre: 'La cama',
-      llegada: 'Mi cama. La mía, con mis sábanas, en el medio de todo esto.',
-      vuelta: 'Mi cama, otra vez.',
+      llegada: 'Mi cama. La mía, con mis sábanas, la mancha de tinta de aquella ' +
+               'vez, todo. Puesta en el medio del campo como si alguien la ' +
+               'hubiera traído hasta acá y se hubiera ido sin explicar nada. Es ' +
+               'lo único de todo esto que no me sorprende, y eso es lo que más ' +
+               'me sorprende.',
+      vuelta: 'Mi cama, otra vez. Sigue igual de hecha y sigue igual de mía, ' +
+              'con la misma arruga en el mismo lado, y yo sigo sin acordarme de ' +
+              'haberla dejado acá ni de haberme levantado de ella.',
       esconde: 'Estoy yo adentro, durmiendo.',
       revela: 'puerta'
     }
@@ -6213,6 +6491,11 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
 
   var bel = Bel.crear();
   var cielo = Cielo.crear();
+  /* La luna de verdad de esta noche. De todo el calculo de efemerides solo se
+     usa el signo: la FASE no es la real, porque en el sueno la marca lo que
+     ella va encontrando. Que el signo si sea el verdadero es el guino: si lo
+     mira, coincide con el cielo de afuera. */
+  var lunaReal = (typeof Luna !== 'undefined') ? Luna.estado() : null;
   var mirada = Instante.crear();
 
   /* Multiplicador de velocidad. Vale 1 jugando; una prueba automática lo sube
@@ -6225,7 +6508,35 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
      registro, reiniciar una partida deja vivos los `setTimeout` de la anterior
      y el juego avanza dos veces por cada paso. */
   var relojes = [];
+
+  /* Reloj propio para las partidas simuladas.
+
+     El navegador frena los setTimeout de una pestana oculta a uno por segundo.
+     Como cada paso del juego encadena varios, una partida simulada tardaba
+     minutos en avanzar un solo lugar y ninguna verificacion llegaba a
+     terminar. En modo prueba los tiempos se llevan en una cola propia que
+     avanza con el mismo pulso que adelanta los cuadros: el juego corre a la
+     velocidad de la maquina y no a la del reloj de la pestana. */
+  var colaPrueba = [], relojPrueba = 0;
+
+  function avanzarRelojPrueba(ms) {
+    relojPrueba += ms;
+    // Se copia y se vacia antes de disparar: un fn puede encolar mas trabajo.
+    for (var v = 0; v < 200 && colaPrueba.length; v++) {
+      var listos = colaPrueba.filter(function (c) { return c.vence <= relojPrueba; });
+      if (!listos.length) return;
+      colaPrueba = colaPrueba.filter(function (c) { return c.vence > relojPrueba; });
+      listos.sort(function (a, b) { return a.vence - b.vence; });
+      listos.forEach(function (c) { c.fn(); });
+    }
+  }
+
   function luego(ms, fn) {
+    if (RITMO > 1) {
+      var tarea = { vence: relojPrueba + ms / RITMO, fn: fn };
+      colaPrueba.push(tarea);
+      return tarea;
+    }
     var id = setTimeout(function () {
       var i = relojes.indexOf(id);
       if (i !== -1) relojes.splice(i, 1);
@@ -6238,6 +6549,7 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
      click de la partida nueva dispara el avance de la anterior. */
   function frenarRelojes() {
     if (typeof cancelarEspera === 'function') cancelarEspera();
+    colaPrueba = [];
     relojes.forEach(clearTimeout);
     relojes = [];
   }
@@ -6294,6 +6606,14 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
   /* Cuanto tarda en leerse. Ya no decide cuando avanza el juego — eso lo
      decide el jugador — pero sigue sirviendo para saber a partir de cuando
      tiene sentido ofrecerle seguir. */
+  /* Cuanto de la luna esta iluminado: exactamente lo que se lleva encontrado.
+     Es la misma cuenta con la que se elige el arcano XXII, asi que al final la
+     carta y la luna del cielo dicen lo mismo — y la carta no le revela nada
+     que no estuviera ahi arriba toda la partida. */
+  function faseLuna() {
+    return Math.max(0, Math.min(1, J.indicios.length / Guion.PASOS));
+  }
+
   function tiempoDeLectura(texto) {
     return Math.max(2200, Math.min(9000, 900 + texto.length * 52));
   }
@@ -7148,6 +7468,12 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     cx.fillStyle = g;
     cx.fillRect(0, 0, W, H);
     Cielo.dibujar(cx, cielo, W, H, t);
+    /* La luna del hilo: su fase es lo que la jugadora lleva encontrado. Se
+       apaga cuando el lugar del recorrido ES la luna, porque dos lunas en el
+       mismo cuadro se leen como un error de dibujo y no como una idea. */
+    var enLaLuna = (J.lugar === 'luna') || (J.destino && J.destino.figura === 'luna');
+    Cielo.luna(cx, W, H, t, faseLuna(), !enLaLuna,
+               lunaReal ? lunaReal.signoGlifo : null);
 
     /* En vertical la pantalla es angosta y alta: si el piso se queda abajo del
        todo, queda un tercio de escena y dos tercios de cielo vacío. */
@@ -7481,6 +7807,13 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
       J.tension = J.tensionSuave = opciones.tension;
     }
     if (opciones.climax !== undefined) J.climax = opciones.climax;
+    /* Cuantos indicios dar por encontrados. Es lo unico que mueve la fase
+       de la luna, asi que sin esto no hay forma de capturarla en otra cosa
+       que no sea luna nueva. */
+    if (opciones.indicios !== undefined) {
+      J.indicios = [];
+      for (var qi = 0; qi < opciones.indicios; qi++) J.indicios.push('prueba' + qi);
+    }
     if (opciones.empuje !== undefined) bel.empuje = opciones.empuje;
     if (opciones.asombro !== undefined) bel.asombro = opciones.asombro;
     // El modo captura tambien reajusta: si no, una captura tras un resize sale
@@ -7511,7 +7844,9 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
       belMeta: +J.belMeta.toFixed(4), andando: J.andando,
       indicios: J.indicios.length, perdidos: J.perdidos.length,
       u: +J.u.toFixed(3), jugando: J.jugando,
-      destino: J.destino, cuadros: cuadrosDibujados
+      destino: J.destino, cuadros: cuadrosDibujados,
+      faseLuna: +faseLuna().toFixed(3),
+      lunaSigno: lunaReal ? lunaReal.signoNombre : null
     };
   };
 
@@ -7584,15 +7919,21 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
            segundo, y con eso la mutacion tarda una eternidad en completarse.
            En cada vuelta se adelantan cuadros a mano, con dt sintetico, para
            que el estado avance aunque el reloj del navegador este frenado. */
-        for (var f = 0; f < 40; f++) cuadro(anterior + 16, true);
+        /* La mirada se revisa DENTRO del adelanto, no despues: la ventana
+           del instante dura menos que un bloque de cuadros, asi que mirandola
+           solo entre vueltas se abria y se cerraba sin que la prueba llegara
+           nunca a tocarla — y todas las partidas simuladas terminaban con cero
+           indicios, que es justo lo que se queria poder probar. */
+        for (var f = 0; f < 120; f++) {
+          cuadro(anterior + 16, true);
+          avanzarRelojPrueba(16);
+          if (mirada.activo && !mirada.resuelto) {
+            var q = (typeof mirar === 'function') ? mirar(jugados) : mirar;
+            if (q) window.forzarMirada(true);
+          }
+        }
         if (vueltas > 6000) { cerrar('agoto el tiempo'); return; }
         if (elCierre.classList.contains('ver')) { cerrar(null); return; }
-
-        // Si hay un instante abierto, resolverlo como pida la prueba.
-        if (mirada.activo && !mirada.resuelto) {
-          var quiere = (typeof mirar === 'function') ? mirar(jugados) : mirar;
-          if (quiere) window.forzarMirada(true);
-        }
 
         var cartas = elMano.classList.contains('fuera')
           ? [] : elMano.querySelectorAll('.carta');

@@ -265,40 +265,34 @@ var Cielo = (function () {
     cx.fillStyle = halo;
     cx.beginPath(); cx.arc(lx, ly, R * (3.4 + ilum * 2.2), 0, 6.2832); cx.fill();
 
-    /* El disco entero, muy tenue: la parte a oscuras de la luna igual se ve
-       un poco — es la luz de la Tierra rebotando, y sin eso la luna nueva
-       seria simplemente nada. */
-    cx.fillStyle = 'rgba(150,158,196,.13)';
+    /* El disco a oscuras. Igual se ve un poco: es la luz de la Tierra
+       rebotando en la cara nocturna, y sin eso una luna nueva seria
+       simplemente nada. */
+    cx.fillStyle = 'rgba(146,155,200,.16)';
     cx.beginPath(); cx.arc(lx, ly, R, 0, 6.2832); cx.fill();
 
-    /* La parte iluminada. Se dibuja el disco claro y se le come una elipse
-       oscura: es como se ve una fase de verdad, y con una elipse en vez de un
-       circulo el terminador queda curvo en el sentido correcto. */
+    /* La parte iluminada, como una forma propia en vez de un recorte.
+
+       Recortando con destination-out se borraba tambien el disco de abajo y la
+       parte oscura quedaba negra dura, que no es como se ve una luna: la mitad
+       a oscuras sigue estando ahi. Esto arma el contorno de la fase — medio
+       circulo mas media elipse — y lo rellena.
+
+       La luz entra por la IZQUIERDA porque asi se ve creciendo desde el
+       hemisferio sur, que es desde donde la mira ella. */
     if (ilum > .012) {
-      cx.save();
-      cx.beginPath(); cx.arc(lx, ly, R, 0, 6.2832); cx.clip();
-      cx.fillStyle = 'rgba(238,242,255,.90)';
-      cx.beginPath(); cx.arc(lx, ly, R, 0, 6.2832); cx.fill();
-      if (ilum < .985) {
-        // De 0 a .5 la sombra es una elipse encima; de .5 a 1 se va achicando.
-        var k = 1 - 2 * ilum;                 // 1 = nueva, 0 = media, -1 = llena
-        cx.globalCompositeOperation = 'destination-out';
-        cx.beginPath();
-        cx.ellipse(lx - R * k * 0, ly, R * Math.abs(k), R, 0, 0, 6.2832);
-        if (k > 0) {
-          // Creciente: la sombra tapa el lado izquierdo mas la mitad oscura.
-          cx.rect(lx - R * 1.05, ly - R * 1.05, R * 1.05, R * 2.1);
-        } else {
-          cx.rect(lx, ly - R * 1.05, R * 1.05, R * 2.1);
-          cx.rect(lx - R * 1.05, ly - R * 1.05, R * 1.05, R * 2.1);
-          cx.beginPath();
-          cx.ellipse(lx, ly, R * Math.abs(k), R, 0, 0, 6.2832);
-          cx.rect(lx - R * 1.05, ly - R * 1.05, R * 1.05, R * 2.1);
-        }
-        cx.fill();
-        cx.globalCompositeOperation = 'source-over';
-      }
-      cx.restore();
+      var k = 1 - 2 * ilum;              // 1 nueva · 0 media · -1 llena
+      cx.fillStyle = 'rgba(238,242,255,.92)';
+      cx.beginPath();
+      cx.arc(lx, ly, R, Math.PI / 2, -Math.PI / 2, false);
+      /* El sentido del arco es lo que decide si la fase sale fina o gibosa,
+         y estaba al reves: con k > 0 (menos de media luna) el terminador
+         tiene que curvarse hacia adentro, o sea recorrer la elipse por el
+         lado de la luz. Al reves, un indicio encontrado pintaba casi luna
+         llena y los ocho la apagaban del todo. */
+      cx.ellipse(lx, ly, R * Math.abs(k), R, 0, -Math.PI / 2, Math.PI / 2, k > 0);
+      cx.closePath();
+      cx.fill();
     }
 
     // El borde, siempre, para que el disco se lea aunque este a oscuras.

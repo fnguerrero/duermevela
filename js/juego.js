@@ -60,6 +60,11 @@
 
   var bel = Bel.crear();
   var cielo = Cielo.crear();
+  /* La luna de verdad de esta noche. De todo el calculo de efemerides solo se
+     usa el signo: la FASE no es la real, porque en el sueno la marca lo que
+     ella va encontrando. Que el signo si sea el verdadero es el guino: si lo
+     mira, coincide con el cielo de afuera. */
+  var lunaReal = (typeof Luna !== 'undefined') ? Luna.estado() : null;
   var mirada = Instante.crear();
 
   /* Multiplicador de velocidad. Vale 1 jugando; una prueba automática lo sube
@@ -72,7 +77,35 @@
      registro, reiniciar una partida deja vivos los `setTimeout` de la anterior
      y el juego avanza dos veces por cada paso. */
   var relojes = [];
+
+  /* Reloj propio para las partidas simuladas.
+
+     El navegador frena los setTimeout de una pestana oculta a uno por segundo.
+     Como cada paso del juego encadena varios, una partida simulada tardaba
+     minutos en avanzar un solo lugar y ninguna verificacion llegaba a
+     terminar. En modo prueba los tiempos se llevan en una cola propia que
+     avanza con el mismo pulso que adelanta los cuadros: el juego corre a la
+     velocidad de la maquina y no a la del reloj de la pestana. */
+  var colaPrueba = [], relojPrueba = 0;
+
+  function avanzarRelojPrueba(ms) {
+    relojPrueba += ms;
+    // Se copia y se vacia antes de disparar: un fn puede encolar mas trabajo.
+    for (var v = 0; v < 200 && colaPrueba.length; v++) {
+      var listos = colaPrueba.filter(function (c) { return c.vence <= relojPrueba; });
+      if (!listos.length) return;
+      colaPrueba = colaPrueba.filter(function (c) { return c.vence > relojPrueba; });
+      listos.sort(function (a, b) { return a.vence - b.vence; });
+      listos.forEach(function (c) { c.fn(); });
+    }
+  }
+
   function luego(ms, fn) {
+    if (RITMO > 1) {
+      var tarea = { vence: relojPrueba + ms / RITMO, fn: fn };
+      colaPrueba.push(tarea);
+      return tarea;
+    }
     var id = setTimeout(function () {
       var i = relojes.indexOf(id);
       if (i !== -1) relojes.splice(i, 1);
@@ -85,6 +118,7 @@
      click de la partida nueva dispara el avance de la anterior. */
   function frenarRelojes() {
     if (typeof cancelarEspera === 'function') cancelarEspera();
+    colaPrueba = [];
     relojes.forEach(clearTimeout);
     relojes = [];
   }
@@ -141,6 +175,14 @@
   /* Cuanto tarda en leerse. Ya no decide cuando avanza el juego — eso lo
      decide el jugador — pero sigue sirviendo para saber a partir de cuando
      tiene sentido ofrecerle seguir. */
+  /* Cuanto de la luna esta iluminado: exactamente lo que se lleva encontrado.
+     Es la misma cuenta con la que se elige el arcano XXII, asi que al final la
+     carta y la luna del cielo dicen lo mismo — y la carta no le revela nada
+     que no estuviera ahi arriba toda la partida. */
+  function faseLuna() {
+    return Math.max(0, Math.min(1, J.indicios.length / Guion.PASOS));
+  }
+
   function tiempoDeLectura(texto) {
     return Math.max(2200, Math.min(9000, 900 + texto.length * 52));
   }
@@ -995,6 +1037,12 @@
     cx.fillStyle = g;
     cx.fillRect(0, 0, W, H);
     Cielo.dibujar(cx, cielo, W, H, t);
+    /* La luna del hilo: su fase es lo que la jugadora lleva encontrado. Se
+       apaga cuando el lugar del recorrido ES la luna, porque dos lunas en el
+       mismo cuadro se leen como un error de dibujo y no como una idea. */
+    var enLaLuna = (J.lugar === 'luna') || (J.destino && J.destino.figura === 'luna');
+    Cielo.luna(cx, W, H, t, faseLuna(), !enLaLuna,
+               lunaReal ? lunaReal.signoGlifo : null);
 
     /* En vertical la pantalla es angosta y alta: si el piso se queda abajo del
        todo, queda un tercio de escena y dos tercios de cielo vacío. */
@@ -1328,6 +1376,13 @@
       J.tension = J.tensionSuave = opciones.tension;
     }
     if (opciones.climax !== undefined) J.climax = opciones.climax;
+    /* Cuantos indicios dar por encontrados. Es lo unico que mueve la fase
+       de la luna, asi que sin esto no hay forma de capturarla en otra cosa
+       que no sea luna nueva. */
+    if (opciones.indicios !== undefined) {
+      J.indicios = [];
+      for (var qi = 0; qi < opciones.indicios; qi++) J.indicios.push('prueba' + qi);
+    }
     if (opciones.empuje !== undefined) bel.empuje = opciones.empuje;
     if (opciones.asombro !== undefined) bel.asombro = opciones.asombro;
     // El modo captura tambien reajusta: si no, una captura tras un resize sale
@@ -1358,7 +1413,9 @@
       belMeta: +J.belMeta.toFixed(4), andando: J.andando,
       indicios: J.indicios.length, perdidos: J.perdidos.length,
       u: +J.u.toFixed(3), jugando: J.jugando,
-      destino: J.destino, cuadros: cuadrosDibujados
+      destino: J.destino, cuadros: cuadrosDibujados,
+      faseLuna: +faseLuna().toFixed(3),
+      lunaSigno: lunaReal ? lunaReal.signoNombre : null
     };
   };
 
@@ -1431,15 +1488,21 @@
            segundo, y con eso la mutacion tarda una eternidad en completarse.
            En cada vuelta se adelantan cuadros a mano, con dt sintetico, para
            que el estado avance aunque el reloj del navegador este frenado. */
-        for (var f = 0; f < 40; f++) cuadro(anterior + 16, true);
+        /* La mirada se revisa DENTRO del adelanto, no despues: la ventana
+           del instante dura menos que un bloque de cuadros, asi que mirandola
+           solo entre vueltas se abria y se cerraba sin que la prueba llegara
+           nunca a tocarla — y todas las partidas simuladas terminaban con cero
+           indicios, que es justo lo que se queria poder probar. */
+        for (var f = 0; f < 120; f++) {
+          cuadro(anterior + 16, true);
+          avanzarRelojPrueba(16);
+          if (mirada.activo && !mirada.resuelto) {
+            var q = (typeof mirar === 'function') ? mirar(jugados) : mirar;
+            if (q) window.forzarMirada(true);
+          }
+        }
         if (vueltas > 6000) { cerrar('agoto el tiempo'); return; }
         if (elCierre.classList.contains('ver')) { cerrar(null); return; }
-
-        // Si hay un instante abierto, resolverlo como pida la prueba.
-        if (mirada.activo && !mirada.resuelto) {
-          var quiere = (typeof mirar === 'function') ? mirar(jugados) : mirar;
-          if (quiere) window.forzarMirada(true);
-        }
 
         var cartas = elMano.classList.contains('fuera')
           ? [] : elMano.querySelectorAll('.carta');
