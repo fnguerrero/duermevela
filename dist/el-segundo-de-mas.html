@@ -6615,6 +6615,21 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     return Math.max(0, Math.min(1, J.indicios.length / Guion.PASOS));
   }
 
+  /* El eje de la escena.
+
+     El relato, el rotulo y la mano son elementos HTML centrados en la ventana:
+     estan los tres en el 0,500 exacto. La figura estaba en 0,560 y el anillo
+     del instante y el resplandor del fondo la seguian, asi que todo el dibujo
+     quedaba corrido un 6% respecto del texto y de las cartas — que en una
+     pantalla de mil pixeles son sesenta, y se ve.
+
+     Ahora es uno solo y es el centro de verdad. A Bel le queda menos lugar a la
+     izquierda, y por eso su marca pasa a medirse contra el borde de la figura
+     en vez de contra una fraccion fija del ancho. */
+  function ejeFigura() {
+    return W * .50;
+  }
+
   function tiempoDeLectura(texto) {
     return Math.max(2200, Math.min(9000, 900 + texto.length * 52));
   }
@@ -7066,7 +7081,7 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     /* El anillo arranca en 2.9 veces el radio: si el radio se calcula solo
        contra la pantalla, en vertical el anillo nace pisando el borde. Se
        ajusta al espacio que hay de verdad a cada lado del centro. */
-    var ix = W * (H > W * 1.25 ? .62 : .56);
+    var ix = ejeFigura();
     var iy = J.ultimaFy || H * .44;
     var aire = Math.min(ix, W - ix) - 14;
     var iradio = Math.max(34, Math.min(Math.min(W, H) * .13, aire / 2.9));
@@ -7498,7 +7513,7 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     if (J.fogonazo > 0) {
       var q = J.fogonazo;
       var col = J.destino ? J.destino.color : J.color;
-      var r = cx.createRadialGradient(W * .56, H * .44, 0, W * .56, H * .44, H * .72);
+      var r = cx.createRadialGradient(ejeFigura(), H * .44, 0, ejeFigura(), H * .44, H * .72);
       r.addColorStop(0, 'rgba(' + col + ',' + (.17 * q) + ')');
       r.addColorStop(1, 'rgba(' + col + ',0)');
       cx.fillStyle = r;
@@ -7506,7 +7521,7 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     }
 
     // --- la figura, en tres capas ---
-    var fx = W * (vertical ? .62 : .56);
+    var fx = ejeFigura();
     /* El tamaño no sale solo de la pantalla: sale del hueco que queda entre el
        texto y el piso. Midiendo contra la altura total, una pantalla ancha y
        baja hace crecer la figura hasta meterse atras del relato — que es
@@ -7517,7 +7532,7 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     /* El minimo no es cosmetico: si la mano se mide antes de que el layout
        asiente, el hueco da negativo, E se va abajo de cero y el primer
        createRadialGradient tira IndexSizeError y no se dibuja nada. */
-    var E = Math.max(W * .08, Math.min(vertical ? W * .36 : W * .27, cabe));
+    var E = Math.max(W * .08, Math.min(vertical ? W * .30 : W * .27, cabe));
     var fy = alturaDe(J.lugar, J.destino, J.u, piso, E);
     /* Las figuras se mueven mas rapido cuanto mas descubierto esta el sueno.
        No es un efecto encima: es la misma animacion, acelerada, y por eso se
@@ -7652,11 +7667,14 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
        la figura, mas cerca de la figura cuanto mas grande sea lo que mira.
        Medida contra la figura sola le queda encima; contra el ancho de la
        pantalla sola, en la otra punta. */
+    /* Se planta en el hueco que queda a la izquierda de la figura, mas cerca
+       o mas lejos segun lo grande que sea lo que mira. Contra una fraccion
+       fija del ancho quedaba encima de la figura en cuanto esta se centro. */
     var lejania = LEJANIA[J.lugar] === undefined ? .26 : LEJANIA[J.lugar];
     var bordeFigura = fx - E;
     var metaCalculada = Math.max(
-      W * lejania * .62,                    // nunca pegada al borde
-      Math.min(bordeFigura * .55, bordeFigura - E * .30)
+      W * .055,                             // nunca pegada al borde del cuadro
+      Math.min(bordeFigura * (.62 - lejania * .55), bordeFigura - W * .045)
     ) / W;
     if (Math.abs(J.belMeta - metaCalculada) > .004) J.belMeta = metaCalculada;
     var belPantalla = W * J.belX;
@@ -7833,12 +7851,19 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
   /* Devuelve la mano que se repartiria en un paso dado, sin jugar nada. Es la
      unica forma de comprobar el reparto sin depender de los tiempos. */
   window.manoDe = function (paso, lugar) {
+    /* Guarda y restaura tambien el MAZO. Sin eso, preguntarle por la mano del
+       primer paso despues de haber jugado devolvia lo que quedaba del mazo
+       gastado — siempre las mismas tres cartas — y parecia que el reparto era
+       fijo cuando en realidad la herramienta estaba mirando otra partida. */
     var pasoAntes = J.paso, lugarAntes = J.lugar, vistosAntes = J.visitados;
+    var mazoAntes = J.mazo.slice();
     J.paso = paso === undefined ? 0 : paso;
     J.lugar = lugar || Guion.ARRANQUE;
     J.visitados = {};
+    J.mazo = Guion.CARTAS.map(function (c) { return c.clave; });
     var m = repartir(3);
     J.paso = pasoAntes; J.lugar = lugarAntes; J.visitados = vistosAntes;
+    J.mazo = mazoAntes;
     return m;
   };
 
@@ -7859,7 +7884,7 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
   window.verificarBases = function () {
     var vertical = H > W * 1.25;
     var piso = Math.min(H * (vertical ? .80 : .84), techoMano() + H * .05);
-    var E = Math.max(W * .08, Math.min(vertical ? W * .36 : W * .27,
+    var E = Math.max(W * .08, Math.min(vertical ? W * .30 : W * .27,
                      (piso - H * (vertical ? .27 : .29)) / 2));
     var mal = [];
     Object.keys(Figuras.CATALOGO).forEach(function (k) {
