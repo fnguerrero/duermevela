@@ -66,7 +66,8 @@
      para recorrer una partida entera en segundos en vez de en minutos. */
   /* Todo el juego, un 20% mas lento. Las transformaciones, las entradas y
      las esperas entre pasos: iba a un ritmo que no dejaba mirar nada. */
-  var RITMO = .8;
+  var RITMO_NORMAL = .8;
+  var RITMO = RITMO_NORMAL;
   /* Todos los temporizadores del juego pasan por aca y quedan anotados. Sin un
      registro, reiniciar una partida deja vivos los `setTimeout` de la anterior
      y el juego avanza dos veces por cada paso. */
@@ -153,7 +154,7 @@
      en la primera partida siempre rapido. La habilidad del juego esta en el
      instante de mirar, no en leer contra reloj: el texto se queda hasta que
      el jugador dice seguir. */
-  var esperando = null;
+  var esperando = null, fichaEspera = 0;
   var elSeguir = document.getElementById('seguir');
 
   function avanzar() {
@@ -171,15 +172,36 @@
        a avanzar solo, porque si no las pruebas se cuelgan esperando un click
        que nunca llega. RITMO > 1 solo pasa en simulacion. */
     if (RITMO > 1) { luego(msLectura, fn); return; }
-    esperando = fn;
-    /* El aviso no aparece de una: si saliera junto con el texto, el ojo va
-       ahi antes de leer. Sale cuando un lector rapido ya termino. */
+    var mia = ++fichaEspera;
+    esperando = null;
+    /* El avance no se habilita junto con el texto, sino con el aviso. Los dos
+       llegan tarde a proposito: el jugador viene de tocar el anillo, y si el
+       relato aceptara el toque desde el primer milisegundo, el gesto de la
+       mecanica anterior se lo saltea sin que llegue a leer una palabra. */
     luego(900, function () {
-      if (esperando === fn) elSeguir.classList.add('ver');
+      if (mia !== fichaEspera) return;
+      esperando = fn;
+      elSeguir.classList.add('ver');
     });
   }
 
+  /* Los botones del final llegan uno atras del otro y todos en el centro de la
+     pantalla — que es justo donde el jugador viene tocando para pasar los
+     textos. Sin esta demora, un toque que sobra dispara el boton que acaba de
+     aparecer, y el que jugo ve pasar de largo el cierre, el arcano y el sobre
+     sin haber leido ninguno. */
+  function habilitarLuego(boton, ms) {
+    boton.disabled = true;
+    boton.style.pointerEvents = 'none';
+    luego(ms || 1100, function () {
+      boton.disabled = false;
+      boton.style.pointerEvents = '';
+    });
+    return boton;
+  }
+
   function cancelarEspera() {
+    fichaEspera++;
     esperando = null;
     if (elSeguir) elSeguir.classList.remove('ver');
   }
@@ -602,6 +624,7 @@
       luego(900, mostrarCartaFinal);
     });
     elCierre.appendChild(seguir);
+    habilitarLuego(seguir, 2600);
 
     Audio2.final();
     Audio2.dormirColchon(5);
@@ -659,6 +682,7 @@
             luego(1100, mostrarSobre);
           });
           texto.appendChild(seguir);
+          habilitarLuego(seguir, 1400);
         });
         Audio2.gota(0, 1, .11, 4.2);
         luego(500, function () { Audio2.gota(4, 1, .08, 3.8); });
@@ -669,9 +693,12 @@
 
   /* El sobre. Aparece despues del arcano y es lo unico del juego que no
      pertenece al sueno: es una carta de papel, de Nico para Bel. */
+  var btnAbrir = document.getElementById('abrirSobre');
+
   function mostrarSobre() {
     var caja = document.getElementById('sobre');
     caja.classList.add('ver');
+    if (btnAbrir) habilitarLuego(btnAbrir, 1400);
     Audio2.gota(0, 0, .09, 5);
     luego(700, function () { Audio2.gota(4, 1, .06, 4.4); });
   }
@@ -697,7 +724,6 @@
     luego(900, function () { elCarta.classList.add('ver'); });
   }
 
-  var btnAbrir = document.getElementById('abrirSobre');
   if (btnAbrir) btnAbrir.addEventListener('click', abrirCarta);
   var btnCerrar = document.getElementById('cerrarCarta');
   if (btnCerrar) btnCerrar.addEventListener('click', function () { location.reload(); });
@@ -772,12 +798,17 @@
     });
   }
 
+  /* Devuelve si el gesto se consumio. Importa: el mismo toque sirve para el
+     instante y para seguir el relato, y si las dos cosas corren con un solo
+     gesto, tocar el anillo tarde tambien se lleva puesto el texto que acaba
+     de aparecer — el jugador ve pasar de largo lo que iba a leer. */
   function tocarInstante() {
     // Sin instante abierto no hay nada que tocar, y uno resuelto no se toca dos
     // veces: las dos guardas juntas evitan contar un indicio de mas.
-    if (!mirada.activo || mirada.resuelto) return;
+    if (!mirada.activo || mirada.resuelto) return false;
     Instante.tocar(mirada);
     resolverMirada();
+    return true;
   }
   window.addEventListener('pointerdown', function (ev) {
     /* Las cartas y los botones tienen lo suyo: acá solo el resto de la
@@ -789,8 +820,7 @@
     // Con el cierre o la carta final en pantalla no hay nada que mirar.
     if (elCierre.classList.contains('ver')) return;
     if (algunaCapaAbierta()) return;
-    tocarInstante();
-    avanzar();
+    if (!tocarInstante()) avanzar();
   });
   window.addEventListener('keydown', function (ev) {
     if (ev.code !== 'Space' && ev.code !== 'Enter' &&
@@ -803,8 +833,7 @@
     if (elCierre.classList.contains('ver')) return;
     if (algunaCapaAbierta()) return;
     ev.preventDefault();
-    tocarInstante();
-    avanzar();
+    if (!tocarInstante()) avanzar();
   });
 
   /* ---------- dibujo ---------- */
@@ -812,7 +841,7 @@
   var anterior = performance.now();
   var sinBucle = false;
 
-  function cuadro(ahora) {
+  function cuadro(ahora, deRespaldo) {
     var dt = sinBucle ? 0 : Math.min(.05, (ahora - anterior) / 1000);
     anterior = ahora; t += dt;
 
@@ -1155,9 +1184,25 @@
     cx.fillStyle = gAba;
     cx.fillRect(0, H * .84, W, H * .16);
 
-    if (!sinBucle) requestAnimationFrame(cuadro);
+    /* El respaldo no reengancha la cadena: el requestAnimationFrame que ya
+       estaba pedido sigue vivo y se dispara cuando la pestana vuelva. Si
+       reenganchara, al volver se dispararian todos juntos. */
+    if (!sinBucle && !deRespaldo) requestAnimationFrame(cuadro);
   }
   requestAnimationFrame(cuadro);
+
+  /* Respaldo por reloj.
+
+     Con la pestana oculta o en segundo plano el navegador deja de dar cuadros,
+     y como la transformacion avanza dentro del cuadro, el juego se congelaba a
+     mitad de camino: J.u se quedaba clavado abajo de 1 y el paso no terminaba
+     nunca. El dibujo puede faltar — nadie lo esta mirando — pero el estado no
+     puede depender de que se este dibujando. */
+  setInterval(function () {
+    if (sinBucle) return;
+    var ahora = performance.now();
+    if (ahora - anterior > 34) cuadro(ahora, true);
+  }, 16);
 
   /* ---------- sonido ---------- */
 
@@ -1337,7 +1382,7 @@
       function cerrar(motivo) {
         clearInterval(reloj);
         if (pruebaEnCurso === reloj) pruebaEnCurso = null;
-        RITMO = 1;
+        RITMO = RITMO_NORMAL;
         window.onerror = previo;
         resolver({
           pasos: J.paso,
