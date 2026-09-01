@@ -894,7 +894,10 @@
     }
     elSobre.classList.remove('ver');
     Audio2.volteo();
-    luego(900, function () { elCarta.classList.add('ver'); });
+    luego(900, function () {
+      elCarta.classList.add('ver');
+      elCarta.scrollTop = 0;
+    });
   }
 
   if (btnAbrir) btnAbrir.addEventListener('click', abrirCarta);
@@ -1971,6 +1974,10 @@
       boton(par[0], function () { window.verFinal(par[1]); }, true);
     });
 
+    titulo('el sobre y la carta');
+    boton('el sobre cerrado', function () { window.verSobre(); }, true);
+    boton('la carta de papel', function () { window.verCarta(); }, true);
+
     titulo('otros');
     boton('reiniciar', function () { location.reload(); }, true);
 
@@ -1982,6 +1989,47 @@
     document.body.appendChild(elPanel);
     return elPanel;
   }
+
+  /* La carta de papel, directo. Es lo ultimo del juego y lo que mas se va a
+     retocar, asi que llegar hasta ella jugando ocho pasos cada vez no tiene
+     sentido. Arma la hoja igual que abrirCarta y la muestra. */
+  window.verCarta = function () {
+    frenarRelojes();
+    document.getElementById('portada').classList.add('ido');
+    ['cierre', 'final', 'sobre'].forEach(function (id) {
+      document.getElementById(id).classList.remove('ver');
+    });
+    var hoja = document.getElementById('hoja');
+    if (!hoja.children.length) {
+      var c = Guion.CARTA_PARA_BEL;
+      c.parrafos.forEach(function (t2) {
+        var p2 = document.createElement('p');
+        p2.textContent = t2;
+        hoja.appendChild(p2);
+      });
+      var f = document.createElement('p');
+      f.className = 'firma';
+      f.textContent = c.firma;
+      hoja.appendChild(f);
+    }
+    var capa = document.getElementById('cartaEscrita');
+    capa.classList.add('ver');
+    // Siempre desde el saludo: la carta es mas alta que la pantalla y si queda
+    // el scroll de antes se abre por la mitad de una frase.
+    capa.scrollTop = 0;
+    return 'carta a la vista';
+  };
+
+  /* Y el sobre cerrado, que es el paso anterior. */
+  window.verSobre = function () {
+    frenarRelojes();
+    document.getElementById('portada').classList.add('ido');
+    ['cierre', 'final', 'cartaEscrita'].forEach(function (id) {
+      document.getElementById(id).classList.remove('ver');
+    });
+    mostrarSobre();
+    return 'sobre a la vista';
+  };
 
   window.panel = function (quiero) {
     var el = armarPanel();
