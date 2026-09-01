@@ -8176,7 +8176,12 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     else if (J.revelando > 0) J.revelando = Math.max(0, J.revelando - dt * 1.4);
 
     if (J.u < 1 && !J.congelado) {
-      J.u = Math.min(1, J.u + dt * .42 * RITMO);
+      /* La mutacion tarda ~2,9s en vez de ~2,4s. La ventana para mirar va de
+         u .10 a .96, o sea 2,5s, y hay que sostener 1s: antes quedaba 1s para
+         darse cuenta de que aparecio el anillo y reaccionar, que para alguien
+         que no juega videojuegos es nada. Se alarga la mutacion y no se toca
+         el segundo, que es de lo que se trata el juego. */
+      J.u = Math.min(1, J.u + dt * .34 * RITMO);
       if (J.u >= 1 && J.destino) {
         J.destello = 1;
         /* Apenas termina la mutacion, el lugar pasa a ser el destino. Antes
@@ -8317,13 +8322,33 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
       }
     } else {
       var aSale = 1 - Math.min(1, u / .26);
-      var aPiezas = Math.min(1, Math.min(u / .16, (1 - u) / .18));
       var aEntra = Math.max(0, (u - .70) / .30);
+      var aPiezas = Math.min(1, Math.min(u / .16, (1 - u) / .18));
+      /* Mientras se muestra lo que el lugar escondia, el mundo se frena y
+         queda SOLO la figura vieja: sostener un segundo se come media
+         mutacion, asi que para cuando se resuelve el instante la figura
+         nueva ya esta entrando, y encima de un arbol aparecian dos naves a
+         medio armar. Se apagan las dos mientras dura la revelacion. */
+      var quieto = 1 - Math.min(1, J.revelando);
+      aPiezas *= quieto;
+      aEntra *= quieto;
 
       if (aSale > .01) {
         cx.save(); cx.globalAlpha = aSale;
         Pintores.pintar(cx, J.lugar, fx, fy, E, tt, extra);
         cx.restore();
+        /* Y lo que este lugar escondia, encima de la figura que se va.
+           Es ACA donde se ve: el instante se resuelve mientras la figura se
+           transforma, o sea con u < 1, y la rama de figura quieta nunca llega
+           a correr con revelando en alto. Sin esto, acertar sumaba el indicio
+           al marcador y decia el texto, pero no se dibujaba nada: se leia
+           "pero yo lo vi" con el lugar intacto y vacio. */
+        if (J.revelando > 0 && typeof Anomalias !== 'undefined') {
+          cx.save(); cx.globalAlpha = aSale;
+          Anomalias.pintar(cx, J.lugar, fx, fy, E, t, J.revelando, extra,
+                           W, H, W * J.belX, piso);
+          cx.restore();
+        }
       }
       if (aPiezas > .01 && J.pares) {
         var cc = J.destino ? mezclarColor(J.color, J.destino.color, u) : J.color;
