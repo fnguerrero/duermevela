@@ -3246,6 +3246,37 @@ var Pintores = (function () {
       if (prof > 7) rama(x2, y2, a + .03, largo * .62, grosor * .55, prof - 2);
     }
     rama(0, E, -Math.PI / 2, E * .58, E * .060, 9);
+
+    /* Un pajaro lejos, cruzando el cielo. Se ve siempre, aciertes o no, pero
+       en silueta y sin color: el secreto de este lugar no es que haya un
+       pajaro, es verlo de cerca. Quien falla el instante se queda sabiendo
+       que habia algo y no que color tenia.
+       Cruza cada catorce segundos y tarda cuatro en pasar, asi que la mayor
+       parte del tiempo el cielo esta vacio y el cruce se siente un hallazgo. */
+    var CICLO = 14, CRUCE = 4;
+    var fase = (t % CICLO) / CRUCE;
+    if (fase < 1) {
+      var bx = E * (-2.0 + fase * 4.0);
+      var by = -E * (1.44 + Math.sin(fase * Math.PI) * .12);
+      var ala = Math.sin(t * 9) * .5 + .5;      // aleteo
+      var br = E * .042;
+      cx.save();
+      // Se desvanece en los bordes: entra y sale del cuadro sin aparecer de golpe.
+      cx.globalAlpha = Math.min(1, Math.sin(fase * Math.PI) * 2.2) * .50;
+      /* Dos arcos y nada mas: la "v" es lo que el ojo lee como pajaro a esta
+         distancia. Con cuerpo y alas separadas quedaba una mancha ovalada, que
+         a seis pixeles se ve como un platillo y no como un ave. */
+      cx.strokeStyle = 'rgba(186,200,226,1)';
+      cx.lineWidth = Math.max(1.1, E * .0075);
+      cx.lineCap = 'round';
+      var alto = br * (.30 + ala * .85);
+      cx.beginPath();
+      cx.moveTo(bx - br * 1.5, by - alto);
+      cx.quadraticCurveTo(bx - br * .55, by + br * .16, bx, by);
+      cx.quadraticCurveTo(bx + br * .55, by + br * .16, bx + br * 1.5, by - alto);
+      cx.stroke();
+      cx.restore();
+    }
   }
 
 
