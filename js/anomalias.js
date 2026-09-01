@@ -182,7 +182,12 @@ var Anomalias = (function () {
       /* Arriba y al costado de la copa, donde hay cielo detras. Medido: en el
          medio del follaje el pajaro cae entre las ramas y no se distingue,
          aunque en una lamina aislada se viera perfecto. */
-      var px = fx + E * .54, py = fy - E * 1.30;
+      /* A la altura de la copa y bien a la derecha, NO por encima del arbol:
+         el panel del texto es HTML sobre el canvas y ocupa la franja de
+         arriba, justo cuando este pajaro se muestra. Puesto mas alto queda
+         detras del panel y no se ve nunca — paso, y el texto decia "yo lo vi"
+         con el cielo vacio. */
+      var px = fx + E * .74, py = fy - E * .88;
       /* Cuando dejas de mirar, se va: la ida es el (1 - a) — levanta vuelo
          hacia arriba y afuera en vez de desvanecerse en la rama. Mientras lo
          mires, se queda. Es literalmente lo que dice el texto. */

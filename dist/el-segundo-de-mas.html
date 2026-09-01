@@ -3245,7 +3245,7 @@ var Pintores = (function () {
          perfecta de arriba sin ensuciar la repeticion de las puntas. */
       if (prof > 7) rama(x2, y2, a + .03, largo * .62, grosor * .55, prof - 2);
     }
-    rama(0, E, -Math.PI / 2, E * .58, E * .060, 9);
+    rama(0, E, -Math.PI / 2, E * .66, E * .066, 9);
 
     /* Un pajaro lejos, cruzando el cielo. Se ve siempre, aciertes o no, pero
        en silueta y sin color: el secreto de este lugar no es que haya un
@@ -3257,7 +3257,7 @@ var Pintores = (function () {
     var fase = (t % CICLO) / CRUCE;
     if (fase < 1) {
       var bx = E * (-2.0 + fase * 4.0);
-      var by = -E * (1.44 + Math.sin(fase * Math.PI) * .12);
+      var by = -E * (1.18 + Math.sin(fase * Math.PI) * .10);
       var ala = Math.sin(t * 9) * .5 + .5;      // aleteo
       var br = E * .042;
       cx.save();
@@ -4135,7 +4135,12 @@ var Anomalias = (function () {
       /* Arriba y al costado de la copa, donde hay cielo detras. Medido: en el
          medio del follaje el pajaro cae entre las ramas y no se distingue,
          aunque en una lamina aislada se viera perfecto. */
-      var px = fx + E * .54, py = fy - E * 1.30;
+      /* A la altura de la copa y bien a la derecha, NO por encima del arbol:
+         el panel del texto es HTML sobre el canvas y ocupa la franja de
+         arriba, justo cuando este pajaro se muestra. Puesto mas alto queda
+         detras del panel y no se ve nunca — paso, y el texto decia "yo lo vi"
+         con el cielo vacio. */
+      var px = fx + E * .74, py = fy - E * .88;
       /* Cuando dejas de mirar, se va: la ida es el (1 - a) — levanta vuelo
          hacia arriba y afuera en vez de desvanecerse en la rama. Mientras lo
          mires, se queda. Es literalmente lo que dice el texto. */

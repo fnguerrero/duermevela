@@ -372,7 +372,7 @@ var Pintores = (function () {
          perfecta de arriba sin ensuciar la repeticion de las puntas. */
       if (prof > 7) rama(x2, y2, a + .03, largo * .62, grosor * .55, prof - 2);
     }
-    rama(0, E, -Math.PI / 2, E * .58, E * .060, 9);
+    rama(0, E, -Math.PI / 2, E * .66, E * .066, 9);
 
     /* Un pajaro lejos, cruzando el cielo. Se ve siempre, aciertes o no, pero
        en silueta y sin color: el secreto de este lugar no es que haya un
@@ -384,7 +384,7 @@ var Pintores = (function () {
     var fase = (t % CICLO) / CRUCE;
     if (fase < 1) {
       var bx = E * (-2.0 + fase * 4.0);
-      var by = -E * (1.44 + Math.sin(fase * Math.PI) * .12);
+      var by = -E * (1.18 + Math.sin(fase * Math.PI) * .10);
       var ala = Math.sin(t * 9) * .5 + .5;      // aleteo
       var br = E * .042;
       cx.save();
