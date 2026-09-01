@@ -1,92 +1,91 @@
-# Informe — tanda 4
+# Informe — tanda 5: relevamiento de bugs
 
-La portada, los ocho lugares que faltaban y la luna como hilo de la partida.
+Auditoría profunda del juego entero. No "arreglar lo que se veía mal": buscar
+clases enteras de fallas con herramientas que quedan puestas.
 
-## Qué se hizo
+## Los tres bugs reales encontrados
 
-**La portada.** El velo era medio transparente en el centro y la montaña rusa
-subía justo hasta el título: letras claras sobre vigas claras. Ahora el centro
-es casi opaco y la escena asoma solo en los bordes. Los números de las tres
-reglas iban en la serif del título a 12 px con espaciado, y a ese cuerpo una
-serif con remates se empasta: pasan a tipografía de sistema, 14 px, peso 600,
-con fondo propio.
+**1. El audio podía congelar la pantalla.** Las funciones de sonido no saneaban
+sus parámetros: un valor no finito llegaba a un `AudioParam` y tiraba excepción.
+Como todo eso se llama desde adentro del bucle de dibujo, esa excepción mata el
+cuadro entero y deja la pantalla congelada con lo último que se alcanzó a
+pintar. Solo aparece **con el sonido encendido**, que es como lo va a jugar Bel
+y como nunca lo había probado.
 
-**Los catorce lugares.** Los ocho que quedaban cortos se reescribieron en
-primera persona y más largos. De paso apareció un bug que ya estaba en los seis
-de la tanda anterior (ver abajo), así que se regeneraron los catorce.
+**2. El juego quedaba paralizado después de correr una prueba.** El adelanto de
+cuadros empuja el reloj interno al futuro — 4,2 segundos en una partida — y como
+el delta está acotado a cero por abajo (para que la cabeza de Bel no gire), el
+juego no avanzaba hasta que el tiempo real lo alcanzara.
 
-**La luna como hilo.** Está siempre en el cielo y su fase *es* lo que la
-jugadora lleva encontrado, de nueva a llena. Sale de la misma cuenta que elige
-el arcano XXII, así que al final la carta no le revela nada que no estuviera
-arriba toda la partida. Se apaga cuando el lugar del recorrido es la luna.
+**3. `auditarTodo()` estaba rota en su primera línea.** Encadenaba
+`verificarBases()` como si devolviera una promesa, y devuelve el objeto directo:
+la auditoría entera tiraba `TypeError` antes de correr nada.
 
-## Cómo correrlo
+## Las herramientas que quedan
 
-Servidor de desarrollo: `py -3 tools/servidor.py 8156` y abrir
-`http://localhost:8156`. O el archivo suelto `dist/el-segundo-de-mas.html`, con
-doble click, sin servidor.
+| Herramienta | Qué caza |
+|---|---|
+| `centinelaDibujo(fn)` | NaN, Infinity, radios negativos y `save`/`restore` desbalanceados en el canvas |
+| `centinelaConsola(fn)` | errores, warnings y rechazos sin atrapar, incluidos los de callbacks |
+| `verificarTextos()` | palabras pegadas, campos vacíos, tercera persona, algo real nombrado |
+| `verFinal(n)` | salta al cierre con los indicios que se pidan, para probar las cuatro ramas |
+| `auditarTodo()` | corre las siete verificaciones y da un veredicto |
 
 ## Verificación
 
-| Prueba | Resultado |
+| Área | Resultado |
 |---|---|
-| `verificarBases()` | 14/14 |
-| `verificarDibujo()` | 14 figuras, 0 fallos |
-| `auditar()` | sin faltantes, sin cama temprana |
-| `verificarRotulo()` | 0 desajustes |
-| `verificarTramos(3)` | 0 fallos, recorridos variados |
-| Textos contra el JSON de origen | 0 diferencias · 14 lugares × 5 campos |
-| Fases de la luna | la luz crece siempre: 0 → 510 px aislada, 0 → 1223 en el juego |
-| Fase contra arcano final | 0 desajustes en los 9 resultados posibles |
-| Portada | 0,6 % de píxeles claros del fondo dentro de la caja del título |
+| Dibujo estático | 14 lugares en reposo y en transformación, 18 cartas + dorso en 3 tamaños, 12 relaciones de pantalla — **0 alertas** |
+| Geometría | 1920x1080, 1366x768, 1600x500, 375x812, 360x640 — **0 superposiciones, 0 desbordes** |
+| Resize en caliente | a mitad de mutación, con el instante abierto y en el cierre, en 5 tamaños — **0 alertas** |
+| Dobles disparos | doble ENTRAR, triple click en cartas, doble instante — **avanza 1 paso, suma 1 indicio** |
+| Las 4 ramas del final | cierre → arcano → sobre → carta, las cuatro completas |
+| Textos | 42 textos medidos contra su caja en 2 tamaños — **ninguno se corta** |
+| Audio | basura contra 5 funciones con el sonido prendido — **0 caídas**; voces vuelven a 0 |
+| Partida con sonido | 8 pasos, 8 indicios, cierre, **0 errores** |
+| `auditarTodo()` | **las 7 áreas en verde** |
 
-Las cinco primeras corren en 28 segundos.
+## Tres pruebas que estaban mal, y cómo se supo
+
+Esto es lo que más valor tuvo de la tanda, porque cada una habría dado un
+veredicto falso:
+
+- **La geometría dio 12 de 12 en rojo** y estaba mal la prueba: cambiaba el
+  tamaño del canvas y del body, pero el texto, el marcador y la mano son
+  `position:fixed` y se posicionan contra el viewport. Medía cajas reales contra
+  un ancho imaginario.
+- **`verificarTextos()` tenía dos bugs propios.** Los `\b` del patrón quedaron
+  escritos como caracteres de **backspace literales** — Python los interpretó al
+  escribir el archivo — así que no cazaba nada y parecía estar en verde. Y aun
+  bien escritos habrían fallado: en JavaScript `\b` no cierra sobre una vocal
+  acentuada, así que `\bmama\b` nunca caza "mamá". Se descubrió inyectando
+  corrupciones a propósito en vez de confiar en que pasara.
+- **La cadena de tres partidas simuladas** parecía mostrar que el juego se
+  trababa al reiniciar. Era el simulador: con la pestaña oculta el navegador
+  frena los timers a uno por segundo. Jugando a mano, el juego avanza normal.
+
+La lección repetida: **una prueba en verde no vale nada si nunca se comprobó que
+sepa ponerse en rojo.**
 
 ## Decisiones tomadas por criterio propio
 
-- **La luna se ve desde el hemisferio sur**, iluminada por la izquierda. Es
-  desde donde la mira ella.
-- **Del cálculo real de efemérides se usa el signo, no la fase.** La fase la
-  marca el juego; que el signo sí sea el verdadero es el guiño: si lo mira,
-  coincide con el cielo de afuera.
-- **La cama queda exenta del mínimo de largo en su `esconde`.** Son seis
-  palabras — "Estoy yo adentro, durmiendo" — y ahí está toda su fuerza. Se
-  alargó la `vuelta` para que el lugar cumpla el criterio sin tocar el golpe.
-- **La luna del cielo se apaga en el lugar `luna`.** Dos lunas en el mismo
-  cuadro se leen como un error de dibujo, no como una idea.
+- **Eliminado el snapshot de textos en JSON.** Duplicaba los textos y quedaba
+  viejo cuando el guion cambiaba, acusando diferencias que eran suyas. El guion
+  es la fuente y no puede haber dos.
+- **Conservado el texto nuevo de `faro.llegada`.** La diferencia que apareció
+  era del snapshot, no del juego: ese texto lo cambié a propósito en el commit
+  `f894c9c`.
+- **El audio sanea en vez de fallar.** Que un sonido no suene es un problema
+  chico; que el juego se congele por un NaN, no.
 
 ## Desvíos respecto de lo planeado
 
-- **`js/luna.js` ya existía y no lo cargaba nadie.** Un módulo entero de
-  efemérides, con el cálculo real de fase y signo, escrito y nunca enchufado ni
-  en `index.html`. El plan era escribir el cálculo; en realidad solo hubo que
-  conectarlo.
-- **Se regeneraron los catorce lugares, no los ocho previstos.** Al escribir los
-  ocho apareció que la función que parte el texto en líneas concatenadas ponía
-  el espacio al principio de la línea siguiente en vez de al final de la actual,
-  así que en JavaScript las palabras del corte quedaban pegadas: `'aquella' +
-  'vez'` da `aquellavez`. Los seis de la tanda anterior tenían el mismo
-  problema. Ahora los catorce salen de un JSON que es la fuente de la verdad y
-  se verifican comparando carácter por carácter contra él.
-- **Hizo falta darle a las partidas simuladas su propio reloj.** No estaba
-  previsto y no es del juego: el navegador frena los `setTimeout` de una pestaña
-  oculta a uno por segundo, y como cada paso encadena varios, ninguna
-  verificación llegaba a terminar. Sin eso no se podía comprobar nada.
-
-## Lo que no cazó ninguna prueba, y por qué importa
-
-Dos bugs de esta tanda pasaron todas las verificaciones que había:
-
-- Las **palabras pegadas** pasaban cualquier prueba de largo, y el primer
-  detector que escribí tampoco las veía: buscaba palabras de 19 o más letras y
-  `aquellavez` tiene 10. Lo único que lo caza es comparar contra el texto
-  original.
-- La **fase invertida** de la luna dibujaba perfecto, sin errores en consola: un
-  indicio encontrado pintaba casi luna llena y los ocho la apagaban del todo.
-  Lo único que lo caza es medir que la luz crezca.
-
-En los dos casos la prueba que servía era la que mide el resultado contra lo que
-se quería, no la que comprueba que el código no explote.
+- **B1 y B3 se verificaron distinto de lo previsto.** El plan era encadenar
+  partidas simuladas; el entorno no lo permite de forma fiable. Se verificaron
+  jugando a mano y por el recorrido completo del final.
+- **E1 se planeó como "contar nodos" y terminó encontrando un bug.** La primera
+  medición dio 0 voces siempre, lo que parecía perfecto y en realidad era que el
+  audio ni había arrancado: el navegador exige un gesto del usuario.
 
 ## Bloqueado
 
@@ -94,4 +93,4 @@ Nada.
 
 ## Iteraciones
 
-De la #108 a la #115, ocho, sobre un presupuesto de 40.
+De la #128 a la #142, quince, sobre un presupuesto de 40.

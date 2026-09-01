@@ -82,6 +82,7 @@ var Audio2 = (function () {
   /* Volumen general, de 0 a 1. El mute es un caso de esto, no algo aparte. */
   var volumen = .9;
   function ponerVolumen(v) {
+    v = sano(v, .7, 0, 1);
     volumen = Math.max(0, Math.min(1, v));
     if (ac && encendido) maestro.gain.setTargetAtTime(volumen, ac.currentTime, .12);
     return volumen;
@@ -232,6 +233,7 @@ var Audio2 = (function () {
   var tensionAudio = 0;
 
   function tensar(nivel) {
+    nivel = sano(nivel, 0, 0, 1);
     tensionAudio = Math.max(0, Math.min(1, nivel));
     if (!activo() || !colchon) return;
     var t0 = ac.currentTime;
@@ -286,6 +288,10 @@ var Audio2 = (function () {
   var vivas = 0;
 
   function gota(grado, octava, volumen, duracion) {
+    grado = sano(grado, 0, -24, 24);
+    octava = sano(octava, 0, -3, 3);
+    volumen = sano(volumen, .08, 0, 1);
+    duracion = sano(duracion, 3, .05, 20);
     if (!activo()) return;
     if (vivas >= TOPE_VOCES) return;
     vivas++;
@@ -340,6 +346,7 @@ var Audio2 = (function () {
 
   /* La carta al jugarse: un golpe corto y seco, más su nota. */
   function golpe(grado) {
+    grado = sano(grado, 0, -24, 24);
     if (!activo()) return;
     var t0 = ac.currentTime;
     var f = ac.createBufferSource();
@@ -359,8 +366,22 @@ var Audio2 = (function () {
 
   /* Un tic corto. Se usa para marcar el paso del anillo: cuanto mas cerca de
      la marca, mas agudo. Es la unica pista sonora del instante. */
+  /* Un numero que no sirve no puede tirar una excepcion.
+
+     Todo esto se llama desde adentro del bucle de dibujo, y una excepcion ahi
+     mata el cuadro entero: la pantalla queda congelada con lo ultimo que se
+     alcanzo a pintar. Que el sonido no suene es un problema chico; que el
+     juego se congele por un NaN que llego a un parametro de audio, no. */
+  function sano(v, porDefecto, minimo, maximo) {
+    v = (typeof v === 'number' && isFinite(v)) ? v : porDefecto;
+    if (minimo !== undefined && v < minimo) v = minimo;
+    if (maximo !== undefined && v > maximo) v = maximo;
+    return v;
+  }
+
   function tic(cercania) {
     if (!activo()) return;
+    cercania = sano(cercania, 0, 0, 1);
     var t0 = ac.currentTime;
     var o = ac.createOscillator();
     o.type = 'triangle';

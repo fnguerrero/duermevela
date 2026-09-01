@@ -1,32 +1,38 @@
-# TODO — El segundo de más, tanda 4: la portada y lo que falta del guion
+# TODO — tanda 5: relevamiento profundo de bugs
+
+No es "arreglar lo que se vea mal": es buscar clases enteras de fallas con
+comprobaciones que queden puestas. Cada ítem deja su verificación en el código.
 
 Estados: `[ ]` pendiente · `[~]` en curso · `[x]` hecho y verificado · `[!]` bloqueado
 
-## A · Portada
+## A · Herramientas de auditoría (van primero: sin esto no hay relevamiento)
 
-- [x] P1 · El fondo (la montaña rusa) sube hasta el título y le compite. Bajarlo, atenuarlo o correrlo para que el título quede sobre fondo limpio · archivos: index.html, js/juego.js · verif: captura de portada + medir cuánta tinta del fondo cae dentro de la caja del título
-- [x] P2 · Los números 1/2/3 de las tres reglas se ven mal: círculos chicos con cifra ilegible. Rehacerlos legibles sin agrandar el bloque · archivos: index.html · verif: medir cuerpo en px del número y contraste contra su fondo
-- [x] P3 · Revisar la portada entera en escritorio y en móvil tras P1 y P2 · verif: capturas en 1272x727 y 375x812, sin desborde horizontal
+- [x] A1 · Un `auditarTodo()` que corra en cadena todas las verificaciones que ya existen y devuelva un solo veredicto · verif: corre y da un objeto con cada resultado
+- [x] A2 · Centinela de dibujo: envolver el contexto 2D y cazar NaN/Infinity en cualquier coordenada, radios negativos y save/restore desbalanceados · verif: renderizar los 14 lugares + 18 cartas + los 4 finales sin una sola alerta
+- [x] A3 · Centinela de consola: registrar todo error o warning durante una partida completa · verif: partida entera con 0 entradas
 
-## B · Los ocho lugares que quedaron cortos
+## B · Estado y flujo
 
-Todos en primera persona, un poco más largos, sin nombrar nunca nada real.
+- [x] B1 · Reinicio limpio: jugar hasta el final, reiniciar y volver a jugar sin residuos (timers, guías repetidas, mazo, indicios) · verif: dos partidas seguidas con el mismo resultado estructural
+- [x] B2 · Dobles disparos: doble click en carta, doble toque en el instante, click en botón del final dos veces · verif: contadores no se pasan de lo esperado
+- [x] B3 · El juego no se traba en ningún estado: barrido de las combinaciones congelado/instante/espera · verif: máquina de estados recorrida sin bloqueos
+- [x] B4 · Las cuatro ramas del final (0, 1-2, 3-5, 6-8 indicios) llegan hasta la carta manuscrita · verif: las 4 recorridas de punta a punta
 
-- [x] T1 · `cama` — es la revelación final y hoy tiene el texto más corto de los catorce (105 caracteres). Merece ser el mejor · verif: largo > 400 y que el `esconde` siga siendo el golpe
-- [x] T2 · `ruina` — segundo paso del tramo del dolor, hoy genérico · verif: largo > 400
-- [x] T3 · `luna` y `laguna` · verif: largo > 400 cada uno
-- [x] T4 · `calesita` y `montania` · verif: largo > 400 cada uno
-- [x] T5 · `puerta` y `bandada` · verif: largo > 400 cada uno
-- [x] T6 · `barca` quedó en 359, justo abajo del resto del tramo · verif: largo > 400
-- [x] T7 · Ningún texto nuevo se escapó a la tercera persona ni nombra nada real · verif: detector sobre los 14 lugares, revisando a mano cada acierto (los falsos positivos son la norma)
+## C · Geometría
 
-## C · La luna como hilo
+- [x] C1 · Barrido de tamaños: nada se superpone ni se sale en 12 relaciones de pantalla · verif: Bel, figura, cartas, texto y marcador medidos en cada uno
+- [x] C2 · Resize en momentos críticos (durante la mutación, con el instante abierto, en el final) · verif: sin errores y geometría coherente después
 
-- [x] L1 · La fase de la luna del cielo cambia con los indicios encontrados: de nueva a llena · archivos: js/luna.js, js/cielo.js, js/juego.js · verif: forzar 0, 4 y 8 indicios y capturar las tres
-- [x] L2 · La fase que quedó al final coincide con el arcano XXII que toca · verif: correr las cuatro franjas de resultado y comparar fase contra carta
-- [x] L3 · La luna del hilo no pisa a `luna` como lugar del recorrido · verif: partida que pase por el lugar luna con el hilo activo
+## D · Contenido
 
-## D · Cierre
+- [x] D1 · Los 14 lugares y las 18 cartas: textos exactos contra el origen, sin tercera persona, sin nada real nombrado · verif: comparación carácter por carácter
+- [x] D2 · Ningún texto se corta ni se desborda de su caja, en escritorio y en móvil · verif: medición de cajas contra contenido
 
-- [x] Z1 · Verificación final: bases, dibujo, auditoría, rótulo, tramos · verif: las cinco en verde
-- [x] Z2 · Reempaquetar dist/ y escribir INFORME.md · verif: el .html suelto abre y juega
+## E · Audio
+
+- [x] E1 · No se acumulan nodos de audio en una partida larga · verif: contar nodos antes y después
+
+## F · Cierre
+
+- [x] F1 · Correr auditarTodo() completo y dejarlo en verde · verif: todos los sub-resultados ok
+- [x] F2 · Reempaquetar dist/ e informe · verif: el .html suelto abre y juega

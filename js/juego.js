@@ -1026,6 +1026,13 @@
        pow(k, dt)) invierten el signo del factor y en vez de acercarse al
        objetivo se alejan: asi es como la cabeza de Bel se ponia a girar
        sola, cada vez mas, sin nada que la frenara. */
+    /* Si el reloj interno quedo adelantado respecto del real, se resincroniza
+       en vez de quedarse esperando. El adelanto de cuadros de las pruebas
+       empuja `anterior` al futuro —cuatro segundos en una partida, minutos en
+       varias— y con dt acotado a cero por abajo el juego quedaba paralizado
+       hasta que el tiempo real lo alcanzara. Acotar el dt evitaba que la
+       cabeza girara; sin esto, evitaba tambien que el juego avanzara. */
+    if (ahora < anterior - 40) anterior = ahora;
     var dt = sinBucle ? 0 : Math.max(0, Math.min(.05, (ahora - anterior) / 1000));
     anterior = ahora; t += dt;
 
@@ -1527,6 +1534,12 @@
       destino: J.destino, cuadros: cuadrosDibujados,
       faseLuna: +faseLuna().toFixed(3),
       belAlza: +bel.alza.toFixed(3),   // fuera de 0..1 la cabeza queda dada vuelta
+      congelado: J.congelado,
+      miradaActiva: mirada.activo, miradaResuelta: mirada.resuelto,
+      hayDestino: !!J.destino, esperandoToque: !!esperando,
+      relojesVivos: relojes.length + colaPrueba.length,
+      ritmo: RITMO,
+      relojAdelantado: Math.round(anterior - performance.now()),
       lunaSigno: lunaReal ? lunaReal.signoNombre : null
     };
   };
@@ -1634,6 +1647,9 @@
 
       function cerrar(motivo) {
         clearInterval(reloj);
+        // El reloj vuelve al tiempo real: la prueba lo dejaba en el futuro y
+        // el juego siguiente arrancaba paralizado.
+        anterior = performance.now();
         if (pruebaEnCurso === reloj) pruebaEnCurso = null;
         RITMO = RITMO_NORMAL;
         window.onerror = previo;
@@ -1752,6 +1768,116 @@
      orden que toca, y que lo que queda venga despues. Sin esto, una carta mal
      ubicada desarma la estructura sin romper nada — el juego sigue andando y
      nadie se entera. */
+  /* La auditoria entera, de una. Devuelve un veredicto por area y uno global,
+     para no tener que acordarse de correr seis cosas distintas. */
+  /* Salta directo al cierre con la cantidad de indicios que se pida. Sirve
+     para ver los cuatro finales sin jugar cuatro partidas, y para probarlos:
+     son la parte del juego que menos se recorre y la que mas importa. */
+  /* Los textos, sin copia de referencia.
+
+     Antes esto se comparaba contra un JSON con los textos duplicados. Cuando
+     el guion cambiaba —y cambio, la llegada del faro— el snapshot quedaba
+     viejo y la verificacion acusaba una diferencia que era suya, no del juego.
+     El guion es la fuente y no hay que tener dos.
+
+     Lo que se busca son corrupciones, que es lo que de verdad pasa: palabras
+     pegadas al concatenar lineas, campos vacios, la voz que se escapa a la
+     tercera persona, o algo real nombrado con todas las letras. */
+  window.verificarTextos = function () {
+    var fallas = [];
+    var CLAVES = ['montania', 'platillo', 'calesita', 'laguna', 'faro', 'casa',
+                  'arbol', 'reloj', 'luna', 'puerta', 'ruina', 'bandada',
+                  'barca', 'cama'];
+
+    function revisar(donde, txt, minimo) {
+      if (!txt || !txt.trim()) { fallas.push(donde + ': vacio'); return; }
+      if (txt.length < minimo) fallas.push(donde + ': muy corto (' + txt.length + ')');
+      // Dos palabras pegadas por un corte de linea mal armado.
+      if (/[a-záéíóúñ][A-ZÁÉÍÓÚÑ]/.test(txt)) fallas.push(donde + ': palabras pegadas');
+      if (/\s\s/.test(txt)) fallas.push(donde + ': espacio doble');
+      if (/\s$|^\s/.test(txt)) fallas.push(donde + ': espacio al borde');
+      // Nada real nombrado, y nada en tercera persona.
+      /* Se le sacan los acentos al texto antes de buscar, y el patron se
+         escribe con clases y no con \b: en JavaScript \b no cierra sobre una
+         vocal acentuada —la a con tilde no cuenta como caracter de palabra—
+         asi que un patron con \b alrededor de 'mama' no caza 'mama'. */
+      var plano = txt.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      if (/(^|[^a-z])(bel|tigre|mama|madre)([^a-z]|$)/i.test(plano)) {
+        fallas.push(donde + ': nombra algo real');
+      }
+    }
+
+    CLAVES.forEach(function (k) {
+      var l = Guion.lugar(k);
+      if (!l) { fallas.push(k + ': no existe'); return; }
+      if (!l.nombre) fallas.push(k + ': sin nombre');
+      if (!Guion.lugar(l.revela)) fallas.push(k + ': revela apunta a un lugar que no existe');
+      revisar(k + '.llegada', l.llegada, 60);
+      revisar(k + '.vuelta', l.vuelta, 40);
+      // La cama esconde seis palabras a proposito: ahi esta toda su fuerza.
+      revisar(k + '.esconde', l.esconde, k === 'cama' ? 20 : 60);
+    });
+
+    Guion.CARTAS.forEach(function (c) {
+      ['clave', 'num', 'nombre', 'lectura', 'accion', 'astro'].forEach(function (campo) {
+        if (!c[campo]) fallas.push(c.clave + ': sin ' + campo);
+      });
+      revisar(c.clave + '.lectura', c.lectura, 12);
+      revisar(c.clave + '.accion', c.accion, 12);
+      if (!c.revela && !Guion.lugar(c.figura)) fallas.push(c.clave + ': figura inexistente');
+    });
+
+    // La carta de papel: es de Nico y ahi si puede decir Bel.
+    var carta = Guion.CARTA_PARA_BEL;
+    if (!carta || !carta.parrafos || carta.parrafos.length < 10) fallas.push('la carta de papel esta incompleta');
+    if (!carta.firma) fallas.push('la carta de papel no esta firmada');
+    carta.parrafos.forEach(function (t, i) {
+      if (/[a-záéíóúñ][A-ZÁÉÍÓÚÑ]/.test(t)) fallas.push('carta parrafo ' + i + ': palabras pegadas');
+    });
+
+    return { fallas: fallas, cuantas: fallas.length, ok: fallas.length === 0 };
+  };
+
+  window.verFinal = function (n) {
+    frenarRelojes();
+    document.getElementById('portada').classList.add('ido');
+    J.indicios = [];
+    for (var i = 0; i < n; i++) J.indicios.push(Guion.lugar(Guion.ARRANQUE).esconde + ' ' + i);
+    J.perdidos = [];
+    for (var k = 0; k < Guion.PASOS - n; k++) J.perdidos.push('perdido' + k);
+    J.paso = Guion.PASOS;
+    J.lugar = 'cama';
+    J.recorrido = ['montania', 'arbol', 'luna', 'calesita', 'barca', 'ruina', 'faro', 'casa', 'cama'];
+    J.congelado = false;
+    terminar();
+    return Guion.cartaDeElla(J.indicios).clave;
+  };
+
+  window.auditarTodo = function () {
+    var out = {};
+    /* Con Promise.resolve envolviendo cada una: verificarBases y auditar
+       devuelven el objeto directo, no una promesa, y encadenarlas como si
+       lo fueran rompia la auditoria entera en la primera linea. */
+    return Promise.resolve(window.verificarBases()).then(function (r) { out.bases = r.ok;
+    }).then(function () { return Promise.resolve(window.verificarDibujo()); }).then(function (r) { out.dibujo = r.ok;
+    }).then(function () { return Promise.resolve(window.auditar()); }).then(function (r) { out.contenido = r.ok;
+    }).then(function () { return Promise.resolve(window.verificarTextos()); }).then(function (r) { out.textos = r.ok;
+    }).then(function () { return window.verificarRotulo(); }).then(function (r) { out.rotulo = r.desajustes === 0;
+    }).then(function () { return window.verificarTramos(2); }).then(function (r) { out.tramos = r.fallos === 0;
+    }).then(function () {
+      return window.centinelaDibujo(function () {
+        ['montania','platillo','calesita','laguna','faro','casa','arbol','reloj',
+         'luna','puerta','ruina','bandada','barca','cama'].forEach(function (k) {
+          window.instante(k, null, { t: 2, indicios: 4 });
+        });
+      });
+    }).then(function (r) {
+      out.dibujoLimpio = r.ok;
+      out.ok = Object.keys(out).every(function (k) { return out[k] === true; });
+      return out;
+    });
+  };
+
   window.verificarTramos = function (cuantas) {
     cuantas = cuantas || 5;
     var mal = [], recorridos = [];
@@ -1787,6 +1913,118 @@
     return cadena.then(function () {
       return { fallos: mal.length, mal: mal.slice(0, 4), recorridos: recorridos, ok: mal.length === 0 };
     });
+  };
+
+  /* Centinela de dibujo.
+
+     Envuelve el contexto 2D y avisa cuando entra un numero que no es finito,
+     un radio negativo o un save sin su restore. Esa clase de errores no rompe
+     nada visible: el navegador ignora la operacion en silencio, o peor, tira
+     una excepcion que mata el cuadro y deja la pantalla congelada con el
+     dibujo anterior — que es exactamente lo que paso con el radio negativo del
+     halo y con el eje corrido. Sin esto hay que descubrirlos mirando.
+
+     Se instala, se corre lo que sea, y se saca. */
+  var METODOS_XY = {
+    arc: [0, 1, 2], arcTo: [0, 1, 2, 3, 4], ellipse: [0, 1, 2, 3],
+    rect: [0, 1, 2, 3], fillRect: [0, 1, 2, 3], strokeRect: [0, 1, 2, 3],
+    clearRect: [0, 1, 2, 3], moveTo: [0, 1], lineTo: [0, 1],
+    quadraticCurveTo: [0, 1, 2, 3], bezierCurveTo: [0, 1, 2, 3, 4, 5],
+    translate: [0, 1], scale: [0, 1], rotate: [0],
+    createLinearGradient: [0, 1, 2, 3], createRadialGradient: [0, 1, 2, 3, 4, 5],
+    fillText: [1, 2], strokeText: [1, 2], setTransform: [0, 1, 2, 3, 4, 5]
+  };
+  // Argumentos que ademas no pueden ser negativos: son radios.
+  var RADIOS = { arc: [2], ellipse: [2, 3], createRadialGradient: [2, 5] };
+
+  /* Centinela de consola: recoge todo error, warning o rechazo sin atrapar
+     que ocurra mientras corre lo que sea. Un error en un callback no rompe la
+     pantalla ni aparece en ningun resultado; sin esto, pasa sin que nadie se
+     entere. */
+  window.centinelaConsola = function (fn) {
+    var caidas = [];
+    var errO = console.error, warnO = console.warn;
+    function onErr(e) { caidas.push({ tipo: 'error', que: String(e.message || e.reason || e) }); }
+    console.error = function () { caidas.push({ tipo: 'console.error', que: [].join.call(arguments, ' ').slice(0, 140) }); return errO.apply(console, arguments); };
+    console.warn = function () { caidas.push({ tipo: 'console.warn', que: [].join.call(arguments, ' ').slice(0, 140) }); return warnO.apply(console, arguments); };
+    window.addEventListener('error', onErr);
+    window.addEventListener('unhandledrejection', onErr);
+    function limpiar() {
+      console.error = errO; console.warn = warnO;
+      window.removeEventListener('error', onErr);
+      window.removeEventListener('unhandledrejection', onErr);
+    }
+    return Promise.resolve().then(fn).then(function (v) {
+      // Un respiro: los errores de callbacks llegan despues del return.
+      return new Promise(function (res) { setTimeout(function () { res(v); }, 260); });
+    }).then(function (v) {
+      limpiar();
+      return { caidas: caidas, ok: caidas.length === 0, valor: v };
+    }, function (e) {
+      limpiar();
+      caidas.push({ tipo: 'excepcion', que: String(e && e.message || e) });
+      return { caidas: caidas, ok: false };
+    });
+  };
+
+  window.centinelaDibujo = function (fn) {
+    var alertas = [], hondo = 0, minHondo = 0;
+    var originales = {};
+
+    Object.keys(METODOS_XY).forEach(function (m) {
+      if (typeof cx[m] !== 'function') return;
+      originales[m] = cx[m];
+      cx[m] = function () {
+        var args = arguments;
+        METODOS_XY[m].forEach(function (i) {
+          var v = args[i];
+          if (typeof v === 'number' && !isFinite(v) && alertas.length < 40) {
+            alertas.push({ metodo: m, arg: i, valor: String(v) });
+          }
+        });
+        (RADIOS[m] || []).forEach(function (i) {
+          if (typeof args[i] === 'number' && args[i] < 0 && alertas.length < 40) {
+            alertas.push({ metodo: m, arg: i, valor: args[i], que: 'radio negativo' });
+          }
+        });
+        return originales[m].apply(cx, args);
+      };
+    });
+
+    var saveO = cx.save, restoreO = cx.restore;
+    cx.save = function () { hondo++; return saveO.apply(cx, arguments); };
+    cx.restore = function () {
+      hondo--;
+      if (hondo < minHondo) minHondo = hondo;
+      return restoreO.apply(cx, arguments);
+    };
+
+    function limpiar() {
+      Object.keys(originales).forEach(function (m) { cx[m] = originales[m]; });
+      cx.save = saveO; cx.restore = restoreO;
+    }
+
+    var resultado = { alertas: alertas };
+    try {
+      var r = fn();
+      if (r && typeof r.then === 'function') {
+        return r.then(function () {
+          limpiar();
+          resultado.saveSinRestore = hondo;
+          resultado.restoreDeMas = minHondo;
+          resultado.ok = !alertas.length && hondo === 0 && minHondo === 0;
+          return resultado;
+        });
+      }
+    } finally {
+      if (!resultado.saveSinRestore) {
+        limpiar();
+        resultado.saveSinRestore = hondo;
+        resultado.restoreDeMas = minHondo;
+        resultado.ok = !alertas.length && hondo === 0 && minHondo === 0;
+      }
+    }
+    return Promise.resolve(resultado);
   };
 
   window.auditar = function () {
