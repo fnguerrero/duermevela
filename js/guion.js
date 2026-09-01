@@ -197,9 +197,8 @@ var Guion = (function () {
     },
     faro: {
       nombre: 'El faro',
-      llegada: 'Un faro prendido, dando vueltas, sin mar alrededor. Le está ' +
-               'avisando algo a alguien, y en todo el campo no hay nadie más que ' +
-               'yo.',
+      llegada: 'Un faro prendido, dando vueltas, sin mar alrededor. Nadie lo ' +
+               'prendió esta noche: está prendido desde antes que yo.',
       vuelta: 'El faro otra vez. Sigue barriendo el campo vacío, con la misma ' +
               'paciencia de antes.',
       esconde: 'El haz da la vuelta entera y siempre frena un segundo de más ' +
