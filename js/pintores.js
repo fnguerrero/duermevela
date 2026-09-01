@@ -332,6 +332,7 @@ var Pintores = (function () {
        enciende una de cada tres, contando en el mismo orden siempre para que
        no titilen entre cuadros. */
     var punta = 0;
+    var hoja = 0;
 
     function rama(x, y, ang, largo, grosor, prof) {
       if (prof <= 0 || largo < E * .014) return;
@@ -347,13 +348,31 @@ var Pintores = (function () {
       if (prof <= 1 && (punta++ % 3 === 0)) {
         halo(cx, x2, y2, E * .028, '190,230,180', .22);
       }
+      /* Las hojas van solo en las dos puntas finales y una de cada dos: con
+         mas, los doscientos y pico de extremos se juntan en una mancha y se
+         pierde la repeticion, que es lo que este lugar tiene que mostrar.
+         Son oscuras a proposito — de noche una hoja no es verde brillante,
+         y ademas asi no compiten con las puntas encendidas. */
+      if (prof <= 2 && (hoja++ % 2 === 0)) {
+        var hv = (hoja * 37 % 11) / 11;          // variacion estable por hoja
+        cx.save();
+        cx.translate(x2, y2);
+        cx.rotate(a + (hv - .5) * .9);
+        cx.fillStyle = 'rgba(' + Math.round(58 + hv * 26) + ',' +
+                                 Math.round(96 + hv * 34) + ',' +
+                                 Math.round(74 + hv * 20) + ',.55)';
+        cx.beginPath();
+        cx.ellipse(E * .020, 0, E * .022, E * .009, 0, 0, 6.2832);
+        cx.fill();
+        cx.restore();
+      }
       rama(x2, y2, a - ABRE, largo * RAZON, grosor * .70, prof - 1);
       rama(x2, y2, a + ABRE, largo * RAZON, grosor * .70, prof - 1);
       /* Una tercera rama al centro, solo en el tronco: le saca la simetria
          perfecta de arriba sin ensuciar la repeticion de las puntas. */
       if (prof > 7) rama(x2, y2, a + .03, largo * .62, grosor * .55, prof - 2);
     }
-    rama(0, E, -Math.PI / 2, E * .47, E * .050, 9);
+    rama(0, E, -Math.PI / 2, E * .58, E * .060, 9);
   }
 
 

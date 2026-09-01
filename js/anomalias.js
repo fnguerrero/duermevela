@@ -182,25 +182,42 @@ var Anomalias = (function () {
       /* Arriba y al costado de la copa, donde hay cielo detras. Medido: en el
          medio del follaje el pajaro cae entre las ramas y no se distingue,
          aunque en una lamina aislada se viera perfecto. */
-      var px = fx + E * .42, py = fy - E * 1.02;
+      var px = fx + E * .54, py = fy - E * 1.30;
       /* Cuando dejas de mirar, se va: la ida es el (1 - a) — levanta vuelo
          hacia arriba y afuera en vez de desvanecerse en la rama. Mientras lo
          mires, se queda. Es literalmente lo que dice el texto. */
       px += (1 - a) * E * .55;
       py -= (1 - a) * E * .70;
+      /* El color que no existe. No es uno fijo: gira por el violeta, el verde
+         y el rojo mientras el pajaro esta posado. Un color que no existe no
+         puede ser uno del circulo — es uno que no se queda quieto, y ademas
+         asi se ve desde lejos, que es lo que hacia falta contra el follaje. */
+      var giro = (t * 52) % 360;
+      var luz = function (desfase, cl) {
+        var h = (giro + desfase) % 360, c = (1 - Math.abs(2 * cl - 1)) * .92;
+        var x2 = c * (1 - Math.abs((h / 60) % 2 - 1)), m = cl - c / 2;
+        var q = h < 60 ? [c, x2, 0] : h < 120 ? [x2, c, 0] : h < 180 ? [0, c, x2]
+              : h < 240 ? [0, x2, c] : h < 300 ? [x2, 0, c] : [c, 0, x2];
+        return [Math.round((q[0] + m) * 255), Math.round((q[1] + m) * 255),
+                Math.round((q[2] + m) * 255)];
+      };
+      var cuerpo = luz(0, .62), ala = luz(140, .58);
+
       cx.save();
       cx.globalAlpha = a;
-      halo(cx, px, py, E * .28, '120,255,220', .40 * a);
+      halo(cx, px, py, E * .34, cuerpo.join(','), .46 * a);
       // Cuerpo: dos curvas y una cola. Chico y nitido, para que se lea.
-      var r = E * .072;
-      cx.fillStyle = 'rgba(120,255,214,.95)';
+      var r = E * .082;
+      cx.fillStyle = 'rgba(' + cuerpo.join(',') + ',.95)';
       cx.beginPath();
       cx.ellipse(px, py, r * 1.25, r * .85, -.2, 0, 6.2832);
       cx.fill();
       cx.beginPath();
       cx.arc(px + r * 1.05, py - r * .55, r * .52, 0, 6.2832);
       cx.fill();
-      // La cola, levantada.
+      // La cola, levantada. Va en el otro extremo del giro: dos tonos lejanos
+      // conviviendo es lo que lo hace llamativo de verdad.
+      cx.fillStyle = 'rgba(' + ala.join(',') + ',.95)';
       cx.beginPath();
       cx.moveTo(px - r * 1.1, py + r * .1);
       cx.lineTo(px - r * 2.4, py - r * .75);

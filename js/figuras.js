@@ -133,7 +133,7 @@ var Figuras = (function () {
       rama(x2, y2, ang + .38 + prof * .02, largo * .70, grosor * .68, prof - 1);
       if (prof > 3) rama(x2, y2, ang + .04, largo * .60, grosor * .55, prof - 2);
     }
-    rama(0, 1, -Math.PI / 2, .52, 7, 6);
+    rama(0, 1, -Math.PI / 2, .62, 8, 6);
     return s;
   }
 
