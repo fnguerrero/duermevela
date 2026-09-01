@@ -469,7 +469,7 @@ var Guion = (function () {
   function cartaDeElla(indicios) {
     var n = indicios.length;
 
-    if (n >= 6) {
+    if (n >= 8) {
       return {
         clave: 'astrologa', num: 'XXII', nombre: 'La Astróloga',
         lectura: 'Mirar hasta que la cosa se rinde.',
@@ -484,12 +484,12 @@ var Guion = (function () {
           'Lo hacés cuando alguien se sienta enfrente tuyo y te pide que le leas ' +
           'algo. Lo hacés cuando escuchás a alguien contar un problema y ves, ' +
           'antes que la persona, dónde está el nudo. No lo aprendiste en ningún ' +
-          'lado. Lo trajiste puesto.',
+          'lado. Es tu don.',
           'Seguí. Hay gente esperando que le mires las cosas.'
         ]
       };
     }
-    if (n >= 3) {
+    if (n >= 5) {
       return {
         clave: 'testigo', num: 'XXII', nombre: 'La Testigo',
         lectura: 'Quedarse el segundo de más.',
@@ -527,15 +527,18 @@ var Guion = (function () {
       clave: 'durmiente', num: 'XXII', nombre: 'La Durmiente',
       lectura: 'Pasar al lado y seguir de largo.',
       astro: '☽', astroNombre: 'la Luna',
+      /* Un final valido, no un fracaso. No pide revancha ni sugiere que le
+         fue mal: lo unico que hace es dejar las cosas donde estan. La
+         invitacion es que sigan ahi, no que vuelva a intentarlo. */
       parrafos: [
-        'No viste ninguna. Ocho veces algo estuvo a punto de mostrarse y ' +
-        'ocho veces se cerró antes.',
-        'No es un reproche: así se atraviesa casi todo. Uno pasa al lado de las ' +
-        'cosas raras y sigue de largo porque tiene cosas que hacer.',
-        'Pero fijate que igual llegaste hasta acá, y que todo lo que viste esta ' +
-        'noche lo pusiste vos. Eso solo ya es bastante más de lo que hace la ' +
-        'mayoría con los ojos abiertos.',
-        'Volvé a intentarlo. Las cosas siguen ahí, esperando que alguien las mire.'
+        'No viste ninguna. Ocho veces algo estuvo a punto de mostrarse, y las ' +
+        'ocho veces el sueño siguió.',
+        'No es un reproche ni una lástima: así se atraviesa casi todo. Uno ' +
+        'pasa al lado de las cosas raras y sigue de largo, porque tiene cosas ' +
+        'que hacer y porque no siempre hay con qué frenar.',
+        'Y sin embargo lo soñaste entero. Todo lo que hubo esta noche lo ' +
+        'pusiste vos, incluso lo que no llegaste a mirar.',
+        'Las cosas siguen ahí. No se van a ningún lado.'
       ]
     };
   }

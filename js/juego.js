@@ -149,7 +149,7 @@
     revelando: 0,           // cuanto se ve la anomalia del lugar, de 0 a 1
     seguirPaso: null,       // como sigue el paso cuando termine de leerse
     guias: {},              // que avisos de la primera partida ya salieron
-    errosSeguidos: 0,       // tres seguidos y la ventana se agranda
+    siguioDeLargo: 0,       // cuantas veces eligio no quedarse a mirar
     ultimoTic: -1,          // para no repetir el tic del anillo
     esconde: null,          // lo que esconde el lugar del que se está yendo
     vioAhora: null,         // indicio recién descubierto, para contarlo
@@ -713,10 +713,10 @@
     Instante.arrancar(mirada, ix, iy, iradio);
     // El aviso dice que hacer, no una palabra suelta: "mira" no le indicaba
     // a nadie que habia que tocar cuando el anillo llegara a la marca.
-    mostrarAviso('tocá cuando el anillo llegue a la marca', '');
+    mostrarAviso('mantené apretado para quedarte mirando', '');
     /* Mientras las piezas vuelan, el lugar deja ver por un momento lo que
        escondia. La guia dice las dos cosas: que hay algo, y como agarrarlo. */
-    guiar('anillo', 'mientras se transforma, este lugar muestra lo que esconde · tocá cuando el anillo llegue a la marca', 6400);
+    guiar('anillo', 'mientras se transforma, este lugar deja ver lo que esconde · mantené apretado para quedarte mirando', 6600);
 
     /* Como sigue el paso una vez que se dijo todo lo que habia que decir.
        Puede llamarlo el reloj —cuando no se encontro nada— o el indicio, si
@@ -956,8 +956,7 @@
   }
 
   function resolverMirada() {
-    var r = mirada.resultado;
-    if (Instante.acerto(mirada)) {
+    if (Instante.vio(mirada)) {
       // Lo que vio es el indicio de ESE lugar, y no se junta dos veces.
       if (J.esconde && J.indicios.indexOf(J.esconde) === -1) {
         J.indicios.push(J.esconde);
@@ -971,51 +970,41 @@
         void elMarcador.offsetWidth;
         elMarcador.classList.add('suma');
       }
-      Instante.apretar();
-      J.errosSeguidos = 0;
       mostrarAviso('lo viste', 'bien');
       Audio2.acierto();
 
       /* El mundo se frena y se dice lo que este lugar escondia, con la figura
-         vieja todavia delante. Antes esto se mostraba despues de la
-         transformacion, cuando el lugar ya era otro: se leia el secreto de la
-         luna con el arbol en pantalla y el cartel diciendo EL ARBOL. */
+         vieja todavia delante. */
       if (J.vioAhora) {
         var visto = J.vioAhora;
         J.congelado = true;
         decir(visto, function () {
           J.congelado = false;
           J.vioAhora = null;
-          // Lo que falte de transformacion, y despues el texto de la carta.
           luego(1300, function () { if (J.seguirPaso) J.seguirPaso(); });
         });
       }
       luego(1400, function () {
         guiar('marcador', 'eso queda anotado arriba · cuántas veas decide el final', 5200);
       });
+
     } else {
-      J.errosSeguidos = (J.errosSeguidos || 0) + 1;
-      /* Decir QUE se perdio. "Eso ya no lo vas a ver" hablaba de una cosa que
-         el jugador nunca llego a ver, asi que no se referia a nada. */
-      var textoFallo = (r === 'pronto' ? 'tocaste muy pronto' : 'se te pasó') +
-                       ' — acá había algo y ya no vas a saber qué';
-      // Se anota como perdido: al final se muestra cuantos fueron.
+      /* Siguio de largo, que no es un error: mirar es una decision, asi que
+         no mirar tambien lo es y el juego no tiene nada que reprochar. Las
+         primeras dos veces deja constancia de que ahi habia algo, para que se
+         entienda que se podia. Despues se calla y no vuelve a mencionarlo:
+         quien elige seguir de largo no necesita que se lo recuerden. */
       if (J.esconde && J.indicios.indexOf(J.esconde) === -1 &&
           J.perdidos.indexOf(J.esconde) === -1) {
         J.perdidos.push(J.esconde);
       }
-      // A la tercera seguida el juego afloja, y lo dice: que se note que es a
-      // proposito y no que de golpe se volvio facil.
-      if (J.errosSeguidos >= 3) {
-        Instante.aflojar();
-        J.errosSeguidos = 0;
-        textoFallo += '  ·  te doy un poco más de tiempo';
+      J.siguioDeLargo = (J.siguioDeLargo || 0) + 1;
+      if (J.siguioDeLargo <= 2) {
+        mostrarAviso('seguiste de largo · acá había algo', '');
+        luego(1500, function () {
+          guiar('mirar', 'para ver lo que un lugar esconde, quedate: mantené apretado mientras se transforma', 6200);
+        });
       }
-      mostrarAviso(textoFallo, 'mal');
-      Audio2.fallo();
-      luego(1400, function () {
-        guiar('marcador', 'arriba se anota lo que ves · cuántas sean decide el final', 5200);
-      });
     }
     actualizarRestan();
     luego(2600, ocultarAviso);
@@ -1029,18 +1018,24 @@
     });
   }
 
-  /* Devuelve si el gesto se consumio. Importa: el mismo toque sirve para el
-     instante y para seguir el relato, y si las dos cosas corren con un solo
-     gesto, tocar el anillo tarde tambien se lleva puesto el texto que acaba
-     de aparecer — el jugador ve pasar de largo lo que iba a leer. */
+  /* Apoyar para mirar. Devuelve si el gesto se consumio: el mismo dedo sirve
+     para quedarse mirando y para seguir el relato, y hace falta saber cual de
+     las dos cosas esta pasando. */
   function tocarInstante() {
-    // Sin instante abierto no hay nada que tocar, y uno resuelto no se toca dos
-    // veces: las dos guardas juntas evitan contar un indicio de mas.
-    if (!mirada.activo || mirada.resuelto) return false;
-    Instante.tocar(mirada);
-    resolverMirada();
-    return true;
+    return Instante.apoyar(mirada);
   }
+
+  /* Y soltar deja de mirar. Lo que se llevaba mirado no se pierde de golpe:
+     baja despacio, asi que soltar sin querer y volver a apoyar suma igual. */
+  function soltarInstante() {
+    Instante.soltar(mirada);
+  }
+  window.addEventListener('pointerup', soltarInstante);
+  window.addEventListener('pointercancel', soltarInstante);
+  window.addEventListener('blur', soltarInstante);
+  window.addEventListener('keyup', function (ev) {
+    if (ev.code === 'Space' || ev.code === 'Enter') soltarInstante();
+  });
   window.addEventListener('pointerdown', function (ev) {
     /* Las cartas y los botones tienen lo suyo: acá solo el resto de la
        pantalla. El target no siempre es un elemento — puede ser el propio
@@ -1672,6 +1667,7 @@
       belAlza: +bel.alza.toFixed(3),   // fuera de 0..1 la cabeza queda dada vuelta
       congelado: J.congelado, revelando: +J.revelando.toFixed(2),
       miradaActiva: mirada.activo, miradaResuelta: mirada.resuelto,
+      mirando: mirada.sosteniendo, lleno: +mirada.lleno.toFixed(2),
       hayDestino: !!J.destino, esperandoToque: !!esperando,
       relojesVivos: relojes.length + colaPrueba.length,
       ritmo: RITMO,
@@ -1701,10 +1697,11 @@
   /* Fuerza el resultado del instante sin depender del reloj del navegador: con
      la pestaña oculta la mutación no avanza y no habría forma de probarlo. */
   window.forzarMirada = function (acierta) {
-    if (!mirada.activo || mirada.resuelto) return 'no habia instante activo';
+    if (!mirada.activo || mirada.resuelto) return 'no habia nada que mirar';
     mirada.resuelto = true;
-    mirada.resultado = acierta ? 'clavado' : 'tarde';
-    if (acierta) mirada.destello = 1; else mirada.fallo = 1;
+    mirada.resultado = acierta ? 'visto' : 'siguio';
+    mirada.lleno = acierta ? 1 : 0;
+    if (acierta) mirada.destello = 1;
     resolverMirada();
     return mirada.resultado;
   };
