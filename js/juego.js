@@ -403,20 +403,39 @@
       else deOtro.push(k);
     });
 
+    /* De donde se viene. Volver a un lugar ya visitado esta bien —en un sueno
+       repetir es verosimil y hay texto propio para eso—, pero rebotar contra
+       el lugar que se acaba de dejar no se lee como un sueno: se lee como que
+       el juego te devolvio. Esas cartas van ultimas, y solo se reparten si no
+       quedo ninguna otra. */
+    var deDondeVengo = J.recorrido[J.recorrido.length - 2];
+
     function ordenar(lista) {
-      var nuevas = [], repetidas = [], inutiles = [];
+      var nuevas = [], repetidas = [], volver = [], inutiles = [];
       lista.forEach(function (k) {
         var d = Guion.destino(k, J.lugar);
         if (!d || d === J.lugar) inutiles.push(k);
+        else if (d === deDondeVengo) volver.push(k);
         else if (J.visitados[d]) repetidas.push(k);
         else nuevas.push(k);
       });
-      // Primero las que abren lugar nuevo; despues las repetidas; las que no
-      // cambian nada, solo si no quedo otra.
-      return nuevas.concat(repetidas).concat(inutiles);
+      // Primero las que abren lugar nuevo; despues las repetidas; despues las
+      // que hacen retroceder; las que no cambian nada, al final de todo.
+      return nuevas.concat(repetidas).concat(volver).concat(inutiles);
     }
 
     var mano = ordenar(delTramo).concat(ordenar(deOtro));
+
+    /* Y las que hacen retroceder se sacan del todo, no solo se posponen: con
+       ponerlas ultimas seguian entrando en la mano una de cada sesenta, y una
+       carta que te devuelve al lugar que acabas de dejar se lee como un error
+       del juego aunque la hayas elegido vos. Vale mas una mano de dos cartas.
+       Solo se usan si no quedara ninguna otra. */
+    var sinRetroceso = mano.filter(function (k) {
+      return Guion.destino(k, J.lugar) !== deDondeVengo;
+    });
+    if (sinRetroceso.length) mano = sinRetroceso;
+
     return mano.slice(0, Math.min(n, mano.length));
   }
 
@@ -1472,20 +1491,29 @@
 
   /* Devuelve la mano que se repartiria en un paso dado, sin jugar nada. Es la
      unica forma de comprobar el reparto sin depender de los tiempos. */
-  window.manoDe = function (paso, lugar) {
+  window.manoDe = function (paso, lugar, recorrido) {
     /* Guarda y restaura tambien el MAZO. Sin eso, preguntarle por la mano del
        primer paso despues de haber jugado devolvia lo que quedaba del mazo
        gastado — siempre las mismas tres cartas — y parecia que el reparto era
        fijo cuando en realidad la herramienta estaba mirando otra partida. */
     var pasoAntes = J.paso, lugarAntes = J.lugar, vistosAntes = J.visitados;
-    var mazoAntes = J.mazo.slice();
+    var mazoAntes = J.mazo.slice(), recAntes = J.recorrido;
     J.paso = paso === undefined ? 0 : paso;
     J.lugar = lugar || Guion.ARRANQUE;
-    J.visitados = {};
-    J.mazo = Guion.CARTAS.map(function (c) { return c.clave; });
+    /* El recorrido importa: de el sale de donde se viene, y eso decide si una
+       carta que hace retroceder se reparte o se guarda para el final. */
+    if (recorrido) {
+      J.recorrido = recorrido.slice();
+      J.visitados = {};
+      recorrido.forEach(function (k) { J.visitados[k] = true; });
+      J.mazo = mazoAntes.slice();
+    } else {
+      J.visitados = {};
+      J.mazo = Guion.CARTAS.map(function (c) { return c.clave; });
+    }
     var m = repartir(3);
     J.paso = pasoAntes; J.lugar = lugarAntes; J.visitados = vistosAntes;
-    J.mazo = mazoAntes;
+    J.mazo = mazoAntes; J.recorrido = recAntes;
     return m;
   };
 
