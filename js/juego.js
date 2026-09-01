@@ -146,6 +146,7 @@
     perdidos: [],           // lo que estuvo ahí y no llegó a ver
     jugando: false,         // hay una jugada en curso: no aceptar otra
     congelado: false,       // la transformacion frenada mientras se lee un indicio
+    revelando: 0,           // cuanto se ve la anomalia del lugar, de 0 a 1
     seguirPaso: null,       // como sigue el paso cuando termine de leerse
     guias: {},              // que avisos de la primera partida ya salieron
     errosSeguidos: 0,       // tres seguidos y la ventana se agranda
@@ -488,6 +489,7 @@
     J.pares = null;
     J.jugando = false;
     J.congelado = false;
+    J.revelando = 0;
     mirada.activo = false;
 
     /* Bel se queda donde esta, siempre. La figura se transforma delante de
@@ -1088,6 +1090,12 @@
       J.u = Math.max(0, J.u - dt * 1.7 * RITMO);
     }
 
+    /* Lo que el lugar escondia, apareciendo. Sube mientras el mundo esta
+       frenado y baja al soltarlo: la anomalia dura exactamente lo que dura la
+       lectura, que es cuando se la puede mirar. */
+    if (J.congelado) J.revelando = Math.min(1, J.revelando + dt * 2.2);
+    else if (J.revelando > 0) J.revelando = Math.max(0, J.revelando - dt * 1.4);
+
     if (J.u < 1 && !J.congelado) {
       J.u = Math.min(1, J.u + dt * .42 * RITMO);
       if (J.u >= 1 && J.destino) {
@@ -1222,6 +1230,12 @@
 
     if (u >= 1) {
       Pintores.pintar(cx, J.lugar, fx, fy, E, tt, extra);
+      /* Y encima, lo que este lugar escondia. Va despues de la figura y nunca
+         la borra: se agrega, como algo que estaba ahi y recien ahora se ve. */
+      if (J.revelando > 0 && typeof Anomalias !== 'undefined') {
+        Anomalias.pintar(cx, J.lugar, fx, fy, E, t, J.revelando, extra,
+                         W, H, W * J.belX, piso);
+      }
     } else {
       var aSale = 1 - Math.min(1, u / .26);
       var aPiezas = Math.min(1, Math.min(u / .16, (1 - u) / .18));
@@ -1551,7 +1565,7 @@
       destino: J.destino, cuadros: cuadrosDibujados,
       faseLuna: +faseLuna().toFixed(3),
       belAlza: +bel.alza.toFixed(3),   // fuera de 0..1 la cabeza queda dada vuelta
-      congelado: J.congelado,
+      congelado: J.congelado, revelando: +J.revelando.toFixed(2),
       miradaActiva: mirada.activo, miradaResuelta: mirada.resuelto,
       hayDestino: !!J.destino, esperandoToque: !!esperando,
       relojesVivos: relojes.length + colaPrueba.length,
@@ -1802,6 +1816,68 @@
      Lo que se busca son corrupciones, que es lo que de verdad pasa: palabras
      pegadas al concatenar lineas, campos vacios, la voz que se escapa a la
      tercera persona, o algo real nombrado con todas las letras. */
+  /* Que cada anomalia se VEA.
+
+     Es la prueba que le falta al juego: una anomalia que no cambia nada en
+     pantalla no es una anomalia, es un parrafo. Para cada lugar se pinta la
+     escena, se cuentan los pixeles, se pinta la anomalia encima y se vuelve a
+     contar. Si la diferencia es chica, no se ve — por mas linda que sea la
+     idea o por bien que se vea en una lamina aislada.
+
+     Usa el buffer del canvas y no su tamano en pantalla: con la pestana oculta
+     el segundo es cero y la prueba mide sobre la nada. */
+  window.verificarAnomalias = function () {
+    var cv2 = document.createElement('canvas');
+    var W = 1100, H = 700;
+    cv2.width = W; cv2.height = H;
+    var c2 = cv2.getContext('2d');
+    var vertical = H > W * 1.25;
+    var piso = H * .83;
+    var E = Math.max(W * .08, Math.min(W * .27, (piso - H * .29) / 2));
+    var fx = W * .5, fy = piso - E, belX = W * .18;
+
+    /* Cuantos pixeles CAMBIARON, no cuantos hay.
+
+       Contar el total daba cero en las anomalias que se dibujan encima de la
+       figura —la casa, el reloj, la luna, la puerta— porque no agregan
+       superficie, la modifican. Con el total, cuatro anomalias que se ven
+       perfecto figuraban como invisibles. */
+    function foto() {
+      return c2.getImageData(0, 0, W, H).data;
+    }
+    function cuantosCambiaron(a, b) {
+      var n = 0;
+      for (var i = 0; i < a.length; i += 4) {
+        if (Math.abs(a[i] - b[i]) > 10 ||
+            Math.abs(a[i + 1] - b[i + 1]) > 10 ||
+            Math.abs(a[i + 2] - b[i + 2]) > 10) n++;
+      }
+      return n;
+    }
+
+    var flojas = [], tabla = [];
+    ['montania', 'platillo', 'calesita', 'laguna', 'faro', 'casa', 'arbol',
+     'reloj', 'luna', 'puerta', 'ruina', 'bandada', 'barca', 'cama'].forEach(function (k) {
+      c2.setTransform(1, 0, 0, 1, 0, 0);
+      c2.fillStyle = '#0b0917';
+      c2.fillRect(0, 0, W, H);
+      c2.save();
+      Pintores.pintar(c2, k, fx, fy, E, 3, { alPiso: E, tension: 0,
+                                             perfil: Figuras.perfilMontania() });
+      c2.restore();
+      var antes = foto();
+      Anomalias.pintar(c2, k, fx, fy, E, 3, 1, {}, W, H, belX, piso);
+      var cambio = cuantosCambiaron(antes, foto());
+      tabla.push({ lugar: k, pixeles: cambio });
+      // Mil pixeles sobre setecientos mil es poco, pero alcanza para que el ojo
+      // registre que algo aparecio donde no habia nada.
+      if (cambio < 900) flojas.push({ lugar: k, pixeles: cambio });
+    });
+
+    tabla.sort(function (a, b) { return a.pixeles - b.pixeles; });
+    return { flojas: flojas, ok: flojas.length === 0, tabla: tabla };
+  };
+
   window.verificarTextos = function () {
     var fallas = [];
     var CLAVES = ['montania', 'platillo', 'calesita', 'laguna', 'faro', 'casa',
