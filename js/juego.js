@@ -73,6 +73,18 @@
      las esperas entre pasos: iba a un ritmo que no dejaba mirar nada. */
   var RITMO_NORMAL = .8;
   var RITMO = RITMO_NORMAL;
+
+  /* Dos cosas distintas que antes eran una sola.
+
+     `enPrueba` es el simulador: los tiempos van por una cola propia que avanza
+     a mano, porque el navegador frena los timers de una pestana oculta.
+     `RAPIDO` es el modo para probar el juego a mano sin esperar los tiempos
+     de lectura. Mezclarlos —usando RITMO > 1 para las dos— hacia que subir la
+     velocidad mandara los timers a una cola que nadie iba a avanzar, y el
+     juego se trababa entero. */
+  var enPrueba = false;
+  var RAPIDO = false;
+  var RITMO_RAPIDO = 3;
   /* Todos los temporizadores del juego pasan por aca y quedan anotados. Sin un
      registro, reiniciar una partida deja vivos los `setTimeout` de la anterior
      y el juego avanza dos veces por cada paso. */
@@ -101,7 +113,7 @@
   }
 
   function luego(ms, fn) {
-    if (RITMO > 1) {
+    if (enPrueba) {
       var tarea = { vence: relojPrueba + ms / RITMO, fn: fn };
       colaPrueba.push(tarea);
       return tarea;
@@ -235,8 +247,10 @@
   function pedirSeguir(fn, msLectura) {
     /* En las partidas simuladas no hay nadie para tocar. Ahi el texto vuelve
        a avanzar solo, porque si no las pruebas se cuelgan esperando un click
-       que nunca llega. RITMO > 1 solo pasa en simulacion. */
-    if (RITMO > 1) { luego(msLectura, fn); return; }
+       que nunca llega. Y en modo rapido tampoco se espera el toque: la idea
+       es justamente no tener que ir tocando para ver el juego entero. */
+    if (enPrueba) { luego(msLectura, fn); return; }
+    if (RAPIDO) { luego(Math.min(900, msLectura * .35), fn); return; }
     var mia = ++fichaEspera;
     esperando = null;
     /* El avance no se habilita junto con el texto, sino con el aviso. Los dos
@@ -1586,6 +1600,7 @@
     var elegir = opciones.elegir || function () { return 0; };
     var mirar = opciones.mirar === undefined ? false : opciones.mirar;
     RITMO = opciones.ritmo || 60;
+    enPrueba = true;
     var errores = [];
     var previo = window.onerror;
     window.onerror = function (m) { errores.push(String(m)); };
@@ -1651,7 +1666,8 @@
         // el juego siguiente arrancaba paralizado.
         anterior = performance.now();
         if (pruebaEnCurso === reloj) pruebaEnCurso = null;
-        RITMO = RITMO_NORMAL;
+        enPrueba = false;
+        RITMO = RAPIDO ? RITMO_RAPIDO : RITMO_NORMAL;
         window.onerror = previo;
         resolver({
           pasos: J.paso,
@@ -1837,6 +1853,51 @@
 
     return { fallas: fallas, cuantas: fallas.length, ok: fallas.length === 0 };
   };
+
+  /* Modo rapido: para probar el juego sin esperar los tiempos de lectura.
+
+     Se prende con la tecla R, o entrando con ?rapido en la direccion. Todo va
+     al triple y los textos avanzan solos, asi que una partida entera se ve en
+     un rato en vez de en varios minutos.
+
+     Lleva un cartel fijo arriba a proposito: es un modo para trabajar, y lo
+     peor que puede pasar es mostrarselo a alguien sin darse cuenta de que
+     esta puesto. */
+  var elRapido = null;
+
+  function pintarRapido() {
+    if (!elRapido) {
+      elRapido = document.createElement('div');
+      elRapido.id = 'avisoRapido';
+      elRapido.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99;' +
+        'text-align:center;font:600 11px/1.9 system-ui,sans-serif;letter-spacing:.18em;' +
+        'text-transform:uppercase;color:#1a1206;background:rgba(220,178,108,.92);' +
+        'pointer-events:none';
+      document.body.appendChild(elRapido);
+    }
+    elRapido.textContent = 'modo rápido · R para volver al normal';
+    elRapido.style.display = RAPIDO ? 'block' : 'none';
+  }
+
+  window.rapido = function (quiero) {
+    RAPIDO = (quiero === undefined) ? !RAPIDO : !!quiero;
+    if (!enPrueba) RITMO = RAPIDO ? RITMO_RAPIDO : RITMO_NORMAL;
+    pintarRapido();
+    // Si habia un texto esperando el toque, que siga solo y no quede colgado.
+    if (RAPIDO && esperando) avanzar();
+    return RAPIDO ? 'rapido (x' + RITMO_RAPIDO + ')' : 'normal';
+  };
+
+  // Se puede entrar directo en rapido: /index.html?rapido
+  if (/(^|[?&])rapido($|[&=])/.test(location.search)) window.rapido(true);
+
+  window.addEventListener('keydown', function (ev) {
+    if (ev.key !== 'r' && ev.key !== 'R') return;
+    var f = document.activeElement;
+    if (f && f !== document.body && typeof f.closest === 'function' &&
+        f.closest('input,textarea,button')) return;
+    window.rapido();
+  });
 
   window.verFinal = function (n) {
     frenarRelojes();
