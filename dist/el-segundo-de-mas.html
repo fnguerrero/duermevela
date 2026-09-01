@@ -184,6 +184,31 @@
   .carta{box-shadow:0 16px 44px rgba(0,0,0,.68),
                     0 0 26px 10px rgba(8,6,18,.55),
                     inset 0 1px 0 rgba(255,235,190,.10)}
+  /* Las dos que no llegan a ser. En el tramo sin eleccion el sueno reparte
+     las tres posiciones igual, pero solo una cuaja: las de los costados se
+     insinuan y se deshacen antes de ser naipe. Una mano de una carta sola se
+     lee como que el juego se rompio; esta se lee como que te las sacaron.
+     No llevan la clase .carta a proposito: el atajo de teclado 1/2/3 y el
+     jugador automatico cuentan `.carta`, y una silueta que se puede apretar
+     seria un naipe que no hace nada. */
+  .sombra{pointer-events:none;height:100%;width:auto;aspect-ratio:2/3;
+    max-width:calc((100vw - 2 * var(--hueco) - 2 * var(--orilla)) / 3);
+    border-radius:12px;
+    /* La define el borde, no el relleno: el fondo cambia en cada lugar y una
+       mancha oscura desaparece sobre la luna. Sin blur en reposo — con 2px se
+       come una linea de 1px y no queda nada. */
+    background:radial-gradient(120% 90% at 50% 40%,
+      rgba(38,30,58,.22),rgba(13,10,22,.04) 74%,transparent);
+    border:1px solid rgba(212,180,120,.22);
+    transform:translateY(46px) scale(.84);opacity:0;
+    transition:transform .5s cubic-bezier(.2,.9,.3,1.25),opacity .5s}
+  /* Se quedan tenues a proposito: tienen que leerse como el lugar donde no
+     hay carta, no como un naipe dado vuelta ni como una caja vacia. A media
+     opacidad el contador del mazo se sigue leyendo a traves. */
+  .sombra.entra{transform:translateY(0) scale(.88);opacity:.72}
+  .sombra.deshace{opacity:0;transform:translateY(14px) scale(.78);filter:blur(10px);
+    transition:transform 1.1s ease,opacity 1.1s ease,filter 1.1s ease}
+  #mano.fuera .sombra{opacity:0}
   /* Al jugar, las dos que quedan se van hacia abajo y la elegida sale hacia la
      figura: el gesto cuenta que una se uso y las otras se descartaron. */
   #mano.fuera .carta{pointer-events:none;opacity:0;transform:translateY(60px) scale(.9)}
@@ -7544,6 +7569,24 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     elMano.classList.remove('fuera');
     medirMano();
 
+    /* El tramo sin eleccion reparte una sola carta. Dibujarla sola se lee como
+       que el reparto fallo, asi que se ocupan las tres posiciones: las dos de
+       los costados entran como siluetas y se deshacen antes de cuajar. Cuenta
+       "aca no elegis" sin una palabra, que es la regla del tramo. */
+    var sinEleccion = claves.length === 1 && !!Guion.forzado(J.paso);
+    function sombra() {
+      var s = document.createElement('div');
+      s.className = 'sombra';
+      s.setAttribute('aria-hidden', 'true');
+      elMano.appendChild(s);
+      luego(90, function () { s.classList.add('entra'); });
+      luego(1020, function () {
+        s.classList.remove('entra');
+        s.classList.add('deshace');
+      });
+    }
+    if (sinEleccion) sombra();
+
     claves.forEach(function (clave, i) {
       var c = Guion.carta(clave);
       var el = document.createElement('button');
@@ -7567,6 +7610,7 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
       elMano.appendChild(el);
       luego(90 + i * 130, function () { el.classList.add('entra'); });
     });
+    if (sinEleccion) sombra();
     // Despues de insertarlas: recien ahi tienen tamano.
     pintarNaipes();
     medirMano();
