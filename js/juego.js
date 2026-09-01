@@ -755,7 +755,7 @@
     caja.className = 'hallazgos';
     var titu = document.createElement('p');
     titu.className = 'titu';
-    titu.textContent = 'Encontraste ' + J.indicios.length + ' de ' + Guion.PASOS;
+    titu.textContent = 'Viste ' + J.indicios.length + ' de ' + Guion.PASOS;
     caja.appendChild(titu);
     if (J.indicios.length) {
       var ul = document.createElement('ul');
@@ -933,7 +933,7 @@
       }
       Instante.apretar();
       J.errosSeguidos = 0;
-      mostrarAviso('encontraste algo que no cierra', 'bien');
+      mostrarAviso('lo viste', 'bien');
       Audio2.acierto();
 
       /* El mundo se frena y se dice lo que este lugar escondia, con la figura
@@ -951,14 +951,14 @@
         });
       }
       luego(1400, function () {
-        guiar('marcador', 'eso queda anotado arriba · cuántas encuentres decide el final', 5200);
+        guiar('marcador', 'eso queda anotado arriba · cuántas veas decide el final', 5200);
       });
     } else {
       J.errosSeguidos = (J.errosSeguidos || 0) + 1;
       /* Decir QUE se perdio. "Eso ya no lo vas a ver" hablaba de una cosa que
          el jugador nunca llego a ver, asi que no se referia a nada. */
       var textoFallo = (r === 'pronto' ? 'tocaste muy pronto' : 'se te pasó') +
-                       ' — este lugar escondía algo y ya no vas a saber qué';
+                       ' — acá había algo y ya no vas a saber qué';
       // Se anota como perdido: al final se muestra cuantos fueron.
       if (J.esconde && J.indicios.indexOf(J.esconde) === -1 &&
           J.perdidos.indexOf(J.esconde) === -1) {
@@ -974,7 +974,7 @@
       mostrarAviso(textoFallo, 'mal');
       Audio2.fallo();
       luego(1400, function () {
-        guiar('marcador', 'arriba se anota lo que encontrás · cuántas sean decide el final', 5200);
+        guiar('marcador', 'arriba se anota lo que ves · cuántas sean decide el final', 5200);
       });
     }
     actualizarRestan();

@@ -530,7 +530,7 @@
 </div>
 <div id="mano" role="group" aria-label="Cartas para elegir"></div>
 <div id="marcador" role="status" aria-live="polite">
-  <p class="rotu">Lo que no cierra</p>
+  <p class="rotu">Lo que viste</p>
   <div class="cuentas" id="cuentas"></div>
   <p class="paso" id="restan"></p>
 </div>
@@ -6282,8 +6282,8 @@ var Guion = (function () {
           'suelta que había visto y no sabía dónde poner.',
           'No me acordaba del sueño entero. Me acordaba de un detalle, nítido, ' +
           'de esos que quedan cuando todo lo demás se borra.',
-          'Me pasa seguido, despierta: retengo la única cosa que no cerraba de ' +
-          'una escena que a todos los demás les pareció normal.'
+          'Me pasa seguido, despierta: retengo la única cosa rara de una ' +
+          'escena que a todos los demás les pareció normal.'
         ]
       };
     }
@@ -6335,7 +6335,8 @@ var Guion = (function () {
         lectura: 'Mirar hasta que la cosa se rinde.',
         astro: '☽', astroNombre: 'la Luna',
         parrafos: [
-          'Encontraste ' + n + ' cosas que no cerraban, de ocho. Casi todas.',
+          'Viste ' + n + ' de las ocho cosas que había para ver. ' +
+          (n === 8 ? 'Todas.' : 'Casi todas.'),
           'Eso no es suerte ni puntería. Es que mirás distinto: te quedás en una ' +
           'cosa hasta que la cosa se rinde y te muestra lo que es. Toda la noche ' +
           'estuviste haciendo eso, y a esta altura ya sabés que no lo hacés solo ' +
@@ -6354,7 +6355,7 @@ var Guion = (function () {
         lectura: 'Quedarse el segundo de más.',
         astro: '☽', astroNombre: 'la Luna',
         parrafos: [
-          'Encontraste ' + n + ' cosas que no cerraban, de ocho. Algunas se te ' +
+          'Viste ' + n + ' de las ocho cosas que había para ver. Algunas se te ' +
           'pasaron.',
           'Está bien que se pasen. Nadie mira todo, y las que viste no las viste ' +
           'de casualidad: las viste porque te quedaste el segundo de más que la ' +
@@ -6372,8 +6373,8 @@ var Guion = (function () {
         lectura: 'Con una alcanza para saber que se puede.',
         astro: '☽', astroNombre: 'la Luna',
         parrafos: [
-          'Encontraste ' + n + (n === 1 ? ' cosa que no cerraba' : ' cosas que no cerraban') +
-          ', de ocho. Se te fue casi todo.',
+          'Viste ' + n + (n === 1 ? ' de las ocho cosas que había para ver' : ' de las ocho cosas que había para ver') +
+          '. Se te fue casi todo.',
           'Pasa cuando uno mira sin mirar, que es como andamos la mayor parte del ' +
           'tiempo. Igual algo viste, y esa cosa te la llevás.',
           'Con una alcanza para saber que se puede. Lo demás es acordarse de ' +
@@ -6387,7 +6388,7 @@ var Guion = (function () {
       lectura: 'Pasar al lado y seguir de largo.',
       astro: '☽', astroNombre: 'la Luna',
       parrafos: [
-        'No encontraste ninguna. Ocho veces algo estuvo a punto de mostrarse y ' +
+        'No viste ninguna. Ocho veces algo estuvo a punto de mostrarse y ' +
         'ocho veces se cerró antes.',
         'No es un reproche: así se atraviesa casi todo. Uno pasa al lado de las ' +
         'cosas raras y sigue de largo porque tiene cosas que hacer.',
@@ -7237,7 +7238,7 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     caja.className = 'hallazgos';
     var titu = document.createElement('p');
     titu.className = 'titu';
-    titu.textContent = 'Encontraste ' + J.indicios.length + ' de ' + Guion.PASOS;
+    titu.textContent = 'Viste ' + J.indicios.length + ' de ' + Guion.PASOS;
     caja.appendChild(titu);
     if (J.indicios.length) {
       var ul = document.createElement('ul');
@@ -7415,7 +7416,7 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
       }
       Instante.apretar();
       J.errosSeguidos = 0;
-      mostrarAviso('encontraste algo que no cierra', 'bien');
+      mostrarAviso('lo viste', 'bien');
       Audio2.acierto();
 
       /* El mundo se frena y se dice lo que este lugar escondia, con la figura
@@ -7433,14 +7434,14 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
         });
       }
       luego(1400, function () {
-        guiar('marcador', 'eso queda anotado arriba · cuántas encuentres decide el final', 5200);
+        guiar('marcador', 'eso queda anotado arriba · cuántas veas decide el final', 5200);
       });
     } else {
       J.errosSeguidos = (J.errosSeguidos || 0) + 1;
       /* Decir QUE se perdio. "Eso ya no lo vas a ver" hablaba de una cosa que
          el jugador nunca llego a ver, asi que no se referia a nada. */
       var textoFallo = (r === 'pronto' ? 'tocaste muy pronto' : 'se te pasó') +
-                       ' — este lugar escondía algo y ya no vas a saber qué';
+                       ' — acá había algo y ya no vas a saber qué';
       // Se anota como perdido: al final se muestra cuantos fueron.
       if (J.esconde && J.indicios.indexOf(J.esconde) === -1 &&
           J.perdidos.indexOf(J.esconde) === -1) {
@@ -7456,7 +7457,7 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
       mostrarAviso(textoFallo, 'mal');
       Audio2.fallo();
       luego(1400, function () {
-        guiar('marcador', 'arriba se anota lo que encontrás · cuántas sean decide el final', 5200);
+        guiar('marcador', 'arriba se anota lo que ves · cuántas sean decide el final', 5200);
       });
     }
     actualizarRestan();

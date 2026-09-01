@@ -422,8 +422,8 @@ var Guion = (function () {
           'suelta que había visto y no sabía dónde poner.',
           'No me acordaba del sueño entero. Me acordaba de un detalle, nítido, ' +
           'de esos que quedan cuando todo lo demás se borra.',
-          'Me pasa seguido, despierta: retengo la única cosa que no cerraba de ' +
-          'una escena que a todos los demás les pareció normal.'
+          'Me pasa seguido, despierta: retengo la única cosa rara de una ' +
+          'escena que a todos los demás les pareció normal.'
         ]
       };
     }
@@ -475,7 +475,8 @@ var Guion = (function () {
         lectura: 'Mirar hasta que la cosa se rinde.',
         astro: '☽', astroNombre: 'la Luna',
         parrafos: [
-          'Encontraste ' + n + ' cosas que no cerraban, de ocho. Casi todas.',
+          'Viste ' + n + ' de las ocho cosas que había para ver. ' +
+          (n === 8 ? 'Todas.' : 'Casi todas.'),
           'Eso no es suerte ni puntería. Es que mirás distinto: te quedás en una ' +
           'cosa hasta que la cosa se rinde y te muestra lo que es. Toda la noche ' +
           'estuviste haciendo eso, y a esta altura ya sabés que no lo hacés solo ' +
@@ -494,7 +495,7 @@ var Guion = (function () {
         lectura: 'Quedarse el segundo de más.',
         astro: '☽', astroNombre: 'la Luna',
         parrafos: [
-          'Encontraste ' + n + ' cosas que no cerraban, de ocho. Algunas se te ' +
+          'Viste ' + n + ' de las ocho cosas que había para ver. Algunas se te ' +
           'pasaron.',
           'Está bien que se pasen. Nadie mira todo, y las que viste no las viste ' +
           'de casualidad: las viste porque te quedaste el segundo de más que la ' +
@@ -512,8 +513,8 @@ var Guion = (function () {
         lectura: 'Con una alcanza para saber que se puede.',
         astro: '☽', astroNombre: 'la Luna',
         parrafos: [
-          'Encontraste ' + n + (n === 1 ? ' cosa que no cerraba' : ' cosas que no cerraban') +
-          ', de ocho. Se te fue casi todo.',
+          'Viste ' + n + (n === 1 ? ' de las ocho cosas que había para ver' : ' de las ocho cosas que había para ver') +
+          '. Se te fue casi todo.',
           'Pasa cuando uno mira sin mirar, que es como andamos la mayor parte del ' +
           'tiempo. Igual algo viste, y esa cosa te la llevás.',
           'Con una alcanza para saber que se puede. Lo demás es acordarse de ' +
@@ -527,7 +528,7 @@ var Guion = (function () {
       lectura: 'Pasar al lado y seguir de largo.',
       astro: '☽', astroNombre: 'la Luna',
       parrafos: [
-        'No encontraste ninguna. Ocho veces algo estuvo a punto de mostrarse y ' +
+        'No viste ninguna. Ocho veces algo estuvo a punto de mostrarse y ' +
         'ocho veces se cerró antes.',
         'No es un reproche: así se atraviesa casi todo. Uno pasa al lado de las ' +
         'cosas raras y sigue de largo porque tiene cosas que hacer.',
