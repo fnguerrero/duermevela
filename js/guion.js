@@ -65,7 +65,11 @@ var Guion = (function () {
       figura: 'arbol', tono: 'sombra', color: '160,220,170',
       astro: '♏', astroNombre: 'Escorpio',
       lectura: 'Termina algo y arranca otra cosa.',
-      accion: 'Se murió, y en el mismo lugar me creció otra cosa.' },
+      /* Sin la palabra: el juego es un regalo para alguien que acaba de
+         perder a su madre. El arcano se sigue llamando La Muerte porque en
+         el tarot no significa morir y ella lo sabe, pero el texto que lee
+         mientras juega no tiene por que decirlo. */
+      accion: 'Terminó de ser lo que era, y en el mismo lugar me creció otra cosa.' },
 
     { clave: 'loco', num: '0', nombre: 'El Loco', glifo: '✧',
       figura: 'platillo', tono: 'luz', color: '255,220,160',

@@ -3161,26 +3161,47 @@ var Pintores = (function () {
 
   /* ============ el árbol ============ */
   function arbol(cx, E, t) {
+    /* Un fractal de verdad, no un arbol con ramas.
+
+       Antes cada nivel usaba angulos y proporciones distintas —.72 de un lado,
+       .70 del otro, el angulo corregido por profundidad— y eso hace un arbol
+       creible pero mata justo lo que se quiere mostrar: que la forma se repite
+       a cada escala. Ahora la razon y el angulo son los MISMOS en todos los
+       niveles, asi que cada rama es el arbol entero mas chico, y cada ramita
+       es la rama. Es lo que dice el texto de este lugar.
+
+       La profundidad sube de 6 a 9. Quien se acuesta abajo y mira para arriba
+       puede seguir la repeticion tres niveles mas adentro. */
     var vientoT = t * .5;
+    var RAZON = .74;          // cuanto se achica cada rama respecto de su madre
+    var ABRE = .35;           // cuanto se abre cada hija, igual en todo nivel
+    /* Con nueve niveles hay mas de doscientas puntas: un halo en cada una se
+       junta con el de al lado y la copa se convierte en una mancha blanca. Se
+       enciende una de cada tres, contando en el mismo orden siempre para que
+       no titilen entre cuadros. */
+    var punta = 0;
+
     function rama(x, y, ang, largo, grosor, prof) {
-      if (prof <= 0 || largo < E * .03) return;
-      // Cuanto más fina la rama, más la mueve el viento.
-      var mece = Math.sin(vientoT + prof * 1.4 + x * .02) * (7 - prof) * .012;
+      if (prof <= 0 || largo < E * .014) return;
+      /* El viento mece mas cuanto mas fina la rama, pero se mantiene chico:
+         de mas, desordena la figura y la autosemejanza deja de verse. */
+      var mece = Math.sin(vientoT + prof * 1.4 + x * .02) * (9 - prof) * .008;
       var a = ang + mece;
       var x2 = x + Math.cos(a) * largo, y2 = y + Math.sin(a) * largo;
-      cx.strokeStyle = prof > 3 ? 'rgba(62,48,44,.95)' : 'rgba(96,74,62,.85)';
+      cx.strokeStyle = prof > 5 ? 'rgba(62,48,44,.95)' : 'rgba(96,74,62,.85)';
       cx.lineWidth = grosor;
       cx.lineCap = 'round';
       cx.beginPath(); cx.moveTo(x, y); cx.lineTo(x2, y2); cx.stroke();
-      if (prof <= 2) {
-        // Las puntas llevan luz, como si el árbol tuviera brotes encendidos.
-        halo(cx, x2, y2, E * .05, '190,230,180', .3);
+      if (prof <= 1 && (punta++ % 3 === 0)) {
+        halo(cx, x2, y2, E * .028, '190,230,180', .22);
       }
-      rama(x2, y2, a - .42 - prof * .03, largo * .72, grosor * .68, prof - 1);
-      rama(x2, y2, a + .38 + prof * .02, largo * .70, grosor * .68, prof - 1);
-      if (prof > 3) rama(x2, y2, a + .04, largo * .60, grosor * .55, prof - 2);
+      rama(x2, y2, a - ABRE, largo * RAZON, grosor * .70, prof - 1);
+      rama(x2, y2, a + ABRE, largo * RAZON, grosor * .70, prof - 1);
+      /* Una tercera rama al centro, solo en el tronco: le saca la simetria
+         perfecta de arriba sin ensuciar la repeticion de las puntas. */
+      if (prof > 7) rama(x2, y2, a + .03, largo * .62, grosor * .55, prof - 2);
     }
-    rama(0, E, -Math.PI / 2, E * .52, E * .05, 6);
+    rama(0, E, -Math.PI / 2, E * .47, E * .050, 9);
   }
 
 
@@ -5904,7 +5925,11 @@ var Guion = (function () {
       figura: 'arbol', tono: 'sombra', color: '160,220,170',
       astro: '♏', astroNombre: 'Escorpio',
       lectura: 'Termina algo y arranca otra cosa.',
-      accion: 'Se murió, y en el mismo lugar me creció otra cosa.' },
+      /* Sin la palabra: el juego es un regalo para alguien que acaba de
+         perder a su madre. El arcano se sigue llamando La Muerte porque en
+         el tarot no significa morir y ella lo sabe, pero el texto que lee
+         mientras juega no tiene por que decirlo. */
+      accion: 'Terminó de ser lo que era, y en el mismo lugar me creció otra cosa.' },
 
     { clave: 'loco', num: '0', nombre: 'El Loco', glifo: '✧',
       figura: 'platillo', tono: 'luz', color: '255,220,160',
