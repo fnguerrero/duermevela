@@ -621,8 +621,14 @@
 
     /* El tramo sin eleccion reparte una sola carta. Dibujarla sola se lee como
        que el reparto fallo, asi que se ocupan las tres posiciones: las dos de
-       los costados entran como siluetas y se deshacen antes de cuajar. Cuenta
-       "aca no elegis" sin una palabra, que es la regla del tramo. */
+       los costados quedan como siluetas vacias. Cuenta "aca no elegis" sin una
+       palabra, que es la regla del tramo.
+
+       Se quedan mientras dure la mano, no se deshacen: el texto del lugar
+       espera a que toques, asi que se mira la mano bastante despues de que se
+       reparte. Cuando se desvanecian al segundo, quien leia tranquilo llegaba
+       tarde y volvia a ver una carta sola — que es justo lo que habia que
+       evitar. */
     var sinEleccion = claves.length === 1 && !!Guion.forzado(J.paso);
     function sombra() {
       var s = document.createElement('div');
@@ -630,10 +636,6 @@
       s.setAttribute('aria-hidden', 'true');
       elMano.appendChild(s);
       luego(90, function () { s.classList.add('entra'); });
-      luego(1020, function () {
-        s.classList.remove('entra');
-        s.classList.add('deshace');
-      });
     }
     if (sinEleccion) sombra();
 
