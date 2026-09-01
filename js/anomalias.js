@@ -86,17 +86,21 @@ var Anomalias = (function () {
 
     /* La música llega de todos lados: ondas que entran desde los bordes hacia
        ella, no desde la calesita hacia afuera. */
-    calesita: function (cx, fx, fy, E, t, v, extra, W, H) {
+    calesita: function (cx, fx, fy, E, t, v, extra, W, H, belX, piso) {
+      /* Las ondas convergen en ELLA, no en la calesita: el texto dice "me
+         llega de todos lados a la vez", asi que el centro es Bel. Antes
+         estaban centradas en la figura y el dibujo contradecia al texto. */
       var a = entra(v);
+      var ox = (belX !== undefined) ? belX : fx;
+      var oy = (piso !== undefined) ? piso - E * .40 : fy;
       cx.save();
-      cx.globalAlpha = a * .5;
       cx.strokeStyle = 'rgba(226,214,255,.5)';
       for (var i = 0; i < 4; i++) {
         var f = ((t * .35 + i * .25) % 1);
         var r = Math.max(1, (1 - f) * Math.max(W, H) * .8);
         cx.lineWidth = Math.max(.6, E * .010 * (1 - f));
         cx.globalAlpha = a * .35 * f;
-        cx.beginPath(); cx.arc(fx, fy, r, 0, 6.2832); cx.stroke();
+        cx.beginPath(); cx.arc(ox, oy, r, 0, 6.2832); cx.stroke();
       }
       cx.restore();
     },
@@ -110,7 +114,9 @@ var Anomalias = (function () {
       cx.globalAlpha = a;
       /* Sobre el agua, que se dibuja alrededor de la figura: contra la linea
          del piso el hueco caia en el vacio, fuera del charco. */
-      var hx = fx - E * .52, hy = fy + E * .12;
+      /* En el borde del agua del lado de ella: el texto dice "me asomo", asi
+         que el reflejo que falta esta donde ella se asoma, no en el medio. */
+      var hx = fx - E * .80, hy = fy + E * .14;
       var an = E * .10, alto = E * .30;
       // Alrededor del hueco el agua sigue devolviendo luz.
       halo(cx, hx, hy, E * .34, '150,190,255', .16 * a);
@@ -177,6 +183,11 @@ var Anomalias = (function () {
          medio del follaje el pajaro cae entre las ramas y no se distingue,
          aunque en una lamina aislada se viera perfecto. */
       var px = fx + E * .42, py = fy - E * 1.02;
+      /* Cuando dejas de mirar, se va: la ida es el (1 - a) — levanta vuelo
+         hacia arriba y afuera en vez de desvanecerse en la rama. Mientras lo
+         mires, se queda. Es literalmente lo que dice el texto. */
+      px += (1 - a) * E * .55;
+      py -= (1 - a) * E * .70;
       cx.save();
       cx.globalAlpha = a;
       halo(cx, px, py, E * .28, '120,255,220', .40 * a);
@@ -247,7 +258,7 @@ var Anomalias = (function () {
         cx.beginPath(); cx.arc(x, y, E * o[2], 0, 6.2832); cx.fill();
       });
       // La boca: entreabierta, casi recta, corrida del centro.
-      var abre = E * .035 * a;
+      var abre = E * (.035 + .006 * Math.sin(t * 1.3)) * a;
       cx.beginPath();
       cx.ellipse(fx - E * .02, fy + E * .20, E * .19, Math.max(.5, abre),
                  -.06, 0, 6.2832);

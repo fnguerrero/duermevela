@@ -75,7 +75,8 @@ var Guion = (function () {
       figura: 'platillo', tono: 'luz', color: '255,220,160',
       astro: '♅', astroNombre: 'Urano',
       lectura: 'Salir sin saber a dónde.',
-      accion: 'Se soltó en pedazos y los pedazos se me fueron volando.' },
+      accion: 'Se soltó en pedazos y los pedazos se quedaron en el aire, ' +
+              'esperándome.' },
 
     { clave: 'enamorados', num: 'VI', nombre: 'Los Enamorados', glifo: '☍',
       figura: 'puerta', tono: 'luz', color: '230,190,220',
@@ -111,13 +112,13 @@ var Guion = (function () {
       figura: 'barca', tono: 'luz', color: '170,215,215',
       astro: '♐', astroNombre: 'Sagitario',
       lectura: 'Pasar de un lado al otro, sin apuro.',
-      accion: 'Se volvió algo que sirve para cruzar.' },
+      accion: 'Le creció una vela y quedó apuntando a la otra orilla.' },
 
     { clave: 'colgado', num: 'XII', nombre: 'El Colgado', glifo: '⚯',
       figura: 'reloj', tono: 'sombra', color: '200,180,150',
       astro: '♆', astroNombre: 'Neptuno',
       lectura: 'Quedarse quieto y mirar al revés.',
-      accion: 'Se frenó todo y quedó marcando una hora.' },
+      accion: 'Se frenó todo, menos las agujas.' },
 
     { clave: 'emperatriz', num: 'III', nombre: 'La Emperatriz', glifo: '✿',
       figura: 'arbol', tono: 'luz', color: '190,225,160',
@@ -162,8 +163,8 @@ var Guion = (function () {
       llegada: 'Una cosa enorme, quieta en el aire, con una luz que baja hasta ' +
                'el pasto. No hace ruido, y nada que pese tanto se queda quieto ' +
                'sin hacer ruido. Igual ahí está, esperando.',
-      vuelta: 'Volvió. Está en el mismo lugar exacto del aire, ni un centímetro ' +
-              'corrido, como si nunca se hubiera ido.',
+      vuelta: 'Volvió. Está en el mismo lugar exacto del aire, como si nunca ' +
+              'se hubiera ido.',
       esconde: 'No vino a llevarme. Vino a decirme algo y no sabe cómo, así que ' +
                'se queda ahí arriba hasta que yo levante la cabeza. Levanto la ' +
                'cabeza. La luz se apaga despacio, como quien asiente.',
@@ -180,17 +181,15 @@ var Guion = (function () {
               'orden. Ninguno se movió de lugar, ni siquiera los que estaban a ' +
               'mitad de subida.',
       esconde: 'La música no sale de la calesita: me llega de todos lados a la ' +
-               'vez, igual de fuerte lejos que cerca. Me tapo un oído y la sigo ' +
-               'escuchando igual. Me tapo los dos y la sigo escuchando, y ' +
-               'entiendo que no está sonando afuera.',
+               'vez. Me tapo un oído y la sigo escuchando igual. Me tapo los ' +
+               'dos y la sigo escuchando igual.',
       revela: 'arbol'
     },
     laguna: {
       nombre: 'El agua',
-      llegada: 'Un agua quieta con una luz adentro, como si abajo hubiera algo ' +
-               'encendido. Arriba no hay nada que pueda estar haciendo esa luz: ' +
-               'ni farol, ni luna en ese lado del cielo, ni nada. La luz sale ' +
-               'del agua, no cae sobre ella.',
+      llegada: 'Un agua quieta con una luz adentro. Arriba no hay nada que ' +
+               'pueda estar haciendo esa luz: ni farol, ni luna en ese lado del ' +
+               'cielo. La luz sale del agua, no cae sobre ella.',
       vuelta: 'El agua de nuevo. El reflejo sigue ahí, todavía sin nada arriba ' +
               'que lo explique, y a esta altura ya dejé de buscarle el origen.',
       esconde: 'Me asomo y el agua no me copia. Devuelve la orilla, los juncos, ' +
@@ -207,9 +206,8 @@ var Guion = (function () {
               'paciencia de antes.',
       esconde: 'El haz da la vuelta entera y siempre frena un segundo de más ' +
                'cuando me pasa por encima. No está barriendo el campo: me está ' +
-               'buscando a mí. Y cada vez que me encuentra sigue de largo ' +
-               'tranquilo, como quien se queda más tranquilo sabiendo dónde ' +
-               'estoy.',
+               'buscando a mí. Y cada vez que me encuentra sigue de largo, ' +
+               'como quien se queda más tranquilo sabiendo dónde estoy.',
       revela: 'bandada'
     },
     casa: {
@@ -219,10 +217,9 @@ var Guion = (function () {
                'entornada.',
       vuelta: 'La casa de nuevo. Las luces siguen prendidas y la puerta sigue ' +
               'entornada. Nadie las apagó en todo este tiempo.',
-      esconde: 'Las ventanas están prendidas pero adentro no hay lámparas. La ' +
-               'luz no sale de ningún artefacto: la casa está iluminada de la ' +
-               'manera en que uno se acuerda de las casas. Está así porque yo me ' +
-               'acuerdo así.',
+      esconde: 'Las ventanas están prendidas pero adentro no hay lámparas: la ' +
+               'casa está iluminada de la manera en que uno se acuerda de las ' +
+               'casas. Está así porque yo me acuerdo así.',
       revela: 'puerta'
     },
     arbol: {
@@ -234,9 +231,8 @@ var Guion = (function () {
                'adentro toda la noche.',
       vuelta: 'El mismo árbol. Me vuelvo a acostar abajo. Le crecieron ramas ' +
               'desde la última vez, y la última vez fue hace un minuto.',
-      esconde: 'Se posa un pájaro de un color que no existe. Se queda apenas, el ' +
-               'tiempo justo para que yo lo vea, y se va. No vuelve. Acá nada ' +
-               'vuelve dos veces, y sin embargo yo lo vi.',
+      esconde: 'Se posa un pájaro de un color que no existe. Se queda apenas, ' +
+               'y se va. No vuelve. Pero yo lo vi.',
       revela: 'luna'
     },
     reloj: {
@@ -245,10 +241,11 @@ var Guion = (function () {
                'de los segundos va para atrás, y las dos me parecen tener razón.',
       vuelta: 'El reloj otra vez. Marca una hora distinta de la de recién, y ' +
               'ninguna de las dos es la de verdad.',
-      esconde: 'Ahora entiendo de qué se trata. La culpa de todo la tiene el ' +
-               'tiempo, que se empeña en transcurrir. Si se quedara quieto un ' +
-               'rato, aunque sea un rato, nada de lo que pasó habría tenido que ' +
-               'pasar.',
+      esconde: 'Los números se corrieron de su hora: cada uno anda cerca del ' +
+               'lugar que le tocaba, sin terminar de estar en ninguno. La culpa ' +
+               'de todo la tiene el tiempo, que se empeña en transcurrir. Si se ' +
+               'quedara quieto un rato, aunque sea un rato, nada de lo que pasó ' +
+               'habría tenido que pasar.',
       revela: 'casa'
     },
     luna: {
@@ -256,8 +253,7 @@ var Guion = (function () {
       llegada: 'La luna, bajísima, ocupando medio cielo. La puedo mirar de ' +
                'frente sin que moleste, y eso también está mal: mirarla de ' +
                'frente tendría que costarme algo. Está tan cerca que le veo el ' +
-               'borde recortado contra el aire, como si pudiera tocarla ' +
-               'estirando la mano.',
+               'borde recortado contra el aire.',
       vuelta: 'La luna de nuevo, todavía más cerca. Cada vez que vuelve está un ' +
               'poco más cerca, y ninguna de las veces me pareció que se hubiera ' +
               'movido.',
@@ -276,9 +272,8 @@ var Guion = (function () {
       vuelta: 'La puerta otra vez. La luz de atrás sigue prendida, y del otro ' +
               'lado sigue sin haber un otro lado.',
       esconde: 'La abro y del otro lado está el mismo campo. La cierro, la ' +
-               'vuelvo a abrir, y ahora hay una habitación. Cambió porque yo ' +
-               'esperaba que cambiara. Cierro los ojos y pruebo esperar otra ' +
-               'cosa, a ver hasta dónde llega esto.',
+               'vuelvo a abrir, y ahora hay una habitación. Cierro los ojos y ' +
+               'pruebo esperar otra cosa, a ver hasta dónde llega esto.',
       revela: 'casa'
     },
     ruina: {
@@ -318,10 +313,9 @@ var Guion = (function () {
                'despeina.',
       vuelta: 'La barca otra vez, meciéndose sobre nada. Sigue igual de ' +
               'sacudida y sigue en el mismo lugar, que es lo raro de todo esto.',
-      esconde: 'Está atada, y la soga se pierde en el aire sin llegar a ningún ' +
-               'lado. La sigo con la vista y en algún punto la soga simplemente ' +
-               'deja de existir. Eso es lo que la salva: la sacude todo y no se ' +
-               'va a ningún lado.',
+      esconde: 'Está atada, y la soga se pierde en el aire. La sigo con la ' +
+               'vista y en algún punto simplemente deja de existir. Eso es lo ' +
+               'que la salva: la sacude todo y no se va a ningún lado.',
       revela: 'laguna'
     },
     cama: {
@@ -398,6 +392,43 @@ var Guion = (function () {
 
      El despertar, también en su voz. Lo que entiende depende de cuánto llegó a
      ver: no es un puntaje, es cuánto pudo atar. */
+  /* Cada indicio, dicho en cuatro o cinco palabras. Sirven para que el cierre
+     pueda nombrar lo que se vio sin repetir el parrafo entero. */
+  var ETIQUETA = {
+    montania: 'Las vías cortadas en el aire',
+    platillo: 'La luz que se apagó como quien asiente',
+    calesita: 'La música que sonaba adentro mío',
+    laguna: 'El agua que no me copiaba',
+    faro: 'El haz que frenaba cuando me encontraba',
+    casa: 'La luz sin lámparas',
+    arbol: 'El pájaro de un color que no existe',
+    reloj: 'Los números corridos de su hora',
+    luna: 'La cara que armaban los cráteres',
+    puerta: 'La habitación que apareció porque la esperé',
+    ruina: 'Los pedazos abajo de los pedazos',
+    bandada: 'Los pájaros que se ordenaban cuando los miraba',
+    barca: 'La soga atada a nada',
+    cama: 'Yo, dormida'
+  };
+
+  /* De los textos de indicio guardados, a qué lugares corresponden. */
+  function lugaresVistos(indicios) {
+    var claves = [];
+    Object.keys(LUGARES).forEach(function (k) {
+      if (indicios.indexOf(LUGARES[k].esconde) !== -1) claves.push(k);
+    });
+    return claves;
+  }
+
+  /* Hasta `cuantos` etiquetas de lo visto, como oraciones. Si los indicios no
+     son de verdad —las pruebas cargan textos inventados— devuelve vacío y el
+     texto que lo use tiene que sobrevivir sin la lista. */
+  function citaDeVistos(indicios, cuantos) {
+    var claves = lugaresVistos(indicios).slice(0, cuantos);
+    if (!claves.length) return '';
+    return ' ' + claves.map(function (k) { return ETIQUETA[k] + '.'; }).join(' ');
+  }
+
   function final(indicios, recorrido) {
     var n = indicios.length;
 
@@ -435,7 +466,7 @@ var Guion = (function () {
           'piezas antes de que se me fueran.',
           'Nada de lo que había visto encajaba, y todas las cosas que no ' +
           'encajaban fallaban de la misma manera: se acomodaban cuando yo las ' +
-          'miraba. El agua que no me copiaba. La luz sin lámpara.',
+          'miraba.' + citaDeVistos(indicios, 2),
           'Ahí entendí lo primero: había estado durmiendo. Todo eso lo armé yo, ' +
           'con lo puesto.'
         ]
@@ -448,8 +479,7 @@ var Guion = (function () {
         'el sueño te deja algo en la mano.',
         'Había estado durmiendo, y eso era lo de menos. Lo importante era cómo ' +
         'me di cuenta: cada cosa de ese lugar estaba esperando que yo la mirara ' +
-        'para terminar de existir. El árbol sin sombra. El haz que me seguía. ' +
-        'Los pájaros que se ordenaban cuando les prestaba atención.',
+        'para terminar de existir.' + citaDeVistos(indicios, 3),
         'No entendí el sueño: entendí que el sueño lo hice yo. Y que mirar una ' +
         'cosa hasta que muestra lo que es no es algo que me pasa. Es algo que ' +
         'hago, y lo vengo haciendo despierta desde siempre, sin ponerle nombre.'
