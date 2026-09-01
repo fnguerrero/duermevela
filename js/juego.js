@@ -541,7 +541,20 @@
     elResto.classList.toggle('ver', n > 0);
   }
 
+  /* La pestana dice en que anda la partida: con varias abiertas todas decian
+     lo mismo. */
+  var TITULO = document.title;
+  function actualizarTitulo() {
+    var t = TITULO;
+    if (J.paso > 0 && !elCierre.classList.contains('ver')) {
+      t = TITULO + ' · ' + Math.min(J.paso + 1, Guion.PASOS) + '/' + Guion.PASOS +
+          ' · ' + J.indicios.length + ' de ' + Guion.PASOS;
+    }
+    if (document.title !== t) document.title = t;
+  }
+
   function actualizarRestan() {
+    actualizarTitulo();
     elRestan.textContent = J.indicios.length + ' de ' + Guion.PASOS +
       '  ·  paso ' + Math.min(J.paso + 1, Guion.PASOS);
     // Una bolita por paso; se encienden las que encontro.
@@ -728,9 +741,16 @@
       });
     };
 
-    // El texto entra cuando la transformación ya se ve — salvo que se haya
-    // encontrado algo, y entonces el indicio va primero y manda el.
+    /* El texto entra cuando la transformacion ya se ve — salvo que se haya
+       encontrado algo, y entonces el indicio va primero y manda el.
+
+       La guarda del paso es contra una carrera: si este reloj llega tarde,
+       cuando el paso siguiente ya empezo, `J.seguirPaso` apunta al cierre del
+       paso NUEVO. Llamarlo desde aca lo consume, y el paso nuevo se queda sin
+       nadie que lo cierre — trabado con jugando=true para siempre. */
+    var miPaso = J.paso;
     luego(2400, function () {
+      if (J.paso !== miPaso) return;
       if (J.congelado || J.vioAhora) return;
       J.seguirPaso();
     });
@@ -906,6 +926,24 @@
   var btnCerrar = document.getElementById('cerrarCarta');
   if (btnCerrar) btnCerrar.addEventListener('click', function () { location.reload(); });
 
+  /* El sonido no puede tumbar el juego.
+     Audio2 vive del AudioContext, que falla por motivos que no dependen de
+     nadie: la pestana sin gesto previo, el contexto suspendido, un dispositivo
+     que desaparece. Cualquiera de esas excepciones, subiendo por el medio de
+     una jugada, cortaba el paso a la mitad. Envuelto, el juego sigue mudo pero
+     entero. */
+  (function () {
+    if (typeof Audio2 !== 'object' || !Audio2) return;
+    Object.keys(Audio2).forEach(function (k) {
+      if (typeof Audio2[k] !== 'function') return;
+      var original = Audio2[k];
+      Audio2[k] = function () {
+        try { return original.apply(Audio2, arguments); }
+        catch (e) { if (window.console) console.warn('audio ' + k + ':', e); }
+      };
+    });
+  })();
+
   /* ---------- el instante ---------- */
 
   function mostrarAviso(texto, clase) {
@@ -1036,7 +1074,7 @@
 
   var cuadrosDibujados = 0;
 
-  function cuadro(ahora, deRespaldo) {
+  function dibujarCuadro(ahora, deRespaldo) {
     cuadrosDibujados++;
     /* dt nunca puede ser negativo. El respaldo por reloj y el adelanto de
        cuadros de las pruebas mueven `anterior` mas alla del tiempo real, y
@@ -1434,8 +1472,29 @@
     /* El respaldo no reengancha la cadena: el requestAnimationFrame que ya
        estaba pedido sigue vivo y se dispara cuando la pestana vuelva. Si
        reenganchara, al volver se dispararian todos juntos. */
+  }
+
+  /* El bucle no se muere por un cuadro que falla.
+     Si dibujarCuadro tira una excepcion y nadie la agarra, no se vuelve a pedir
+     el cuadro siguiente: la imagen queda congelada —negra, si fallo antes de
+     pintar el fondo— mientras los textos siguen apareciendo, porque esos van
+     por reloj. Desde afuera parece que se rompio el dibujo entero y en realidad
+     se rompio una sola vez. */
+  var erroresDibujo = [];
+  function cuadro(ahora, deRespaldo) {
+    try {
+      dibujarCuadro(ahora, deRespaldo);
+    } catch (e) {
+      if (erroresDibujo.length < 20) {
+        erroresDibujo.push(String((e && e.stack) || e));
+        if (window.console) console.error('cuadro:', e);
+      }
+    }
+    /* El respaldo no reengancha la cadena: el requestAnimationFrame que ya
+       estaba pedido sigue vivo y se dispara cuando la pestana vuelva. */
     if (!sinBucle && !deRespaldo) requestAnimationFrame(cuadro);
   }
+  window.erroresDeDibujo = function () { return erroresDibujo.slice(); };
   requestAnimationFrame(cuadro);
 
   /* Respaldo por reloj.
@@ -1451,6 +1510,18 @@
     if (ahora - anterior > 34) cuadro(ahora, true);
   }, 16);
 
+  /* Las cartas tambien se juegan con 1, 2 y 3: el resto del juego ya se
+     maneja con el teclado, y elegir carta obligaba a ir al mouse. */
+  window.addEventListener('keydown', function (ev) {
+    if (ev.altKey || ev.ctrlKey || ev.metaKey) return;
+    var i = ['1', '2', '3'].indexOf(ev.key);
+    if (i === -1) return;
+    var cartas = elMano.querySelectorAll('.carta');
+    if (!cartas[i]) return;
+    ev.preventDefault();
+    cartas[i].click();
+  });
+
   /* ---------- sonido ---------- */
 
   var elSonido = document.getElementById('sonido');
@@ -1461,9 +1532,34 @@
     elSonidoIcono.textContent = on ? '♫' : '♪';
     elSonido.title = on ? 'Silenciar' : 'Con sonido';
   }
+  /* La preferencia de sonido sobrevive a la recarga.
+     Volver a empezar es parte del juego —el boton del final recarga la pagina—
+     y eso devolvia el sonido prendido cada vez: quien lo habia silenciado tenia
+     que silenciarlo de nuevo en cada partida. En try/catch porque en modo
+     privado el acceso puede tirar excepcion, y quedarse sin sonido es molesto
+     pero quedarse sin juego es peor. */
+  var LLAVE_SILENCIO = 'elsegundo.silencio';
+  var LLAVE_VOLUMEN = 'elsegundo.volumen';
+
+  function recordarSonido() {
+    try { localStorage.setItem(LLAVE_SILENCIO, Audio2.activo() ? '0' : '1'); }
+    catch (e) { /* sin almacenamiento: se juega igual */ }
+  }
+  function preferenciaEsSilencio() {
+    try { return localStorage.getItem(LLAVE_SILENCIO) === '1'; }
+    catch (e) { return false; }
+  }
+  function volumenGuardado() {
+    try {
+      var v = parseFloat(localStorage.getItem(LLAVE_VOLUMEN));
+      return isFinite(v) && v >= 0 && v <= 1 ? v : null;
+    } catch (e) { return null; }
+  }
+
   elSonido.addEventListener('click', function () {
     Audio2.alternar();
     pintarSonido();
+    recordarSonido();
   });
 
   var elVol = document.getElementById('vol');
@@ -1473,10 +1569,19 @@
     // parece roto.
     if (v > 0 && !Audio2.activo()) { Audio2.prender(); pintarSonido(); }
     Audio2.ponerVolumen(v);
+    try { localStorage.setItem(LLAVE_VOLUMEN, String(v)); } catch (e) {}
   });
   document.getElementById('empezar').addEventListener('click', function () {
-    // El primer gesto del usuario es la única oportunidad de arrancar el audio.
-    Audio2.prender();
+    /* El primer gesto del usuario es la unica oportunidad de arrancar el audio
+       — salvo que la ultima vez lo hayan dejado en silencio a proposito. */
+    if (!preferenciaEsSilencio()) {
+      Audio2.prender();
+      var v = volumenGuardado();
+      if (v !== null) {
+        Audio2.ponerVolumen(v);
+        if (elVol) elVol.value = Math.round(v * 100);
+      }
+    }
     pintarSonido();
     empezar();
   });
