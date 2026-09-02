@@ -375,7 +375,7 @@ var Pintores = (function () {
          perfecta de arriba sin ensuciar la repeticion de las puntas. */
       if (prof > 7) rama(x2, y2, a + .03, largo * .62, grosor * .55, prof - 2);
     }
-    rama(0, E, -Math.PI / 2, E * .63, E * .090, 9);
+    rama(0, E, -Math.PI / 2, E * .57, E * .094, 9);
 
     /* Un pajaro lejos, cruzando el cielo. Se ve siempre, aciertes o no, pero
        en silueta y sin color: el secreto de este lugar no es que haya un

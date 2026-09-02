@@ -114,7 +114,9 @@
      la unica parte del cuadro vacia por diseno. Sueltos, el aviso terminaba
      encima de las cartas y su texto claro sobre el crema del naipe no se leia. */
   #arriba{position:fixed;left:50%;transform:translateX(-50%);
-    top:clamp(62px,9vh,96px);width:min(580px,84vw);z-index:6;
+    /* Lo mas arriba que puede ir sin pisar el rotulo del lugar: la copa del
+       arbol llega alto y este panel le caia encima. */
+    top:clamp(46px,6.4vh,72px);width:min(580px,84vw);z-index:6;
     display:flex;flex-direction:column;align-items:center;gap:9px;
     pointer-events:none}
   #relato{width:100%;text-align:center;

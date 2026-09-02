@@ -1151,12 +1151,12 @@
     else if (J.revelando > 0) J.revelando = Math.max(0, J.revelando - dt * 1.4);
 
     if (J.u < 1 && !J.congelado) {
-      /* La mutacion tarda ~2,9s en vez de ~2,4s. La ventana para mirar va de
-         u .10 a .96, o sea 2,5s, y hay que sostener 1s: antes quedaba 1s para
+      /* La mutacion tarda ~3,6s en vez de ~2,4s. La ventana para mirar va de
+         u .10 a .96, o sea 3,1s, y hay que sostener 1s: antes quedaba 1s para
          darse cuenta de que aparecio el anillo y reaccionar, que para alguien
          que no juega videojuegos es nada. Se alarga la mutacion y no se toca
          el segundo, que es de lo que se trata el juego. */
-      J.u = Math.min(1, J.u + dt * .34 * RITMO);
+      J.u = Math.min(1, J.u + dt * .28 * RITMO);
       if (J.u >= 1 && J.destino) {
         J.destello = 1;
         /* Apenas termina la mutacion, el lugar pasa a ser el destino. Antes

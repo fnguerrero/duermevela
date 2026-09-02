@@ -114,7 +114,9 @@
      la unica parte del cuadro vacia por diseno. Sueltos, el aviso terminaba
      encima de las cartas y su texto claro sobre el crema del naipe no se leia. */
   #arriba{position:fixed;left:50%;transform:translateX(-50%);
-    top:clamp(62px,9vh,96px);width:min(580px,84vw);z-index:6;
+    /* Lo mas arriba que puede ir sin pisar el rotulo del lugar: la copa del
+       arbol llega alto y este panel le caia encima. */
+    top:clamp(46px,6.4vh,72px);width:min(580px,84vw);z-index:6;
     display:flex;flex-direction:column;align-items:center;gap:9px;
     pointer-events:none}
   #relato{width:100%;text-align:center;
@@ -3248,7 +3250,7 @@ var Pintores = (function () {
          perfecta de arriba sin ensuciar la repeticion de las puntas. */
       if (prof > 7) rama(x2, y2, a + .03, largo * .62, grosor * .55, prof - 2);
     }
-    rama(0, E, -Math.PI / 2, E * .63, E * .090, 9);
+    rama(0, E, -Math.PI / 2, E * .57, E * .094, 9);
 
     /* Un pajaro lejos, cruzando el cielo. Se ve siempre, aciertes o no, pero
        en silueta y sin color: el secreto de este lugar no es que haya un
@@ -4153,7 +4155,9 @@ var Anomalias = (function () {
          y el rojo mientras el pajaro esta posado. Un color que no existe no
          puede ser uno del circulo — es uno que no se queda quieto, y ademas
          asi se ve desde lejos, que es lo que hacia falta contra el follaje. */
-      var giro = (t * 52) % 360;
+      /* Despacio: a 52 grados por segundo parpadeaba como una luz de fiesta
+         y dejaba de leerse como un color. */
+      var giro = (t * 26) % 360;
       var luz = function (desfase, cl) {
         var h = (giro + desfase) % 360, c = (1 - Math.abs(2 * cl - 1)) * .92;
         var x2 = c * (1 - Math.abs((h / 60) % 2 - 1)), m = cl - c / 2;
@@ -4168,7 +4172,7 @@ var Anomalias = (function () {
       cx.globalAlpha = a;
       halo(cx, px, py, E * .34, cuerpo.join(','), .46 * a);
       // Cuerpo: dos curvas y una cola. Chico y nitido, para que se lea.
-      var r = E * .082;
+      var r = E * .094;
       cx.fillStyle = 'rgba(' + cuerpo.join(',') + ',.95)';
       cx.beginPath();
       cx.ellipse(px, py, r * 1.25, r * .85, -.2, 0, 6.2832);
@@ -8176,12 +8180,12 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     else if (J.revelando > 0) J.revelando = Math.max(0, J.revelando - dt * 1.4);
 
     if (J.u < 1 && !J.congelado) {
-      /* La mutacion tarda ~2,9s en vez de ~2,4s. La ventana para mirar va de
-         u .10 a .96, o sea 2,5s, y hay que sostener 1s: antes quedaba 1s para
+      /* La mutacion tarda ~3,6s en vez de ~2,4s. La ventana para mirar va de
+         u .10 a .96, o sea 3,1s, y hay que sostener 1s: antes quedaba 1s para
          darse cuenta de que aparecio el anillo y reaccionar, que para alguien
          que no juega videojuegos es nada. Se alarga la mutacion y no se toca
          el segundo, que es de lo que se trata el juego. */
-      J.u = Math.min(1, J.u + dt * .34 * RITMO);
+      J.u = Math.min(1, J.u + dt * .28 * RITMO);
       if (J.u >= 1 && J.destino) {
         J.destello = 1;
         /* Apenas termina la mutacion, el lugar pasa a ser el destino. Antes

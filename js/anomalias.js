@@ -197,7 +197,9 @@ var Anomalias = (function () {
          y el rojo mientras el pajaro esta posado. Un color que no existe no
          puede ser uno del circulo — es uno que no se queda quieto, y ademas
          asi se ve desde lejos, que es lo que hacia falta contra el follaje. */
-      var giro = (t * 52) % 360;
+      /* Despacio: a 52 grados por segundo parpadeaba como una luz de fiesta
+         y dejaba de leerse como un color. */
+      var giro = (t * 26) % 360;
       var luz = function (desfase, cl) {
         var h = (giro + desfase) % 360, c = (1 - Math.abs(2 * cl - 1)) * .92;
         var x2 = c * (1 - Math.abs((h / 60) % 2 - 1)), m = cl - c / 2;
@@ -212,7 +214,7 @@ var Anomalias = (function () {
       cx.globalAlpha = a;
       halo(cx, px, py, E * .34, cuerpo.join(','), .46 * a);
       // Cuerpo: dos curvas y una cola. Chico y nitido, para que se lea.
-      var r = E * .082;
+      var r = E * .094;
       cx.fillStyle = 'rgba(' + cuerpo.join(',') + ',.95)';
       cx.beginPath();
       cx.ellipse(px, py, r * 1.25, r * .85, -.2, 0, 6.2832);
