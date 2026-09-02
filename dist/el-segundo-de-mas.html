@@ -6496,8 +6496,13 @@ var Guion = (function () {
       lectura: 'Elegir deja cosas afuera.',
       accion: 'Se me abrió una salida donde no había pared.' },
 
+    /* Lleva a la bandada y no a la calesita: la calesita ya tenia dos cartas
+       propias —era, con el arbol, el doble de probable que cualquier otro
+       lugar— y a la bandada no llegaba ninguna. Se veia en una partida de cada
+       cien. "La vuelta entera" le sienta igual a los pajaros que van todos
+       para el mismo lado. */
     { clave: 'mundo', num: 'XXI', nombre: 'El Mundo', glifo: '◎',
-      figura: 'calesita', tono: 'luz', color: '200,190,240',
+      figura: 'bandada', tono: 'luz', color: '200,190,240',
       astro: '♄', astroNombre: 'Saturno',
       lectura: 'La vuelta entera, por fin completa.',
       accion: 'Dio la vuelta entera y volvió al principio.' },
@@ -6700,7 +6705,9 @@ var Guion = (function () {
       esconde: 'Levanto un pedazo y abajo no hay tierra: hay más pedazos, y ' +
                'abajo más. Esto no se cayó de ningún lado. Lo armaron ya roto, y ' +
                'yo llegué después a buscarle una explicación que no tiene.',
-      revela: 'arbol'
+      // De los escombros, el tiempo: el arbol ya era el destino mas
+      // frecuente del juego y el reloj no lo era de casi nadie.
+      revela: 'reloj'
     },
     bandada: {
       nombre: 'Los pájaros',
