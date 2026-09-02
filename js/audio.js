@@ -170,7 +170,9 @@ var Audio2 = (function () {
       o.connect(g); g.connect(filtro);
       enchufar(filtro, .6);
       o.start();
-      colchon.voces.push({ o: o, g: g, lfo: lfo, filtro: filtro });
+      /* `base` es la apertura que le toca al lugar, sin tension. Todo lo que
+         mueve el filtro se calcula desde aca y nunca desde el valor actual. */
+      colchon.voces.push({ o: o, g: g, lfo: lfo, filtro: filtro, base: 420 });
     });
 
     // Aire: ruido rosa muy filtrado, apenas audible.
@@ -223,8 +225,24 @@ var Audio2 = (function () {
       var oct = i === 2 ? 0 : -1;
       v.o.frequency.setTargetAtTime(nota(g, oct), t0, 1.6);
       v.o.detune.setTargetAtTime((i - 1) * 6 + c.brillo, t0, 1.6);
-      if (v.filtro) v.filtro.frequency.setTargetAtTime(c.filtro, t0, 1.6);
+      if (v.filtro) {
+        v.base = c.filtro;
+        // Con la tension que ya viene: si no, cambiar de lugar la borraba.
+        v.filtro.frequency.setTargetAtTime(aperturaDe(v), t0, 1.6);
+      }
     });
+  }
+
+  /* La apertura que le toca a una voz: la del lugar, abierta por la tension.
+
+     Antes esto era `filtro.frequency.value * (1 + tension * .55)`, y tenia dos
+     problemas. Se multiplicaba sobre el valor actual, asi que cada acierto
+     abria de nuevo sobre lo ya abierto y hacia el final el colchon terminaba
+     mucho mas brillante de lo previsto. Y el valor actual, ademas, suele estar
+     a mitad de una rampa de colorDe, asi que de que numero se partia dependia
+     de cuando cayera el acierto. */
+  function aperturaDe(v) {
+    return (v.base || 420) * (1 + tensionAudio * .55);
   }
 
   /* Cuanto pesa el colchon. Arranca en dos voces apenas audibles y termina en
@@ -243,10 +261,7 @@ var Audio2 = (function () {
       var suma = tensionAudio * (i === 2 ? .055 : .022);
       v.g.gain.cancelScheduledValues(t0);
       v.g.gain.setTargetAtTime(base + suma, t0, 2.2);
-      if (v.filtro) {
-        v.filtro.frequency.setTargetAtTime(
-          v.filtro.frequency.value * (1 + tensionAudio * .55), t0, 2.2);
-      }
+      if (v.filtro) v.filtro.frequency.setTargetAtTime(aperturaDe(v), t0, 2.2);
     });
     // Y una cuarta voz que solo aparece pasada la mitad.
     if (tensionAudio > .5 && !colchon.cuarta) agregarCuarta();
