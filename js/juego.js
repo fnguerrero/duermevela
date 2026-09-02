@@ -579,6 +579,8 @@
 
   /* Los naipes en pantalla, para poder repintarlos si cambia el tamano. */
   var naipes = [];
+  /* Los dorsos del tramo sin eleccion: se repintan con los naipes. */
+  var dorsos = [];
 
   /* Pinta cada lamina a la resolucion real de su hueco. Si se dibujara a un
      tamano fijo, en pantallas densas se veria borrosa. */
@@ -596,6 +598,16 @@
       c2.setTransform(d, 0, 0, d, 0, 0);
       Naipes.dibujar(c2, n.carta.clave, n.carta.num, n.carta.nombre, an, al,
                      n.carta.lectura, n.carta.astro);
+    });
+    dorsos.forEach(function (l) {
+      var an = l.clientWidth, al = l.clientHeight;
+      if (an < 2 || al < 2) { an = 126; al = 189; }
+      if (l.__an === an && l.__al === al) return;
+      l.__an = an; l.__al = al;
+      l.width = an * d; l.height = al * d;
+      var c3 = l.getContext('2d');
+      c3.setTransform(d, 0, 0, d, 0, 0);
+      Naipes.dorso(c3, an, al);
     });
   }
   window.addEventListener('resize', pintarNaipes);
@@ -621,6 +633,7 @@
     var claves = repartir(3);
     elMano.innerHTML = '';
     naipes = [];
+    dorsos = [];
     elMano.classList.remove('fuera');
     medirMano();
 
@@ -639,7 +652,15 @@
       var s = document.createElement('div');
       s.className = 'sombra';
       s.setAttribute('aria-hidden', 'true');
+      /* Un naipe dado vuelta, no un hueco. Dos rectangulos vacios se leen como
+         cartas que no cargaron — paso de verdad al probarlo. Con el dorso del
+         mazo se lee lo que es: hay cartas, pero no son para vos. */
+      var lienzo = document.createElement('canvas');
+      lienzo.className = 'lamina';
+      s.appendChild(lienzo);
       elMano.appendChild(s);
+      // Se pinta despues, con pintarNaipes: recien ahi el hueco tiene alto.
+      dorsos.push(lienzo);
       luego(90, function () { s.classList.add('entra'); });
     }
     if (sinEleccion) sombra();

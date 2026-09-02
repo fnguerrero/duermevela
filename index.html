@@ -196,7 +196,7 @@
      porque una carta de tarot de verdad no lleva texto explicativo encima. */
   /* La lamina llena la carta. Un <canvas> tiene tamano intrinseco propio, asi
      que se le fijan las dos medidas: sin eso se dibuja del tamano de su buffer. */
-  .carta .lamina{display:block;width:100%;height:100%;border-radius:4px}
+  .carta .lamina,.sombra .lamina{display:block;width:100%;height:100%;border-radius:4px}
   /* Un halo tenue alrededor de cada naipe: sin el, el papel claro choca contra
      el fondo con un canto duro y se ve el recorte. */
   .carta{box-shadow:0 16px 44px rgba(0,0,0,.68),
@@ -211,19 +211,17 @@
      seria un naipe que no hace nada. */
   .sombra{pointer-events:none;height:100%;width:auto;aspect-ratio:2/3;
     max-width:calc((100vw - 2 * var(--hueco) - 2 * var(--orilla)) / 3);
-    border-radius:12px;
-    /* La define el borde, no el relleno: el fondo cambia en cada lugar y una
-       mancha oscura desaparece sobre la luna. Sin blur en reposo — con 2px se
-       come una linea de 1px y no queda nada. */
-    background:radial-gradient(120% 90% at 50% 40%,
-      rgba(38,30,58,.22),rgba(13,10,22,.04) 74%,transparent);
-    border:1px solid rgba(212,180,120,.22);
+    border-radius:7px;overflow:hidden;
+    /* Misma caja que un naipe, con el dorso dibujado adentro: apagada y un
+       poco mas chica que la que si se puede jugar. */
+    border:1px solid rgba(212,180,120,.30);
+    box-shadow:0 10px 30px rgba(0,0,0,.55);
+    filter:saturate(.55) brightness(.62);
     transform:translateY(46px) scale(.84);opacity:0;
     transition:transform .5s cubic-bezier(.2,.9,.3,1.25),opacity .5s}
-  /* Se quedan tenues a proposito: tienen que leerse como el lugar donde no
-     hay carta, no como un naipe dado vuelta ni como una caja vacia. A media
-     opacidad el contador del mazo se sigue leyendo a traves. */
-  .sombra.entra{transform:translateY(0) scale(.88);opacity:.72}
+  /* Se quedan apagadas y mas chicas que la carta jugable: la unica que se
+     puede dar vuelta es la del medio. */
+  .sombra.entra{transform:translateY(0) scale(.88);opacity:.85}
   /* Se van con la mano, cuando la carta ya se jugo: hasta ese momento se
      quedan, porque el texto del lugar espera y la mano se mira tarde. */
   #mano.fuera .sombra{opacity:0;transform:translateY(60px) scale(.8)}
