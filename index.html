@@ -134,44 +134,42 @@
   /* El relato ya no se va solo: espera. Este es el unico aviso de que la
      pelota la tiene el jugador, asi que tiene que verse sin robarle atencion
      al texto — de ahi que aparezca recien despues de un rato y lata despacio. */
-  /* Con cuerpo de boton: antes eran dos palabras flotando y no se leia como
-     algo que responde. Ahora es una pastilla con borde, que es lo que el ojo
-     reconoce como "esto se toca". */
+  /* Solo una punta de flecha. La caja con borde se leia como boton de
+     interfaz y competia con el texto; el chevron dice "hay mas" sin decir una
+     palabra, y con el halo se ve igual sobre cualquier fondo. La palabra queda
+     en el DOM para lectores de pantalla. */
   #seguir{margin:0;opacity:0;transition:opacity .45s,transform .45s;
-    font-size:clamp(12px,1.5vw,14px);letter-spacing:.16em;text-transform:uppercase;
-    color:rgba(243,233,214,.92);text-shadow:0 1px 4px rgba(0,0,0,.9);
-    display:flex;align-items:center;gap:9px;
-    padding:7px 18px;border-radius:999px;
-    border:1px solid rgba(216,182,116,.45);
-    background:linear-gradient(180deg,rgba(46,36,26,.55),rgba(20,15,26,.55));
-    box-shadow:0 2px 14px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,235,190,.10);
-    transform:translateY(4px)}
-  #seguir.ver{opacity:1;transform:translateY(0)}
-  #seguir span{animation:latir 2.4s ease-in-out infinite}
+    display:flex;align-items:center;justify-content:center;
+    height:34px;transform:translateY(4px)}
+  #seguir span{position:absolute;width:1px;height:1px;overflow:hidden;
+    clip-path:inset(50%);white-space:nowrap}
+  /* Punta llena y no dos bordes rotados: rotar el cuadrado daba una esquina
+     abierta que a este tamano no se leia como flecha. */
   #seguir::after{content:"";width:0;height:0;
-    border-left:6px solid rgba(243,233,214,.92);
-    border-top:4px solid transparent;border-bottom:4px solid transparent;
-    animation:latir 2.4s ease-in-out infinite}
+    border-left:10px solid transparent;
+    border-right:10px solid transparent;
+    border-top:12px solid rgba(238,204,140,.95);
+    filter:drop-shadow(0 0 8px rgba(216,168,84,.6))
+           drop-shadow(0 1px 2px rgba(0,0,0,.9));
+    animation:latir 2.2s ease-in-out infinite}
+  #seguir.ver{opacity:1;transform:translateY(0)}
   @keyframes latir{0%,100%{opacity:.62}50%{opacity:1}}
-  #seguir.ver{animation:respirar 2.8s ease-in-out infinite}
-  @keyframes respirar{
-    0%,100%{box-shadow:0 2px 14px rgba(0,0,0,.45),
-                       0 0 0 0 rgba(216,182,116,0),
-                       inset 0 1px 0 rgba(255,235,190,.10)}
-    50%    {box-shadow:0 2px 14px rgba(0,0,0,.45),
-                       0 0 16px 2px rgba(216,182,116,.20),
-                       inset 0 1px 0 rgba(255,235,190,.10)}}
+
   @media (prefers-reduced-motion:reduce){
-    #seguir span,#seguir::after,#seguir.ver{animation:none}
+    #seguir::after{animation:none}
   }
 
   /* ---------- la mano ---------- */
   /* La mano se mide por la ALTURA que hay, no por el ancho. La lamina lleva
      su proporcion de naipe y la lectura va debajo: si el tamano saliera del
      ancho, en una pantalla baja las cartas se salen por abajo. */
+  /* El alto de la mano es variable porque la guia se apoya encima: si se
+     quedara en el medio de la pantalla tapa justo la transformacion, que es
+     lo que hay que estar mirando. */
+  :root{--alto-mano:min(34vh,282px)}
   #mano{position:fixed;left:0;right:0;bottom:0;display:flex;align-items:flex-end;
     justify-content:center;gap:var(--hueco);padding:0 var(--orilla) 22px;
-    height:min(34vh,282px);z-index:5;pointer-events:none;
+    height:var(--alto-mano);z-index:5;pointer-events:none;
     transition:transform .5s ease}
   /* La carta ES el naipe: nada mas adentro, proporcion exacta. El tope de
      ancho garantiza que las tres entren en cualquier pantalla — la altura se
@@ -371,7 +369,7 @@
      a aparecer. Sin esto, la primera jugada se pierde siempre: nadie deduce que
      hay que tocar en un momento exacto. */
   #guia{position:fixed;left:50%;transform:translateX(-50%);
-    top:calc(50% + clamp(70px,9vh,110px));margin:0;z-index:7;pointer-events:none;
+    bottom:calc(var(--alto-mano) + 14px);margin:0;z-index:7;pointer-events:none;
     font-size:clamp(13px,1.6vw,16px);letter-spacing:.06em;text-align:center;
     color:rgba(255,236,190,.95);opacity:0;transition:opacity .5s;
     background:rgba(9,7,16,.86);padding:8px 16px;border-radius:3px;
@@ -489,7 +487,8 @@
   @media (max-width:560px){
     /* Tres cartas mas los huecos tienen que entrar en el ancho: la altura de
        la mano es lo que fija ese ancho, asi que se recorta aca. */
-    #mano{--hueco:10px;--orilla:8px;padding-bottom:12px;height:min(26vh,204px)}
+    #mano{--hueco:10px;--orilla:8px;padding-bottom:12px}
+    :root{--alto-mano:min(26vh,204px)}
     /* Sin abanico: en una pantalla angosta el giro hace que las de los
        costados se salgan por las esquinas, aunque el naipe entre. */
     .carta{--giro:0deg!important}
@@ -512,14 +511,15 @@
   /* Pantalla ancha pero de poca altura (un portatil, una ventana no maximizada):
      con las cartas a tamano completo se comen el pie de la escena. */
   @media (min-width:561px) and (max-height:880px){
-    #mano{height:min(30vh,232px)}
+    :root{--alto-mano:min(30vh,232px)}
 
     #mano{padding-bottom:18px}
   }
 
   /* Pantalla baja y ancha (celular acostado): lo mismo pero mas apretado. */
   @media (max-height:520px){
-    #mano{padding-bottom:10px;gap:10px;height:min(40vh,190px)}
+    #mano{padding-bottom:10px;gap:10px}
+    :root{--alto-mano:min(40vh,190px)}
     #arriba{top:clamp(40px,7vh,58px);gap:5px}
     #relato{font-size:clamp(15px,3.2vh,18px)}
     #rotulo{top:10px}
