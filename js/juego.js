@@ -59,6 +59,15 @@
   var elGuia = document.getElementById('guia');
 
   var bel = Bel.crear();
+
+  /* Cada vez que el jugador toca, ella cierra los ojos un momento. Lo que ve
+     no esta afuera: el sueno lo esta mirando desde adentro. */
+  ['pointerdown', 'keydown'].forEach(function (ev) {
+    window.addEventListener(ev, function (e) {
+      if (ev === 'keydown' && e.key !== ' ' && e.key !== 'Enter') return;
+      bel.adentro = 1;
+    }, true);
+  });
   var cielo = Cielo.crear();
   /* La luna de verdad de esta noche. De todo el calculo de efemerides solo se
      usa el signo: la FASE no es la real, porque en el sueno la marca lo que

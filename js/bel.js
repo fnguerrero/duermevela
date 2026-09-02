@@ -37,13 +37,20 @@ var Bel = (function () {
       // Empuje de la onda de una transformacion: la corre y la inclina.
       empuje: 0,
       // Cuanto se echa para atras por lo que esta viendo (0 a 1).
-      asombro: 0
+      asombro: 0,
+      /* Cuanto tiene los ojos cerrados por decision, no por parpadeo (0 a 1).
+         Se cierra cada vez que el jugador toca: lo que ella ve no esta
+         afuera. Lo pone el juego y baja solo. */
+      adentro: 0
     };
   }
 
   /* Cadencia baja: a velocidad de paseo el ciclo tarda cerca de un segundo y
      medio, que es lo que hace que se vea suelta y no apurada. */
   function actualizar(b, dt, andando) {
+    /* Los ojos vuelven a abrirse solos, mas lento de lo que se cerraron: el
+       gesto tiene que leerse, no pasar de largo. */
+    if (b.adentro > 0) b.adentro = Math.max(0, b.adentro - dt * 1.15);
     // Lo que la empuja o la asombra vuelve a cero solo, con distinta inercia:
     // el golpe pasa rapido, la impresion tarda.
     if (b.empuje) b.empuje *= Math.pow(.06, dt);
@@ -244,6 +251,9 @@ var Bel = (function () {
     // Ceja, ojo con pestaña, y labios.
     var reloj = b.quieto + b.paso * .35;
     var parpadeo = (Math.sin(reloj * .55) > .992) ? .14 : 1;
+    // Cerrar por decision gana sobre el parpadeo: no es un pestaneo, es mirar
+    // para adentro.
+    if (b.adentro > .04) parpadeo = Math.min(parpadeo, 1 - b.adentro * .92);
     cx.strokeStyle = '#3a2830';
     cx.lineWidth = Math.max(.8, rCabeza * .075);
     cx.lineCap = 'round';
