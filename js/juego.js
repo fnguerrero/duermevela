@@ -258,7 +258,12 @@
        llegan tarde a proposito: el jugador viene de tocar el anillo, y si el
        relato aceptara el toque desde el primer milisegundo, el gesto de la
        mecanica anterior se lo saltea sin que llegue a leer una palabra. */
-    luego(900, function () {
+    /* 260ms en vez de 900: alcanza para descartar el toque que sobra de la
+       mecanica anterior, y no deja al jugador esperando sin saber si el juego
+       sigue vivo. La demora tiene que ser corta pero no cero, porque en este
+       mismo punto se habilita el toque: mostrar el boton antes seria ofrecer
+       algo que todavia no responde. */
+    luego(260, function () {
       if (mia !== fichaEspera) return;
       esperando = fn;
       elSeguir.classList.add('ver');

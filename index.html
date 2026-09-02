@@ -134,19 +134,35 @@
   /* El relato ya no se va solo: espera. Este es el unico aviso de que la
      pelota la tiene el jugador, asi que tiene que verse sin robarle atencion
      al texto — de ahi que aparezca recien despues de un rato y lata despacio. */
-  #seguir{margin:0;opacity:0;transition:opacity .7s;
+  /* Con cuerpo de boton: antes eran dos palabras flotando y no se leia como
+     algo que responde. Ahora es una pastilla con borde, que es lo que el ojo
+     reconoce como "esto se toca". */
+  #seguir{margin:0;opacity:0;transition:opacity .45s,transform .45s;
     font-size:clamp(12px,1.5vw,14px);letter-spacing:.16em;text-transform:uppercase;
-    color:rgba(233,222,201,.62);text-shadow:0 1px 4px rgba(0,0,0,.9);
-    display:flex;align-items:center;gap:9px}
-  #seguir.ver{opacity:1}
+    color:rgba(243,233,214,.92);text-shadow:0 1px 4px rgba(0,0,0,.9);
+    display:flex;align-items:center;gap:9px;
+    padding:7px 18px;border-radius:999px;
+    border:1px solid rgba(216,182,116,.45);
+    background:linear-gradient(180deg,rgba(46,36,26,.55),rgba(20,15,26,.55));
+    box-shadow:0 2px 14px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,235,190,.10);
+    transform:translateY(4px)}
+  #seguir.ver{opacity:1;transform:translateY(0)}
   #seguir span{animation:latir 2.4s ease-in-out infinite}
   #seguir::after{content:"";width:0;height:0;
-    border-left:6px solid rgba(233,222,201,.62);
+    border-left:6px solid rgba(243,233,214,.92);
     border-top:4px solid transparent;border-bottom:4px solid transparent;
     animation:latir 2.4s ease-in-out infinite}
-  @keyframes latir{0%,100%{opacity:.45}50%{opacity:1}}
+  @keyframes latir{0%,100%{opacity:.62}50%{opacity:1}}
+  #seguir.ver{animation:respirar 2.8s ease-in-out infinite}
+  @keyframes respirar{
+    0%,100%{box-shadow:0 2px 14px rgba(0,0,0,.45),
+                       0 0 0 0 rgba(216,182,116,0),
+                       inset 0 1px 0 rgba(255,235,190,.10)}
+    50%    {box-shadow:0 2px 14px rgba(0,0,0,.45),
+                       0 0 16px 2px rgba(216,182,116,.20),
+                       inset 0 1px 0 rgba(255,235,190,.10)}}
   @media (prefers-reduced-motion:reduce){
-    #seguir span,#seguir::after{animation:none}
+    #seguir span,#seguir::after,#seguir.ver{animation:none}
   }
 
   /* ---------- la mano ---------- */
