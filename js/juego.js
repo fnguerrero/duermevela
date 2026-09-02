@@ -1173,7 +1173,16 @@
     /* Lo que el lugar escondia, apareciendo. Sube mientras el mundo esta
        frenado y baja al soltarlo: la anomalia dura exactamente lo que dura la
        lectura, que es cuando se la puede mirar. */
-    if (J.congelado) J.revelando = Math.min(1, J.revelando + dt * 2.2);
+    /* La cama se revela sola. Es el unico lugar donde no se juega ninguna
+       carta —es el final del recorrido—, asi que ahi no hay instante que
+       acertar y su anomalia no se disparaba nunca: se llegaba al cierre con
+       la cama vacia, cuando el texto dice "estoy yo adentro, durmiendo". Y es
+       justo la revelacion que explica el sueno entero, no un secreto opcional.
+       Sube mas despacio que las otras: tiene que sentirse que uno se da
+       cuenta, no que aparece. */
+    if (J.lugar === 'cama' && J.u >= 1) {
+      J.revelando = Math.min(1, J.revelando + dt * .55);
+    } else if (J.congelado) J.revelando = Math.min(1, J.revelando + dt * 2.2);
     else if (J.revelando > 0) J.revelando = Math.max(0, J.revelando - dt * 1.4);
 
     if (J.u < 1 && !J.congelado) {
