@@ -498,12 +498,25 @@
     /* Sin hover en tactil, el levantar la carta no sirve: se marca al tocarla. */
     .carta:active{transform:translateY(-8px) rotate(0deg) scale(1.04);
       border-color:rgba(236,200,128,.95)}
-    #arriba{top:clamp(84px,11.5vh,104px);width:96vw;gap:7px}
+    /* El relato baja: entre su pie y la copa de la figura quedaban 200 px
+       de nada en el medio de la pantalla, y arriba en cambio no habia
+       mas que el marcador. Bajarlo reparte ese aire y de paso lo deja
+       cerca de la escena que esta contando. */
+    #arriba{top:clamp(112px,15.5vh,140px);width:96vw;gap:7px}
     #relato{font-size:clamp(16px,4.2vw,19px);padding:11px 22px 13px}
     #aviso{font-size:clamp(11px,3vw,13px);letter-spacing:.10em;padding:6px 11px}
-    #rotulo{font-size:11px;letter-spacing:.22em;top:16px;max-width:64vw}
+    /* El rotulo baja debajo del marcador. Arriba no entran los dos: en celular
+       el marcador se aplana a una linea y se lleva el 70% del ancho, asi que el
+       nombre del lugar —centrado— le caia justo encima y quedaban las dos cosas
+       ilegibles. Abajo del marcador queda solo, y de paso pegado al relato, que
+       es el texto de ese mismo lugar. */
+    #rotulo{font-size:11px;letter-spacing:.22em;top:46px;max-width:64vw}
     .titulo{letter-spacing:.06em}
     #restan{bottom:8px;right:10px;font-size:10px}
+    /* El mazo, arriba de la mano y no encima de ella. Con un bottom fijo de
+       12vh caia adentro de la zona de las cartas —en 812 px de alto la mano se
+       lleva 204— y el contador quedaba montado sobre el tercer naipe. */
+    #resto{bottom:calc(var(--alto-mano) + 16px);right:10px}
     .sonido{width:38px;height:38px;font-size:17px}
     #cierre{gap:20px;padding:8vw 6vw}
     #cierre p{font-size:clamp(16px,4.3vw,19px);line-height:1.55}
@@ -554,10 +567,10 @@
   <ol class="comollo">
     <li>Elegí una carta. Cambia lo que tenés delante, y eso nuevo
       es donde vas a estar.</li>
-    <li>Mientras cambia, un anillo se cierra sobre la figura.
-      <b>Tocá cuando llegue a la marca</b> — con el mouse, el dedo o la barra
-      espaciadora. Ahí la cosa muestra lo que esconde.</li>
-    <li>Si errás no perdés el turno: perdés lo que había abajo.
+    <li>Mientras cambia, el lugar deja ver lo que esconde.
+      <b>Mantené apretado para quedarte mirando</b> — con el mouse, el dedo o
+      la barra espaciadora. El anillo se llena mientras mirás.</li>
+    <li>Mirar o seguir de largo lo elegís vos, y nadie te apura.
       Lo que llegues a ver es lo que ella va a entender al final.</li>
   </ol>
   <button class="boton" id="empezar">Entrar</button>

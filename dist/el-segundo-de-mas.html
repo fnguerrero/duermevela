@@ -498,12 +498,25 @@
     /* Sin hover en tactil, el levantar la carta no sirve: se marca al tocarla. */
     .carta:active{transform:translateY(-8px) rotate(0deg) scale(1.04);
       border-color:rgba(236,200,128,.95)}
-    #arriba{top:clamp(84px,11.5vh,104px);width:96vw;gap:7px}
+    /* El relato baja: entre su pie y la copa de la figura quedaban 200 px
+       de nada en el medio de la pantalla, y arriba en cambio no habia
+       mas que el marcador. Bajarlo reparte ese aire y de paso lo deja
+       cerca de la escena que esta contando. */
+    #arriba{top:clamp(112px,15.5vh,140px);width:96vw;gap:7px}
     #relato{font-size:clamp(16px,4.2vw,19px);padding:11px 22px 13px}
     #aviso{font-size:clamp(11px,3vw,13px);letter-spacing:.10em;padding:6px 11px}
-    #rotulo{font-size:11px;letter-spacing:.22em;top:16px;max-width:64vw}
+    /* El rotulo baja debajo del marcador. Arriba no entran los dos: en celular
+       el marcador se aplana a una linea y se lleva el 70% del ancho, asi que el
+       nombre del lugar —centrado— le caia justo encima y quedaban las dos cosas
+       ilegibles. Abajo del marcador queda solo, y de paso pegado al relato, que
+       es el texto de ese mismo lugar. */
+    #rotulo{font-size:11px;letter-spacing:.22em;top:46px;max-width:64vw}
     .titulo{letter-spacing:.06em}
     #restan{bottom:8px;right:10px;font-size:10px}
+    /* El mazo, arriba de la mano y no encima de ella. Con un bottom fijo de
+       12vh caia adentro de la zona de las cartas —en 812 px de alto la mano se
+       lleva 204— y el contador quedaba montado sobre el tercer naipe. */
+    #resto{bottom:calc(var(--alto-mano) + 16px);right:10px}
     .sonido{width:38px;height:38px;font-size:17px}
     #cierre{gap:20px;padding:8vw 6vw}
     #cierre p{font-size:clamp(16px,4.3vw,19px);line-height:1.55}
@@ -554,10 +567,10 @@
   <ol class="comollo">
     <li>Elegí una carta. Cambia lo que tenés delante, y eso nuevo
       es donde vas a estar.</li>
-    <li>Mientras cambia, un anillo se cierra sobre la figura.
-      <b>Tocá cuando llegue a la marca</b> — con el mouse, el dedo o la barra
-      espaciadora. Ahí la cosa muestra lo que esconde.</li>
-    <li>Si errás no perdés el turno: perdés lo que había abajo.
+    <li>Mientras cambia, el lugar deja ver lo que esconde.
+      <b>Mantené apretado para quedarte mirando</b> — con el mouse, el dedo o
+      la barra espaciadora. El anillo se llena mientras mirás.</li>
+    <li>Mirar o seguir de largo lo elegís vos, y nadie te apura.
       Lo que llegues a ver es lo que ella va a entender al final.</li>
   </ol>
   <button class="boton" id="empezar">Entrar</button>
@@ -6770,9 +6783,16 @@ var Guion = (function () {
     // Lo que paso. En orden y sin alternativa: la tormenta y lo que quedo.
     { nombre: 'paso', hasta: 5, libre: false,
       orden: ['barca', 'ruina'] },
-    // Lo que queda. Se vuelve a elegir, con lo que sobro del mazo.
+    /* Lo que queda. Se vuelve a elegir, con lo que sobro del mazo.
+
+       Los pajaros entran aca. Eran el unico de los catorce lugares que no
+       pertenecia a ningun tramo: se les dio carta propia para que se vieran
+       —antes salian en una partida de cada cien— pero al no estar en ningun
+       tramo, llegar ahi era siempre salirse de la estructura. Van con estos y
+       no con los recuerdos porque no cuentan nada de antes: son ella probando
+       si el sueno le responde, como la puerta, y de hecho revelan la casa. */
     { nombre: 'queda', hasta: 7, libre: true,
-      lugares: ['faro', 'platillo', 'casa', 'reloj', 'puerta'] }
+      lugares: ['faro', 'platillo', 'casa', 'reloj', 'puerta', 'bandada'] }
   ];
 
   /* En que tramo cae un paso. `paso` es el que se esta por jugar, contando
@@ -7530,6 +7550,34 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
 
     var mano = ordenar(delTramo).concat(ordenar(deOtro));
 
+    /* Y las de otro tramo se sacan, no solo se posponen. Ponerlas ultimas
+       alcanzaba mientras hubiera tres del tramo para repartir, pero no siempre
+       las hay: la carta que revela no tiene figura propia —su destino sale del
+       lugar donde uno esta— y puede llevar a cualquier lado, incluida la ruina
+       en pleno tramo de los recuerdos. Cuando eso pasa, el arco del sueno se
+       desarma: se llega al dolor dos pasos antes de que la estructura lo
+       traiga, y despues se vuelve porque el tramo lo fuerza igual. Vale mas
+       una mano corta. */
+    if (tramo && tramo.lugares) {
+      var delTramoAqui = function (k) {
+        var d = Guion.destino(k, J.lugar);
+        return d && d !== J.lugar && tramo.lugares.indexOf(d) !== -1;
+      };
+      var soloTramo = mano.filter(delTramoAqui);
+      /* Y si el mazo se quedo sin ninguna del tramo, se rescata: la estructura
+         no puede depender de la suerte del reparto. Es lo mismo que hace el
+         tramo forzado cuando su carta ya se jugo. */
+      if (!soloTramo.length) {
+        var rescate = mezclar(Guion.CARTAS.map(function (c) { return c.clave; })
+          .filter(delTramoAqui));
+        soloTramo = rescate.slice(0, 1);
+        soloTramo.forEach(function (k) {
+          if (J.mazo.indexOf(k) === -1) J.mazo.push(k);
+        });
+      }
+      if (soloTramo.length) mano = soloTramo;
+    }
+
     /* Y las que hacen retroceder se sacan del todo, no solo se posponen: con
        ponerlas ultimas seguian entrando en la mano una de cada sesenta, y una
        carta que te devuelve al lugar que acabas de dejar se lee como un error
@@ -7795,6 +7843,11 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     if (J.mazo.indexOf(c.clave) === -1) return;
 
     J.jugando = true;
+    /* La guia del reparto se va con la carta jugada. Duraba seis segundos por
+       reloj propio, asi que seguia puesta cuando las piezas ya volaban — en el
+       medio de la escena, encima de la figura y del anillo, tapando justo lo
+       que el aviso te acaba de pedir que mires. */
+    if (elGuia) elGuia.classList.remove('ver');
     J.mazo = J.mazo.filter(function (k) { return k !== c.clave; });
     J.jugadas.push(c.clave);
     J.paso++;
@@ -7842,12 +7895,19 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     var aire = Math.min(ix, W - ix) - 14;
     var iradio = Math.max(34, Math.min(Math.min(W, H) * .13, aire / 2.9));
     Instante.arrancar(mirada, ix, iy, iradio);
-    // El aviso dice que hacer, no una palabra suelta: "mira" no le indicaba
-    // a nadie que habia que tocar cuando el anillo llegara a la marca.
-    mostrarAviso('mantené apretado para quedarte mirando', '');
-    /* Mientras las piezas vuelan, el lugar deja ver por un momento lo que
-       escondia. La guia dice las dos cosas: que hay algo, y como agarrarlo. */
-    guiar('anillo', 'mientras se transforma, este lugar deja ver lo que esconde · mantené apretado para quedarte mirando', 6600);
+    /* El aviso dice que hacer, no una palabra suelta: "mira" no le indicaba
+       a nadie que habia que quedarse mirando.
+
+       La primera vez dice ademas que hay algo escondido, que es la mitad que
+       falta. Antes eso lo decia una guia aparte encima de la escena, y pasaban
+       las dos peores cosas a la vez: el mismo texto dos veces en pantalla, y
+       el cartel justo encima de las piezas volando — tapando lo unico que hay
+       que mirar en el momento en que hay que mirarlo. */
+    var primeraMirada = !J.guias.anillo;
+    J.guias.anillo = true;
+    mostrarAviso(primeraMirada
+      ? 'mientras se transforma, este lugar deja ver lo que esconde · mantené apretado'
+      : 'mantené apretado para quedarte mirando', '');
 
     /* Como sigue el paso una vez que se dijo todo lo que habia que decir.
        Puede llamarlo el reloj —cuando no se encontro nada— o el indicio, si
@@ -8558,8 +8618,16 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
        fija del ancho quedaba encima de la figura en cuanto esta se centro. */
     var lejania = LEJANIA[J.lugar] === undefined ? .26 : LEJANIA[J.lugar];
     var bordeFigura = fx - E;
+    /* El tope de la izquierda tiene que contar el ancho de Bel, no solo su
+       marca. Un 5,5% del ancho son 21 px en un celular de 375, y ella ocupa
+       unos 24 a cada lado de su marca: el centro entraba y el hombro izquierdo
+       quedaba afuera. Se la veia cortada por el borde justo en la cama, que es
+       la escena del final. El .15 sale del dibujo: el cuerpo mas la melena no
+       pasan de esa fraccion del alto (la sombra del piso mide .12). */
+    var altoBelAqui = H * (vertical ? .20 : .255);
+    var medioBel = altoBelAqui * .15;
     var metaCalculada = Math.max(
-      W * .055,                             // nunca pegada al borde del cuadro
+      Math.max(W * .055, medioBel + W * .015), // entera dentro del cuadro
       Math.min(bordeFigura * (.62 - lejania * .55), bordeFigura - W * .045)
     ) / W;
     if (Math.abs(J.belMeta - metaCalculada) > .004) J.belMeta = metaCalculada;
@@ -8577,6 +8645,13 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
 
     // Sombra bajo Bel: sin esto flota sobre la linea del piso.
     var altoBel = H * (vertical ? .20 : .255);
+    /* Las dos cajas quedan anotadas para que se puedan verificar desde afuera:
+       medirlas por pixeles no se puede —el fondo tiene degrade y la sombra
+       tine el piso— y sin esto no hay forma de saber si alguien se sale del
+       cuadro o si se pisan entre ellos. */
+    J.belCaja = { izq: belPantalla - altoBel * .15, der: belPantalla + altoBel * .15,
+                  techo: piso - altoBel, piso: piso };
+    J.figCaja = { izq: fx - E, der: fx + E, techo: fy - E, piso: piso };
     cx.save();
     var gs = cx.createRadialGradient(belPantalla, piso, 0,
                                      belPantalla, piso, altoBel * .30);
@@ -9435,6 +9510,203 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     return Guion.cartaDeElla(J.indicios).clave;
   };
 
+  /* El reparto, sin jugar la partida.
+
+     Jugar partidas enteras para ver si una carta se cuela de otro tramo es
+     carisimo —cada una tarda lo suyo aunque corra a x60— y encima solo prueba
+     los mazos que el azar quiso. Esto llama al reparto directo, con el estado
+     puesto a mano, y barre todos los pasos contra todos los lugares. */
+  window.verificarReparto = function (vueltas) {
+    vueltas = vueltas || 120;
+    var LUGARES = ['montania', 'calesita', 'arbol', 'laguna', 'luna', 'barca',
+                   'ruina', 'faro', 'platillo', 'casa', 'reloj', 'puerta',
+                   'bandada', 'cama'];
+    var guardado = {
+      mazo: J.mazo, paso: J.paso, lugar: J.lugar,
+      visitados: J.visitados, recorrido: J.recorrido
+    };
+    var mal = [], repartos = 0, fallos = 0;
+    try {
+      for (var paso = 0; paso < Guion.PASOS - 1; paso++) {
+        var t = Guion.tramoDe(paso);
+        if (!t) continue;
+        for (var i = 0; i < LUGARES.length; i++) {
+          for (var v = 0; v < vueltas; v++) {
+            J.paso = paso;
+            J.lugar = LUGARES[i];
+            J.visitados = {};
+            J.recorrido = [LUGARES[i]];
+            // Un mazo cualquiera, de cualquier tamano: lo que se gasta al
+            // avanzar es justo lo que dejaba a la mano sin cartas del tramo.
+            J.mazo = Guion.CARTAS.map(function (c) { return c.clave; })
+              .filter(function () { return Math.random() > .45; });
+            if (!J.mazo.length) continue;
+            var mano = repartir(3);
+            repartos++;
+            for (var m = 0; m < mano.length; m++) {
+              var d = Guion.destino(mano[m], J.lugar);
+              if (!d) continue;
+              var bien = t.libre ? t.lugares.indexOf(d) !== -1
+                                 : d === Guion.forzado(paso);
+              if (bien) continue;
+              fallos++;
+              // Se guardan unos pocos como muestra; el conteo va aparte.
+              if (mal.length < 8) {
+                mal.push({ paso: paso, desde: LUGARES[i], carta: mano[m],
+                           lleva: d, tramo: t.nombre });
+              }
+            }
+          }
+        }
+      }
+    } finally {
+      J.mazo = guardado.mazo; J.paso = guardado.paso; J.lugar = guardado.lugar;
+      J.visitados = guardado.visitados; J.recorrido = guardado.recorrido;
+    }
+    return { repartos: repartos, fallos: fallos, mal: mal, ok: !fallos };
+  };
+
+  /* Con que frecuencia sale cada lugar.
+
+     Un lugar entero —con su texto, su dibujo y su anomalia— que aparezca en
+     una partida de cada cien es un lugar que Bel no va a ver nunca. Esto
+     recorre partidas usando el reparto de verdad, pero sin dibujar ni esperar
+     a nadie, asi que en un segundo mide lo que jugando tardaria una tarde. */
+  window.frecuenciaLugares = function (partidas) {
+    partidas = partidas || 500;
+    var guardado = {
+      mazo: J.mazo, paso: J.paso, lugar: J.lugar,
+      visitados: J.visitados, recorrido: J.recorrido
+    };
+    var cuenta = {};
+    try {
+      for (var p = 0; p < partidas; p++) {
+        J.mazo = mezclar(Guion.CARTAS.map(function (c) { return c.clave; }));
+        J.lugar = 'montania';
+        J.visitados = {}; J.recorrido = ['montania'];
+        var vistos = { montania: true };
+        for (var paso = 0; paso < Guion.PASOS - 1; paso++) {
+          J.paso = paso;
+          var mano = repartir(3);
+          if (!mano.length) break;
+          var k = mano[Math.floor(Math.random() * mano.length)];
+          var ix = J.mazo.indexOf(k);
+          if (ix !== -1) J.mazo.splice(ix, 1);
+          var d = Guion.destino(k, J.lugar) || J.lugar;
+          J.recorrido.push(d);
+          J.visitados[d] = true;
+          J.lugar = d;
+          vistos[d] = true;
+        }
+        Object.keys(vistos).forEach(function (l) {
+          cuenta[l] = (cuenta[l] || 0) + 1;
+        });
+      }
+    } finally {
+      J.mazo = guardado.mazo; J.paso = guardado.paso; J.lugar = guardado.lugar;
+      J.visitados = guardado.visitados; J.recorrido = guardado.recorrido;
+    }
+    var tabla = Object.keys(cuenta).map(function (l) {
+      return { lugar: l, porciento: Math.round(cuenta[l] / partidas * 100) };
+    }).sort(function (a, b) { return a.porciento - b.porciento; });
+    // La montania es el arranque y la cama el final: esas no se miden.
+    var libres = tabla.filter(function (f) {
+      return f.lugar !== 'montania' && f.lugar !== 'cama';
+    });
+    var flojos = libres.filter(function (f) { return f.porciento < 12; });
+    return { partidas: partidas, tabla: tabla, flojos: flojos, ok: !flojos.length };
+  };
+
+  /* La pantalla de celular, que es donde lo va a jugar.
+
+     Todo lo que se rompio en la tanda 6 se rompia solo en vertical y angosto:
+     el nombre del lugar encima del marcador, el mazo encima del tercer naipe,
+     Bel cortada por el borde. En escritorio no se veia ninguno. Esto recorre
+     los 14 lugares y mide las cajas de verdad —las del DOM y las dos que el
+     dibujo anota— en vez de mirar capturas.
+
+     No cambia el tamano de la ventana: hay que ponerla en el tamano a probar
+     y correrlo ahi. */
+  window.verificarCelular = function () {
+    var LUGARES = ['montania', 'calesita', 'arbol', 'laguna', 'luna', 'barca',
+                   'ruina', 'faro', 'platillo', 'casa', 'reloj', 'puerta',
+                   'bandada', 'cama'];
+    var choques = [], fuera = [], huecos = [], tabla = [];
+
+    function caja(sel) {
+      var e = document.querySelector(sel);
+      if (!e) return null;
+      var r = e.getBoundingClientRect();
+      /* Sin contenido no hay caja, y eso si es no estar. Pero la opacidad NO
+         se mira: estos elementos entran y salen con una transicion de un
+         segundo, y con la pestana en segundo plano esa transicion no avanza
+         nunca. Filtrando por opacidad, la verificacion daba todo en verde
+         porque no estaba midiendo nada. Lo que se mide aca es donde caen las
+         cajas, que es lo que se pisa. */
+      if (!r.width || !r.height) return null;
+      return r;
+    }
+    function cruzan(a, b) {
+      return !!a && !!b && a.left < b.right && b.left < a.right &&
+             a.top < b.bottom && b.top < a.bottom;
+    }
+
+    function unLugar(i) {
+      if (i >= LUGARES.length) {
+        return {
+          ancho: window.innerWidth, alto: window.innerHeight,
+          choques: choques, fuera: fuera, huecos: huecos, tabla: tabla,
+          ok: !choques.length && !fuera.length && !huecos.length
+        };
+      }
+      var k = LUGARES[i];
+      window.irA(k);
+      return luegoPromesa(700).then(function () {
+        var rotulo = caja('#rotulo'), marcador = caja('#marcador');
+        var mazo = caja('#resto'), relato = caja('#relato');
+        var cartas = [].slice.call(document.querySelectorAll('.carta'))
+          .map(function (e) { return e.getBoundingClientRect(); })
+          .filter(function (r) { return r.width && r.height; });
+
+        if (cruzan(rotulo, marcador)) choques.push({ lugar: k, que: 'rotulo x marcador' });
+        if (cruzan(mazo, marcador)) choques.push({ lugar: k, que: 'mazo x marcador' });
+        if (cruzan(mazo, rotulo)) choques.push({ lugar: k, que: 'mazo x rotulo' });
+        cartas.forEach(function (c, n) {
+          if (cruzan(mazo, c)) choques.push({ lugar: k, que: 'mazo x carta ' + (n + 1) });
+        });
+
+        var b = J.belCaja, f = J.figCaja;
+        if (b) {
+          if (b.izq < 0) fuera.push({ lugar: k, que: 'Bel sale por la izquierda', px: +b.izq.toFixed(1) });
+          /* La caja de la figura es el cuadrado de 2E, no lo que el dibujo
+             llena: una montana rusa deja aire en sus esquinas. Que el hombro
+             de Bel entre unos pixeles en ese cuadrado no la tapa. Se avisa
+             cuando se le mete mas de medio cuerpo, que ahi si se superponen. */
+          var medio = (b.der - b.izq) / 2;
+          if (f && b.der > f.izq + medio) {
+            fuera.push({ lugar: k, que: 'Bel encima de la figura', px: +(b.der - f.izq).toFixed(1) });
+          }
+        }
+        /* El hueco entre el pie del relato y lo mas alto de la figura. Con un
+           texto de dos renglones quedaba media pantalla vacia en el medio. */
+        if (relato && f) {
+          var hueco = f.techo - relato.bottom;
+          tabla.push({ lugar: k, hueco: Math.round(hueco) });
+          if (hueco > window.innerHeight * .30) {
+            huecos.push({ lugar: k, px: Math.round(hueco) });
+          }
+        }
+        return unLugar(i + 1);
+      });
+    }
+    return unLugar(0);
+  };
+
+  // Una espera que se puede encadenar, y que respeta el ritmo de prueba.
+  function luegoPromesa(ms) {
+    return new Promise(function (listo) { luego(ms, listo); });
+  }
+
   window.auditarTodo = function () {
     var out = {};
     /* Con Promise.resolve envolviendo cada una: verificarBases y auditar
@@ -9446,6 +9718,12 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     }).then(function () { return Promise.resolve(window.verificarTextos()); }).then(function (r) { out.textos = r.ok;
     }).then(function () { return window.verificarRotulo(); }).then(function (r) { out.rotulo = r.desajustes === 0;
     }).then(function () { return window.verificarTramos(2); }).then(function (r) { out.tramos = r.fallos === 0;
+    /* El reparto y las frecuencias entran a la auditoria y las partidas
+       simuladas no: estas dos miden lo mismo mil veces mejor y en un segundo,
+       porque no esperan a que nada se dibuje. verificarCelular queda afuera a
+       proposito — necesita que la ventana este en el tamano a probar. */
+    }).then(function () { return window.verificarReparto(40); }).then(function (r) { out.reparto = r.ok;
+    }).then(function () { return window.frecuenciaLugares(300); }).then(function (r) { out.frecuencias = r.ok;
     }).then(function () {
       return window.centinelaDibujo(function () {
         ['montania','platillo','calesita','laguna','faro','casa','arbol','reloj',

@@ -358,9 +358,16 @@ var Guion = (function () {
     // Lo que paso. En orden y sin alternativa: la tormenta y lo que quedo.
     { nombre: 'paso', hasta: 5, libre: false,
       orden: ['barca', 'ruina'] },
-    // Lo que queda. Se vuelve a elegir, con lo que sobro del mazo.
+    /* Lo que queda. Se vuelve a elegir, con lo que sobro del mazo.
+
+       Los pajaros entran aca. Eran el unico de los catorce lugares que no
+       pertenecia a ningun tramo: se les dio carta propia para que se vieran
+       —antes salian en una partida de cada cien— pero al no estar en ningun
+       tramo, llegar ahi era siempre salirse de la estructura. Van con estos y
+       no con los recuerdos porque no cuentan nada de antes: son ella probando
+       si el sueno le responde, como la puerta, y de hecho revelan la casa. */
     { nombre: 'queda', hasta: 7, libre: true,
-      lugares: ['faro', 'platillo', 'casa', 'reloj', 'puerta'] }
+      lugares: ['faro', 'platillo', 'casa', 'reloj', 'puerta', 'bandada'] }
   ];
 
   /* En que tramo cae un paso. `paso` es el que se esta por jugar, contando
