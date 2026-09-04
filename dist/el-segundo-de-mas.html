@@ -4041,55 +4041,68 @@ var Anomalias = (function () {
   /* Una silueta de mujer, de lejos y a contraluz. (x, y) es donde apoya los
      pies y `alto` lo que mide de pies a cabeza.
 
-     Todo lo que la hace legible como mujer a este tamano son tres cosas: el
-     pelo que cae por fuera de los hombros, la cintura, y que la falda se abra
-     abajo. Cara no tiene ni puede tener: a contraluz nadie tiene cara, y si la
-     tuviera dejaria de ser una silueta y pasaria a ser un personaje. */
+     Proporciones de figurin, las mismas que Bel: la cabeza entra unas ocho
+     veces en el alto. Con una cabeza mas grande —entraba cinco— y el pelo
+     ancho, la silueta dejaba de leerse como una mujer a lo lejos y se leia
+     como un bicho. Todo lo que la hace mujer son tres cosas finas: el pelo
+     cayendo por fuera de los hombros, la cintura, y que el vestido se abra
+     apenas abajo. Cara no tiene ni puede tener: a contraluz nadie tiene cara.
+
+     Va en tinta translucida y no en negro pleno: es una persona vista contra
+     una lampara, no un recorte pegado encima del vidrio. */
   function silueta(cx, x, y, alto, alfa) {
     if (!(alfa > .01)) return;
-    var A = alto, tinta = 'rgba(12,9,18,' + (.90 * alfa).toFixed(3) + ')';
+    var A = alto;
     cx.save();
-    // Lo que tiene detras: la luz de la linterna, que es lo que la recorta.
-    halo(cx, x, y - A * .52, A * 1.15, '255,238,196', .30 * alfa);
-    cx.fillStyle = tinta;
-    // Falda: se abre abajo y es lo que mas se lee de lejos.
+    // La luz que la recorta, apenas mas viva justo detras de ella.
+    halo(cx, x, y - A * .55, A * 1.05, '255,240,205', .26 * alfa);
+    cx.fillStyle = 'rgba(16,12,22,' + (.80 * alfa).toFixed(3) + ')';
+
+    /* Vestido: sale de la cintura y se abre en campana. La medida es lo unico
+       que decide si esto se lee como una mujer o como un poste: abierto a un
+       cuarto del alto era un bicho de cabeza grande, cerrado a un decimo era un
+       alfil de ajedrez. Se abre a .155 y la curva sale de la cintura, no del
+       borde de abajo, que es lo que le da la caida. */
     cx.beginPath();
-    cx.moveTo(x - A * .085, y - A * .52);
-    cx.lineTo(x + A * .085, y - A * .52);
-    cx.quadraticCurveTo(x + A * .20, y - A * .16, x + A * .225, y);
-    cx.lineTo(x - A * .225, y);
-    cx.quadraticCurveTo(x - A * .20, y - A * .16, x - A * .085, y - A * .52);
+    cx.moveTo(x - A * .052, y - A * .630);
+    cx.lineTo(x + A * .052, y - A * .630);
+    cx.quadraticCurveTo(x + A * .085, y - A * .34, x + A * .155, y);
+    cx.lineTo(x - A * .155, y);
+    cx.quadraticCurveTo(x - A * .085, y - A * .34, x - A * .052, y - A * .630);
     cx.closePath(); cx.fill();
-    // Torso, con cintura.
+
+    // Torso: hombros caidos y angostos, cerrandose en la cintura.
     cx.beginPath();
-    cx.moveTo(x - A * .115, y - A * .80);
-    cx.quadraticCurveTo(x - A * .055, y - A * .66, x - A * .085, y - A * .50);
-    cx.lineTo(x + A * .085, y - A * .50);
-    cx.quadraticCurveTo(x + A * .055, y - A * .66, x + A * .115, y - A * .80);
+    cx.moveTo(x - A * .078, y - A * .840);
+    cx.quadraticCurveTo(x - A * .042, y - A * .73, x - A * .052, y - A * .615);
+    cx.lineTo(x + A * .052, y - A * .615);
+    cx.quadraticCurveTo(x + A * .042, y - A * .73, x + A * .078, y - A * .840);
+    cx.quadraticCurveTo(x, y - A * .875, x - A * .078, y - A * .840);
     cx.closePath(); cx.fill();
+
+    // Cuello. Tapa, ademas, el hueco por donde la luz se colaba entre la
+    // cabeza y el pelo: de cerca esos dos puntos claros se leian como ojos.
+    cx.beginPath();
+    cx.rect(x - A * .024, y - A * .90, A * .048, A * .07);
+    cx.fill();
+
     // Cabeza.
     cx.beginPath();
-    cx.arc(x, y - A * .885, A * .092, 0, 6.2832);
+    cx.arc(x, y - A * .928, A * .062, 0, 6.2832);
     cx.fill();
-    /* Cuello: no es un detalle de dibujo, es tapar un agujero. Entre la cabeza
-       —que a la altura del cuello ya se afinó— y el pelo quedaban dos huecos
-       por donde pasaba la luz de la linterna, y de cerca se leían como dos
-       ojos. Una silueta a contraluz no puede tener ojos. */
+
+    // Pelo: dos caidas finas, pegadas, que pasan la cintura.
     cx.beginPath();
-    cx.rect(x - A * .058, y - A * .87, A * .116, A * .09);
-    cx.fill();
-    // Pelo largo: cae por fuera de los hombros y llega abajo de la cintura.
-    cx.beginPath();
-    cx.moveTo(x - A * .098, y - A * .93);
-    cx.quadraticCurveTo(x - A * .175, y - A * .80, x - A * .150, y - A * .56);
-    cx.lineTo(x - A * .075, y - A * .60);
-    cx.lineTo(x - A * .062, y - A * .86);
+    cx.moveTo(x - A * .060, y - A * .970);
+    cx.quadraticCurveTo(x - A * .112, y - A * .85, x - A * .092, y - A * .625);
+    cx.lineTo(x - A * .048, y - A * .655);
+    cx.lineTo(x - A * .036, y - A * .905);
     cx.closePath(); cx.fill();
     cx.beginPath();
-    cx.moveTo(x + A * .098, y - A * .93);
-    cx.quadraticCurveTo(x + A * .175, y - A * .80, x + A * .150, y - A * .56);
-    cx.lineTo(x + A * .075, y - A * .60);
-    cx.lineTo(x + A * .062, y - A * .86);
+    cx.moveTo(x + A * .060, y - A * .970);
+    cx.quadraticCurveTo(x + A * .112, y - A * .85, x + A * .092, y - A * .625);
+    cx.lineTo(x + A * .048, y - A * .655);
+    cx.lineTo(x + A * .036, y - A * .905);
     cx.closePath(); cx.fill();
     cx.restore();
   }
@@ -4260,7 +4273,7 @@ var Anomalias = (function () {
       /* Apoyada en el piso de la linterna, que es el rectangulo iluminado y no
          donde nace el haz: medida contra el origen del haz quedaba parada
          arriba de la cupula, como una antena. */
-      silueta(cx, ox + E * .01, fy - E * .455, E * .24, a);
+      silueta(cx, ox + E * .01, fy - E * .455, E * .20, a);
     },
 
     /* Las ventanas están prendidas y adentro no hay nada que las prenda. */
