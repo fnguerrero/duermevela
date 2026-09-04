@@ -177,17 +177,18 @@ var Guion = (function () {
     },
     calesita: {
       nombre: 'La calesita',
-      llegada: 'Gira despacio, con la música baja. No hay un solo chico arriba y ' +
-               'va a la velocidad de cuando está llena, que es más lento que ' +
-               'cuando está vacía. Alguien la dejó andando y se fue, o nunca ' +
-               'hubo nadie y ella sola decidió que había que seguir dando ' +
-               'vueltas.',
+      llegada: 'Gira despacio, con la música baja. Me tapo un oído y la sigo ' +
+               'escuchando igual. No hay un solo chico arriba y va a la ' +
+               'velocidad de cuando está llena, que es más lento que cuando ' +
+               'está vacía. Alguien la dejó andando y se fue, o nunca hubo ' +
+               'nadie y ella sola decidió que había que seguir dando vueltas.',
       vuelta: 'La calesita otra vez, con los mismos caballitos en el mismo ' +
               'orden. Ninguno se movió de lugar, ni siquiera los que estaban a ' +
               'mitad de subida.',
-      esconde: 'La música no sale de la calesita: me llega de todos lados a la ' +
-               'vez. Me tapo un oído y la sigo escuchando igual. Me tapo los ' +
-               'dos y la sigo escuchando igual.',
+      esconde: 'No está apoyada. Se levantó un dedo del piso y sigue girando ' +
+               'ahí arriba, con las luces del borde dando toda la vuelta para ' +
+               'el mismo lado. Cuando aflojo la vista apoya de nuevo, y no ' +
+               'queda marca en la tierra.',
       revela: 'arbol'
     },
     laguna: {
@@ -411,7 +412,7 @@ var Guion = (function () {
   var ETIQUETA = {
     montania: 'Las vías cortadas en el aire',
     platillo: 'La luz que se apagó como quien asiente',
-    calesita: 'La música que sonaba adentro mío',
+    calesita: 'La calesita que no tocaba el piso',
     laguna: 'El agua que no me copiaba',
     faro: 'El haz que frenaba cuando me encontraba',
     casa: 'La luz sin lámparas',

@@ -1,0 +1,124 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8">
+<title>El faro — quién estaba buscando</title>
+<style>
+  html,body{margin:0;background:#07060e;color:#ece6d8;
+    font-family:'Cormorant Garamond',Georgia,serif}
+  h1{font-size:20px;font-weight:400;letter-spacing:.16em;text-transform:uppercase;
+    color:rgba(220,178,108,.9);margin:18px 0 2px;text-align:center}
+  .sub{text-align:center;color:rgba(236,230,216,.5);font-size:15px;margin:0 0 14px}
+  .fila{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;padding:0 14px 24px}
+  canvas{width:min(1100px,94vw);display:block;
+    border:1px solid rgba(220,178,108,.22);border-radius:3px}
+  .zoom{width:min(420px,44vw)}
+  .rotu{font-size:15px;letter-spacing:.10em;color:rgba(236,196,132,.92);
+    margin:8px 0 2px;text-transform:uppercase;text-align:center}
+</style>
+</head><body>
+
+<h1>El faro · quién estaba buscando</h1>
+<p class="sub">El ciclo se repite solo. Abajo, la linterna y la cara de ella de cerca.</p>
+
+<div class="fila"><canvas id="e" width="1100" height="700"></canvas></div>
+<div class="fila">
+  <div><canvas class="zoom" id="z1" width="420" height="420"></canvas>
+    <p class="rotu">Arriba del faro</p></div>
+  <div><canvas class="zoom" id="z2" width="420" height="420"></canvas>
+    <p class="rotu">Ella</p></div>
+</div>
+
+<script src="../js/dibujo.js"></script>
+<script src="../js/bel.js"></script>
+<script src="../js/figuras.js"></script>
+<script src="../js/pintores.js"></script>
+<script src="../js/anomalias.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var W = 1100, H = 700;
+  var piso = H * .83;
+  var E = Math.max(W * .08, Math.min(W * .27, (piso - H * .29) / 2));
+  var fx = W * .5, fy = piso - E, belX = W * .18;
+  var escalaBel = (H * .255) / 176;
+
+  var bel = Bel.crear(belX, piso);
+  bel.mirando = 1;
+
+  var CICLO = 7.5;
+  function vDe(t) {
+    var f = t % CICLO;
+    if (f < .9) return f / .9;
+    if (f < 5.4) return 1;
+    if (f < 6.2) return 1 - (f - 5.4) / .8;
+    return 0;
+  }
+
+  var ce = document.getElementById('e').getContext('2d');
+  var z1 = document.getElementById('z1').getContext('2d');
+  var z2 = document.getElementById('z2').getContext('2d');
+
+  function escena(cx, t, v) {
+    cx.setTransform(1, 0, 0, 1, 0, 0);
+    var g = cx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#0a0817');
+    g.addColorStop(1, '#0d0b1c');
+    cx.fillStyle = g;
+    cx.fillRect(0, 0, W, H);
+    Pintores.pintar(cx, 'faro', fx, fy, E, t, { alPiso: E, tension: 0 });
+    var s = cx.createLinearGradient(0, piso, 0, H);
+    s.addColorStop(0, 'rgba(7,5,16,0)');
+    s.addColorStop(.60, 'rgba(6,4,14,.72)');
+    s.addColorStop(1, 'rgba(4,3,11,.92)');
+    cx.fillStyle = s;
+    cx.fillRect(0, piso, W, H - piso);
+    Bel.dibujar(cx, bel, belX, piso, escalaBel, 1);
+    Anomalias.pintar(cx, 'faro', fx, fy, E, t, v, {}, W, H, belX, piso);
+  }
+
+  /* Los dos recortes: sin esto no hay forma de juzgar ni la silueta ni la
+     sonrisa, que en la escena entera miden treinta pixeles. */
+  function recorte(cx, ox, oy, lado) {
+    cx.setTransform(1, 0, 0, 1, 0, 0);
+    cx.clearRect(0, 0, 420, 420);
+    cx.save();
+    cx.scale(420 / lado, 420 / lado);
+    cx.translate(-ox, -oy);
+    cx.drawImage(document.getElementById('e'), 0, 0);
+    cx.restore();
+  }
+
+  var t0 = performance.now(), anterior = t0;
+  function cuadro(ahora) {
+    var dt = Math.min(.05, (ahora - anterior) / 1000);
+    anterior = ahora;
+    var t = (ahora - t0) / 1000;
+    var v = vDe(t);
+    bel.adentro = 0;
+    // La sonrisa llega despues del haz, no junto con el: primero lo ve.
+    if (v > .55) bel.sonrisa = Math.min(1, bel.sonrisa + dt * .9);
+    if (v < .05) bel.sonrisa = 0;
+    Bel.actualizar(bel, dt, false);
+    escena(ce, t, v);
+    var lado = E * .9;
+    recorte(z1, fx - lado / 2 - E * .04, fy - E * .62 - lado * .55, lado);
+    recorte(z2, belX - lado * .18, piso - H * .255 - 10, lado * .36);
+    requestAnimationFrame(cuadro);
+  }
+  requestAnimationFrame(cuadro);
+
+  window.laminas = function (v) {
+    v = (v === undefined) ? 1 : v;
+    bel.sonrisa = v > .55 ? 1 : 0;
+    escena(ce, 3, v);
+    var lado = E * .9;
+    recorte(z1, fx - lado / 2 - E * .04, fy - E * .62 - lado * .55, lado);
+    recorte(z2, belX - lado * .18, piso - H * .255 - 10, lado * .36);
+    return Promise.all([['e', 'faro'], ['z1', 'faro-arriba'], ['z2', 'faro-ella']]
+      .map(function (par) {
+        return fetch('/_captura/' + par[1] + '-' + Math.round(v * 100) + '.png',
+          { method: 'POST', body: document.getElementById(par[0]).toDataURL('image/png') });
+      })).then(function () { return 'laminas del faro guardadas'; });
+  };
+})();
+</script>
+</body></html>

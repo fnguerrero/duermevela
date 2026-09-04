@@ -30,6 +30,62 @@ var Anomalias = (function () {
     cx.beginPath(); cx.arc(x, y, Math.max(1, r), 0, 6.2832); cx.fill();
   }
 
+  /* Una silueta de mujer, de lejos y a contraluz. (x, y) es donde apoya los
+     pies y `alto` lo que mide de pies a cabeza.
+
+     Todo lo que la hace legible como mujer a este tamano son tres cosas: el
+     pelo que cae por fuera de los hombros, la cintura, y que la falda se abra
+     abajo. Cara no tiene ni puede tener: a contraluz nadie tiene cara, y si la
+     tuviera dejaria de ser una silueta y pasaria a ser un personaje. */
+  function silueta(cx, x, y, alto, alfa) {
+    if (!(alfa > .01)) return;
+    var A = alto, tinta = 'rgba(12,9,18,' + (.90 * alfa).toFixed(3) + ')';
+    cx.save();
+    // Lo que tiene detras: la luz de la linterna, que es lo que la recorta.
+    halo(cx, x, y - A * .52, A * 1.15, '255,238,196', .30 * alfa);
+    cx.fillStyle = tinta;
+    // Falda: se abre abajo y es lo que mas se lee de lejos.
+    cx.beginPath();
+    cx.moveTo(x - A * .085, y - A * .52);
+    cx.lineTo(x + A * .085, y - A * .52);
+    cx.quadraticCurveTo(x + A * .20, y - A * .16, x + A * .225, y);
+    cx.lineTo(x - A * .225, y);
+    cx.quadraticCurveTo(x - A * .20, y - A * .16, x - A * .085, y - A * .52);
+    cx.closePath(); cx.fill();
+    // Torso, con cintura.
+    cx.beginPath();
+    cx.moveTo(x - A * .115, y - A * .80);
+    cx.quadraticCurveTo(x - A * .055, y - A * .66, x - A * .085, y - A * .50);
+    cx.lineTo(x + A * .085, y - A * .50);
+    cx.quadraticCurveTo(x + A * .055, y - A * .66, x + A * .115, y - A * .80);
+    cx.closePath(); cx.fill();
+    // Cabeza.
+    cx.beginPath();
+    cx.arc(x, y - A * .885, A * .092, 0, 6.2832);
+    cx.fill();
+    /* Cuello: no es un detalle de dibujo, es tapar un agujero. Entre la cabeza
+       —que a la altura del cuello ya se afinó— y el pelo quedaban dos huecos
+       por donde pasaba la luz de la linterna, y de cerca se leían como dos
+       ojos. Una silueta a contraluz no puede tener ojos. */
+    cx.beginPath();
+    cx.rect(x - A * .058, y - A * .87, A * .116, A * .09);
+    cx.fill();
+    // Pelo largo: cae por fuera de los hombros y llega abajo de la cintura.
+    cx.beginPath();
+    cx.moveTo(x - A * .098, y - A * .93);
+    cx.quadraticCurveTo(x - A * .175, y - A * .80, x - A * .150, y - A * .56);
+    cx.lineTo(x - A * .075, y - A * .60);
+    cx.lineTo(x - A * .062, y - A * .86);
+    cx.closePath(); cx.fill();
+    cx.beginPath();
+    cx.moveTo(x + A * .098, y - A * .93);
+    cx.quadraticCurveTo(x + A * .175, y - A * .80, x + A * .150, y - A * .56);
+    cx.lineTo(x + A * .075, y - A * .60);
+    cx.lineTo(x + A * .062, y - A * .86);
+    cx.closePath(); cx.fill();
+    cx.restore();
+  }
+
   var PINTA = {
 
     /* Las vías se cortan en el aire. Se dibuja el corte: dos puntas que se
@@ -84,23 +140,51 @@ var Anomalias = (function () {
       cx.restore();
     },
 
-    /* La música llega de todos lados: ondas que entran desde los bordes hacia
-       ella, no desde la calesita hacia afuera. */
+    /* La calesita no esta apoyada. La figura sube sola —eso lo hace el
+       dibujo, no esto— y aca va lo que cuenta que esta en el aire: la sombra
+       que se despega del piso y se aclara, y las luces del borde dando la
+       vuelta entera para el mismo lado, que es lo que no hace ninguna
+       calesita. No se convierte en nada. Cuando soltas, apoya.
+
+       Antes lo que escondia era la musica que le llegaba de todos lados, y se
+       dibujaba con ondas concentricas: era la segunda anomalia menos visible
+       de las catorce (1.696 pixeles contra los 42.793 del platillo) en un
+       juego que se trata de mirar. La frase se mudo al texto de llegada. */
     calesita: function (cx, fx, fy, E, t, v, extra, W, H, belX, piso) {
-      /* Las ondas convergen en ELLA, no en la calesita: el texto dice "me
-         llega de todos lados a la vez", asi que el centro es Bel. Antes
-         estaban centradas en la figura y el dibujo contradecia al texto. */
       var a = entra(v);
-      var ox = (belX !== undefined) ? belX : fx;
-      var oy = (piso !== undefined) ? piso - E * .40 : fy;
+      var suelo = (piso !== undefined) ? piso : fy + E;
+
+      /* La sombra: mas chica cuanto mas alto esta, y con el borde desvanecido.
+         En negro plano quedaba una elipse dura pegada al piso, que se leia
+         como una mancha y no como una sombra. */
       cx.save();
-      cx.strokeStyle = 'rgba(226,214,255,.5)';
-      for (var i = 0; i < 4; i++) {
-        var f = ((t * .35 + i * .25) % 1);
-        var r = Math.max(1, (1 - f) * Math.max(W, H) * .8);
-        cx.lineWidth = Math.max(.6, E * .010 * (1 - f));
-        cx.globalAlpha = a * .35 * f;
-        cx.beginPath(); cx.arc(ox, oy, r, 0, 6.2832); cx.stroke();
+      cx.globalAlpha = .85 * a;
+      cx.translate(fx, suelo + 2);
+      cx.scale(1, .11);
+      var rs = E * (.62 - a * .10);
+      var gs = cx.createRadialGradient(0, 0, 0, 0, 0, Math.max(1, rs));
+      /* Casi toda opaca y desvanecida solo en el borde. Con el degrade repartido
+         de punta a punta la sombra desaparecia: es negro sobre un fondo que ya
+         es casi negro, y lo unico que la hace existir es el contraste con el
+         suelo. Sin sombra, la calesita no se lee levantada, se lee mas alta. */
+      gs.addColorStop(0, 'rgba(0,0,0,1)');
+      gs.addColorStop(.74, 'rgba(0,0,0,.90)');
+      gs.addColorStop(1, 'rgba(0,0,0,0)');
+      cx.fillStyle = gs;
+      cx.beginPath(); cx.arc(0, 0, Math.max(1, rs), 0, 6.2832); cx.fill();
+      cx.restore();
+
+      // Las luces del borde, girando parejas.
+      cx.save();
+      for (var i = 0; i < 12; i++) {
+        var ang = t * 1.5 + i / 12 * 6.2832;
+        var lx = fx + Math.cos(ang) * E * .74;
+        var ly = fy + E * .52 + Math.sin(ang) * E * .13;
+        var frente = (Math.sin(ang) + 1) / 2;
+        cx.globalAlpha = a * (.20 + frente * .75);
+        halo(cx, lx, ly, E * .085, '210,230,255', .9);
+        cx.fillStyle = 'rgba(236,246,255,.95)';
+        cx.beginPath(); cx.arc(lx, ly, E * .022, 0, 6.2832); cx.fill();
       }
       cx.restore();
     },
@@ -156,6 +240,19 @@ var Anomalias = (function () {
       // La quietud: el haz no tiembla, late apenas.
       halo(cx, belX, piso - E * .30, E * (.34 + .04 * Math.sin(t * 1.4)), '255,240,205', .13 * a);
       cx.restore();
+
+      /* Y arriba, en la linterna, hay alguien.
+
+         El texto ya lo decia sin decirlo: "no esta barriendo el campo, me esta
+         buscando a mi... como quien se queda mas tranquilo sabiendo donde
+         estoy". Esto es solamente mostrar QUIEN. Una silueta de mujer, lejos,
+         quieta, mirando para abajo — no saluda, no se mueve, no se acerca. El
+         que la reconozca la va a reconocer; el que no, ve una figura en un
+         faro. Esa es toda la regla del juego con lo que no se nombra. */
+      /* Apoyada en el piso de la linterna, que es el rectangulo iluminado y no
+         donde nace el haz: medida contra el origen del haz quedaba parada
+         arriba de la cupula, como una antena. */
+      silueta(cx, ox + E * .01, fy - E * .455, E * .24, a);
     },
 
     /* Las ventanas están prendidas y adentro no hay nada que las prenda. */

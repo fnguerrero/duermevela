@@ -41,7 +41,11 @@ var Bel = (function () {
       /* Cuanto tiene los ojos cerrados por decision, no por parpadeo (0 a 1).
          Se cierra cada vez que el jugador toca: lo que ella ve no esta
          afuera. Lo pone el juego y baja solo. */
-      adentro: 0
+      adentro: 0,
+      /* Una sonrisa apenas (0 a 1). No la pone el andar ni el asombro: la pone
+         el juego, en el unico lugar donde ella reconoce algo. Baja sola, mas
+         lento que todo lo demas, porque una sonrisa no se apaga de golpe. */
+      sonrisa: 0
     };
   }
 
@@ -51,6 +55,7 @@ var Bel = (function () {
     /* Los ojos vuelven a abrirse solos, mas lento de lo que se cerraron: el
        gesto tiene que leerse, no pasar de largo. */
     if (b.adentro > 0) b.adentro = Math.max(0, b.adentro - dt * 1.15);
+    if (b.sonrisa > 0) b.sonrisa = Math.max(0, b.sonrisa - dt * .16);
     // Lo que la empuja o la asombra vuelve a cero solo, con distinta inercia:
     // el golpe pasa rapido, la impresion tarda.
     if (b.empuje) b.empuje *= Math.pow(.06, dt);
@@ -300,17 +305,25 @@ var Bel = (function () {
       cx.stroke();
     }
     // Labios.
+    /* La sonrisa no abre la boca ni ensancha nada: sube la comisura y le da
+       un poco mas de recorrido. A este tamano —la cabeza entra siete veces y
+       media en el alto— cualquier cosa mas grande deja de ser una sonrisa
+       leve y pasa a ser una mueca. */
+    var son = Math.max(0, Math.min(1, b.sonrisa || 0));
     cx.fillStyle = LABIO;
     cx.beginPath();
-    cx.ellipse(rCabeza * .46, cabezaY + rCabeza * .44, rCabeza * .130, rCabeza * .068, -.16, 0, 6.2832);
+    cx.ellipse(rCabeza * .46, cabezaY + rCabeza * (.44 - son * .015),
+               rCabeza * .130, rCabeza * (.068 - son * .008), -.16 - son * .10,
+               0, 6.2832);
     cx.fill();
     // Comisura levantada: alcanza para que no se vea seria.
     cx.strokeStyle = LABIO;
     cx.lineWidth = Math.max(.7, rCabeza * .045);
     cx.lineCap = 'round';
     cx.beginPath();
-    cx.moveTo(rCabeza * .34, cabezaY + rCabeza * .47);
-    cx.quadraticCurveTo(rCabeza * .28, cabezaY + rCabeza * .43, rCabeza * .26, cabezaY + rCabeza * .37);
+    cx.moveTo(rCabeza * (.34 + son * .02), cabezaY + rCabeza * (.47 + son * .02));
+    cx.quadraticCurveTo(rCabeza * (.28 - son * .02), cabezaY + rCabeza * (.43 - son * .03),
+                        rCabeza * (.26 - son * .04), cabezaY + rCabeza * (.37 - son * .09));
     cx.stroke();
     // Aro: chico, a la altura de la oreja, apenas asomando bajo el pelo.
     cx.strokeStyle = '#c9a24a';

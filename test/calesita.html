@@ -1,0 +1,224 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8">
+<title>La calesita — tres maneras de que esconda algo</title>
+<style>
+  html,body{margin:0;background:#07060e;color:#ece6d8;
+    font-family:'Cormorant Garamond',Georgia,serif}
+  h1{font-size:20px;font-weight:400;letter-spacing:.16em;text-transform:uppercase;
+    color:rgba(220,178,108,.9);margin:18px 0 2px;text-align:center}
+  .sub{text-align:center;color:rgba(236,230,216,.5);font-size:15px;margin:0 0 14px}
+  .fila{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;padding:0 14px 24px}
+  .caso{width:min(520px,46vw)}
+  canvas{width:100%;display:block;border:1px solid rgba(220,178,108,.22);border-radius:3px}
+  .rotu{font-size:15px;letter-spacing:.10em;color:rgba(236,196,132,.92);
+    margin:8px 0 2px;text-transform:uppercase}
+  .dice{font-size:15px;color:rgba(236,230,216,.62);line-height:1.45;margin:0}
+</style>
+</head><body>
+
+<h1>La calesita · tres maneras de que esconda algo</h1>
+<p class="sub">El ciclo se repite solo: llega, se queda mirando, suelta.</p>
+
+<div class="fila">
+  <div class="caso">
+    <canvas id="a" width="1100" height="700"></canvas>
+    <p class="rotu">A · Como está hoy</p>
+    <p class="dice">La música no sale de la calesita: le llega de todos lados a la vez.
+      Se tapa un oído y la sigue escuchando igual.</p>
+  </div>
+  <div class="caso">
+    <canvas id="b" width="1100" height="700"></canvas>
+    <p class="rotu">B · Se despega, y vuelve</p>
+    <p class="dice">Se levanta un dedo del piso y las luces giran como no giran las
+      de una calesita. Apoya de nuevo antes de que puedas asegurarlo.</p>
+  </div>
+  <div class="caso">
+    <canvas id="c" width="1100" height="700"></canvas>
+    <p class="rotu">C · Era un platillo, y se va</p>
+    <p class="dice">Lo que giraba no era una calesita. Se levanta entera y se va,
+      y el lugar queda vacío.</p>
+  </div>
+</div>
+
+<script src="../js/dibujo.js"></script>
+<script src="../js/bel.js"></script>
+<script src="../js/figuras.js"></script>
+<script src="../js/pintores.js"></script>
+<script src="../js/anomalias.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var W = 1100, H = 700;
+  var piso = H * .83;
+  var E = Math.max(W * .08, Math.min(W * .27, (piso - H * .29) / 2));
+  var fx = W * .5, fy = piso - E, belX = W * .18;
+  var escalaBel = (H * .255) / 176;
+
+  var bel = Bel.crear(belX, piso);
+  bel.mirando = 1;
+
+  /* El ciclo de mirada, igual que en el juego: entra rapido, se queda un rato
+     y se suelta. Sin esto no se puede comparar nada, porque las tres cosas que
+     hay que juzgar pasan justo en el movimiento. */
+  var CICLO = 6.2;
+  function vDe(t) {
+    var f = t % CICLO;
+    if (f < .9) return f / .9;          // llega
+    if (f < 4.4) return 1;              // se queda
+    if (f < 5.2) return 1 - (f - 4.4) / .8;  // suelta
+    return 0;                           // respira
+  }
+
+  function fondo(cx) {
+    cx.setTransform(1, 0, 0, 1, 0, 0);
+    var g = cx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#0a0817');
+    g.addColorStop(1, '#0d0b1c');
+    cx.fillStyle = g;
+    cx.fillRect(0, 0, W, H);
+  }
+
+  function suelo(cx) {
+    var s = cx.createLinearGradient(0, piso, 0, H);
+    s.addColorStop(0, 'rgba(7,5,16,0)');
+    s.addColorStop(.22, 'rgba(7,5,16,.34)');
+    s.addColorStop(.60, 'rgba(6,4,14,.72)');
+    s.addColorStop(1, 'rgba(4,3,11,.92)');
+    cx.fillStyle = s;
+    cx.fillRect(0, piso, W, H - piso);
+  }
+
+  function pintarBel(cx) {
+    Bel.dibujar(cx, bel, belX, piso, escalaBel, 1);
+  }
+
+  /* ---------- A: la de hoy ---------- */
+  function caso_a(cx, t, v) {
+    fondo(cx);
+    Pintores.pintar(cx, 'calesita', fx, fy, E, t, { alPiso: E, tension: 0 });
+    suelo(cx);
+    pintarBel(cx);
+    Anomalias.pintar(cx, 'calesita', fx, fy, E, t, v, {}, W, H, belX, piso);
+  }
+
+  /* ---------- B: se despega y vuelve ----------
+
+     La figura sube un poco y las luces del borde giran mas rapido y todas para
+     el mismo lado, que es lo que hace un platillo y no hace una calesita. No
+     se convierte en nada: cuando soltas, apoya. */
+  function caso_b(cx, t, v) {
+    var a = Math.min(1, v * 1.6);
+    var alza = a * E * .17;
+    fondo(cx);
+
+    // La sombra se achica y se aclara: es lo que dice que esta en el aire.
+    if (a > .01) {
+      cx.save();
+      cx.globalAlpha = .5 * a;
+      cx.fillStyle = '#000';
+      cx.beginPath();
+      cx.ellipse(fx, piso + 2, E * (.62 - a * .10), E * .07, 0, 0, 6.2832);
+      cx.fill();
+      cx.restore();
+    }
+
+    cx.save();
+    cx.translate(0, -alza);
+    Pintores.pintar(cx, 'calesita', fx, fy, E, t, { alPiso: E, tension: 0 });
+    cx.restore();
+
+    // Las luces: un anillo bajo el borde, girando parejo.
+    if (a > .01) {
+      cx.save();
+      for (var i = 0; i < 12; i++) {
+        var ang = (t * 1.5 + i / 12 * 6.2832);
+        var lx = fx + Math.cos(ang) * E * .74;
+        var ly = fy + E * .52 - alza + Math.sin(ang) * E * .13;
+        var frente = (Math.sin(ang) + 1) / 2;
+        cx.globalAlpha = a * (.20 + frente * .75);
+        Pintores.halo(cx, lx, ly, E * .085, '210,230,255', .9);
+        cx.fillStyle = 'rgba(236,246,255,.95)';
+        cx.beginPath(); cx.arc(lx, ly, E * .022, 0, 6.2832); cx.fill();
+      }
+      cx.restore();
+    }
+
+    suelo(cx);
+    pintarBel(cx);
+  }
+
+  /* ---------- C: era un platillo y se va ----------
+
+     La calesita se apaga mientras el platillo aparece en su lugar, y lo que
+     queda se levanta y se va del cuadro. Al soltar, el lugar queda vacio. */
+  function caso_c(cx, t, v) {
+    var a = Math.min(1, v * 1.6);
+    // Sube despacio al principio y se dispara al final.
+    var subida = Math.pow(a, 2.4) * H * .62;
+    fondo(cx);
+
+    if (a < 1) {
+      cx.save();
+      cx.globalAlpha = 1 - a;
+      Pintores.pintar(cx, 'calesita', fx, fy, E, t, { alPiso: E, tension: 0 });
+      cx.restore();
+    }
+    if (a > 0) {
+      cx.save();
+      cx.globalAlpha = Math.min(1, a * 1.4);
+      Pintores.pintar(cx, 'platillo', fx, fy - subida, E, t, { alPiso: E });
+      cx.restore();
+      // El haz que deja abajo mientras se va.
+      cx.save();
+      cx.globalAlpha = a * (1 - a * .5) * .5;
+      var hg = cx.createLinearGradient(0, fy - subida, 0, piso);
+      hg.addColorStop(0, 'rgba(200,220,255,.42)');
+      hg.addColorStop(1, 'rgba(200,220,255,0)');
+      cx.fillStyle = hg;
+      cx.beginPath();
+      cx.moveTo(fx - E * .30, fy - subida);
+      cx.lineTo(fx + E * .30, fy - subida);
+      cx.lineTo(fx + E * .95, piso);
+      cx.lineTo(fx - E * .95, piso);
+      cx.closePath(); cx.fill();
+      cx.restore();
+    }
+
+    suelo(cx);
+    pintarBel(cx);
+  }
+
+  var ca = document.getElementById('a').getContext('2d');
+  var cb = document.getElementById('b').getContext('2d');
+  var cc = document.getElementById('c').getContext('2d');
+
+  var t0 = performance.now(), anterior = t0;
+  function cuadro(ahora) {
+    var dt = Math.min(.05, (ahora - anterior) / 1000);
+    anterior = ahora;
+    var t = (ahora - t0) / 1000;
+    var v = vDe(t);
+    // Los ojos se le cierran mientras mira, como en el juego.
+    bel.adentro = v > .2 ? Math.min(1, bel.adentro + dt * 1.2) : 0;
+    bel.asombro = v > .2 ? Math.min(1, v) : 0;
+    Bel.actualizar(bel, dt, false);
+    caso_a(ca, t, v);
+    caso_b(cb, t, v);
+    caso_c(cc, t, v);
+    requestAnimationFrame(cuadro);
+  }
+  requestAnimationFrame(cuadro);
+
+  /* Para dejar las tres laminas en tools/capturas y poder mirarlas quietas. */
+  window.laminas = function (v) {
+    v = (v === undefined) ? 1 : v;
+    var t = 3;
+    caso_a(ca, t, v); caso_b(cb, t, v); caso_c(cc, t, v);
+    return Promise.all(['a', 'b', 'c'].map(function (k) {
+      return fetch('/_captura/calesita-' + k + '-' + Math.round(v * 100) + '.png',
+        { method: 'POST', body: document.getElementById(k).toDataURL('image/png') });
+    })).then(function () { return 'tres laminas guardadas'; });
+  };
+})();
+</script>
+</body></html>

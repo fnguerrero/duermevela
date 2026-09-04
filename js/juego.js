@@ -1069,6 +1069,22 @@
       mostrarAviso('lo viste', 'bien');
       Audio2.acierto();
 
+      /* En el faro, y solo en el faro, ella abre los ojos y sonrie apenas.
+
+         En todos los otros lugares cierra los ojos cuando el jugador toca:
+         lo que ve no esta afuera. Este es el unico donde si lo esta — hay
+         alguien arriba, en la linterna, y esa persona la esta mirando. Por eso
+         la excepcion es el gesto: no hace falta explicar nada, es el unico
+         momento del sueno en que ella mira para afuera.
+
+         La sonrisa es chiquita a proposito y casi no se ve a esta escala
+         —nueve pixeles de setecientos mil— pero esta, y quien se acerque a la
+         pantalla la va a encontrar. Agrandarla la volveria una mueca. */
+      if (J.lugar === 'faro') {
+        bel.adentro = 0;
+        bel.sonrisa = 1;
+      }
+
       /* El mundo se frena y se dice lo que este lugar escondia, con la figura
          vieja todavia delante. */
       if (J.vioAhora) {
@@ -1353,6 +1369,18 @@
        createRadialGradient tira IndexSizeError y no se dibuja nada. */
     var E = Math.max(W * .08, Math.min(vertical ? W * .30 : W * .27, cabe));
     var fy = alturaDe(J.lugar, J.destino, J.u, piso, E);
+    /* La calesita se despega del piso mientras la mirás, y apoya cuando
+       soltás. Va acá y no en la anomalía porque hay que MOVER la figura: las
+       anomalías dibujan encima y no la tocan.
+
+       No hace falta pedir que no haya destino. Cuando el instante se resuelve,
+       la transformación REBOBINA —medido: u va de 0,39 a 0,06 en dos décimas—
+       justo para que la figura vieja vuelva a estar entera mientras se muestra
+       lo que escondía. Pedir `!J.destino` era pedir el único caso que nunca
+       ocurre: durante la revelación siempre hay uno. */
+    if (J.lugar === 'calesita' && J.revelando > 0) {
+      fy -= E * .17 * Math.min(1, J.revelando * 1.6);
+    }
     /* Las figuras se mueven mas rapido cuanto mas descubierto esta el sueno.
        No es un efecto encima: es la misma animacion, acelerada, y por eso se
        lee como que el lugar se puso nervioso y no como un filtro. */
