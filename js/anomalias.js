@@ -48,54 +48,61 @@ var Anomalias = (function () {
     cx.save();
     // La luz que la recorta, apenas mas viva justo detras de ella.
     halo(cx, x, y - A * .55, A * 1.05, '255,240,205', .26 * alfa);
-    cx.fillStyle = 'rgba(16,12,22,' + (.80 * alfa).toFixed(3) + ')';
+
+    /* TODO el cuerpo es UN SOLO trazo con un solo relleno.
+
+       Dibujado como formas sueltas —vestido, torso, cuello, cabeza, pelo—, con
+       tinta translucida cada superposicion sumaba opacidad: donde el pelo
+       cruzaba la cabeza quedaba un parche oscuro y donde no, uno claro, y esos
+       parches dibujaban una cara. Aparecian dos ojos y dos cuernos sin que
+       nadie los hubiera dibujado. Con un unico fill las subrutas se funden y
+       la silueta queda pareja, que es lo unico que una silueta tiene que ser. */
+    cx.fillStyle = 'rgba(16,12,22,' + (.82 * alfa).toFixed(3) + ')';
+    cx.beginPath();
 
     /* Vestido: sale de la cintura y se abre en campana. La medida es lo unico
        que decide si esto se lee como una mujer o como un poste: abierto a un
-       cuarto del alto era un bicho de cabeza grande, cerrado a un decimo era un
-       alfil de ajedrez. Se abre a .155 y la curva sale de la cintura, no del
-       borde de abajo, que es lo que le da la caida. */
-    cx.beginPath();
+       cuarto del alto era un bicho, cerrado a un decimo un alfil de ajedrez. */
     cx.moveTo(x - A * .052, y - A * .630);
     cx.lineTo(x + A * .052, y - A * .630);
     cx.quadraticCurveTo(x + A * .085, y - A * .34, x + A * .155, y);
     cx.lineTo(x - A * .155, y);
     cx.quadraticCurveTo(x - A * .085, y - A * .34, x - A * .052, y - A * .630);
-    cx.closePath(); cx.fill();
+    cx.closePath();
 
-    // Torso: hombros caidos y angostos, cerrandose en la cintura.
-    cx.beginPath();
-    cx.moveTo(x - A * .078, y - A * .840);
-    cx.quadraticCurveTo(x - A * .042, y - A * .73, x - A * .052, y - A * .615);
-    cx.lineTo(x + A * .052, y - A * .615);
-    cx.quadraticCurveTo(x + A * .042, y - A * .73, x + A * .078, y - A * .840);
-    cx.quadraticCurveTo(x, y - A * .875, x - A * .078, y - A * .840);
-    cx.closePath(); cx.fill();
+    // Torso, cuello y cabeza, de un tiron: hombros caidos, cintura, y el
+    // cuello ancho para que no quede ni una rendija entre la cara y el pelo.
+    cx.moveTo(x - A * .052, y - A * .615);
+    cx.quadraticCurveTo(x - A * .042, y - A * .73, x - A * .078, y - A * .840);
+    cx.quadraticCurveTo(x - A * .052, y - A * .900, x - A * .050, y - A * .915);
+    cx.lineTo(x + A * .050, y - A * .915);
+    cx.quadraticCurveTo(x + A * .052, y - A * .900, x + A * .078, y - A * .840);
+    cx.quadraticCurveTo(x + A * .042, y - A * .73, x + A * .052, y - A * .615);
+    cx.closePath();
 
-    // Cuello. Tapa, ademas, el hueco por donde la luz se colaba entre la
-    // cabeza y el pelo: de cerca esos dos puntos claros se leian como ojos.
-    cx.beginPath();
-    cx.rect(x - A * .024, y - A * .90, A * .048, A * .07);
-    cx.fill();
-
-    // Cabeza.
-    cx.beginPath();
+    // Cabeza. El moveTo antes del arco evita que se enganche con la subruta
+    // anterior y le salga una linea cruzando el cuello.
+    cx.moveTo(x + A * .062, y - A * .928);
     cx.arc(x, y - A * .928, A * .062, 0, 6.2832);
-    cx.fill();
+    cx.closePath();
 
-    // Pelo: dos caidas finas, pegadas, que pasan la cintura.
-    cx.beginPath();
-    cx.moveTo(x - A * .060, y - A * .970);
-    cx.quadraticCurveTo(x - A * .112, y - A * .85, x - A * .092, y - A * .625);
+    // Pelo: dos caidas finas por fuera de los hombros, que pasan la cintura.
+    /* El de la izquierda va escrito al reves que el de la derecha, a
+       proposito. Espejarlo punto por punto le da la orientacion contraria, y
+       con un unico relleno (regla nonzero) una subruta al reves no suma: RESTA.
+       Quedaba un agujero con forma de perfil justo donde iria la cara. */
+    cx.moveTo(x - A * .030, y - A * .920);
     cx.lineTo(x - A * .048, y - A * .655);
-    cx.lineTo(x - A * .036, y - A * .905);
-    cx.closePath(); cx.fill();
-    cx.beginPath();
-    cx.moveTo(x + A * .060, y - A * .970);
+    cx.lineTo(x - A * .092, y - A * .625);
+    cx.quadraticCurveTo(x - A * .112, y - A * .85, x - A * .050, y - A * .952);
+    cx.closePath();
+    cx.moveTo(x + A * .050, y - A * .952);
     cx.quadraticCurveTo(x + A * .112, y - A * .85, x + A * .092, y - A * .625);
     cx.lineTo(x + A * .048, y - A * .655);
-    cx.lineTo(x + A * .036, y - A * .905);
-    cx.closePath(); cx.fill();
+    cx.lineTo(x + A * .030, y - A * .920);
+    cx.closePath();
+
+    cx.fill();
     cx.restore();
   }
 
