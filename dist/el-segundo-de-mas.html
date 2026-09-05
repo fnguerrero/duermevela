@@ -8361,6 +8361,24 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     });
   }
 
+  /* El color de la chispa cambia en el camino: sale del color del anillo y
+     llega con el del marcador. La luz se lleva el color de lo que viste y
+     aterriza con el color de donde queda anotado. El tono de salida se lee de
+     `Instante.tinta()`, asi que si el anillo cambia de color la chispa lo
+     sigue sola. */
+  var ORO_MARCADOR = [255, 226, 150];
+  function colorChispa(u, aclarar) {
+    var d = (Instante.tinta().lleno || '255,240,200').split(',');
+    var e = u * u * (3 - 2 * u);
+    var c = [];
+    for (var k = 0; k < 3; k++) {
+      var v = parseFloat(d[k]) + (ORO_MARCADOR[k] - parseFloat(d[k])) * e;
+      if (aclarar) v += (255 - v) * aclarar;
+      c.push(Math.round(v));
+    }
+    return c.join(',');
+  }
+
   function dibujarChispas(cx, dt, W, H) {
     if (!chispas.length) return;
     for (var i = chispas.length - 1; i >= 0; i--) {
@@ -8383,19 +8401,22 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
         var xk = c.x0 + (c.x1 - c.x0) * ek;
         var yk = c.y0 + (c.y1 - c.y0) * ek - Math.sin(uk * Math.PI) * H * .11;
         var ak = vida * (1 - k / 7) * .30;
+        var ck = colorChispa(uk);
         var g = cx.createRadialGradient(xk, yk, 0, xk, yk, Math.max(1, H * .012));
-        g.addColorStop(0, 'rgba(255,236,190,' + ak.toFixed(3) + ')');
-        g.addColorStop(1, 'rgba(255,236,190,0)');
+        g.addColorStop(0, 'rgba(' + ck + ',' + ak.toFixed(3) + ')');
+        g.addColorStop(1, 'rgba(' + ck + ',0)');
         cx.fillStyle = g;
         cx.beginPath(); cx.arc(xk, yk, H * .012, 0, 6.2832); cx.fill();
       }
       // Y la luz: halo ancho y un nucleo chico y blanco.
+      var col = colorChispa(u);
       var gh = cx.createRadialGradient(x, y, 0, x, y, Math.max(1, H * .042));
-      gh.addColorStop(0, 'rgba(255,240,200,' + (.55 * vida).toFixed(3) + ')');
-      gh.addColorStop(1, 'rgba(255,240,200,0)');
+      gh.addColorStop(0, 'rgba(' + col + ',' + (.55 * vida).toFixed(3) + ')');
+      gh.addColorStop(1, 'rgba(' + col + ',0)');
       cx.fillStyle = gh;
       cx.beginPath(); cx.arc(x, y, H * .042, 0, 6.2832); cx.fill();
-      cx.fillStyle = 'rgba(255,252,240,' + (.95 * vida).toFixed(3) + ')';
+      // El nucleo, del mismo color pero casi blanco: es lo que le da el brillo.
+      cx.fillStyle = 'rgba(' + colorChispa(u, .82) + ',' + (.95 * vida).toFixed(3) + ')';
       cx.beginPath(); cx.arc(x, y, Math.max(1.5, H * .0075), 0, 6.2832); cx.fill();
       cx.restore();
 
