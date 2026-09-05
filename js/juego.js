@@ -911,45 +911,34 @@
 
     var f = Guion.final(J.indicios, J.recorrido);
     elCierre.innerHTML = '';
-    f.partes.forEach(function (p) {
+    /* Y entran de a uno. Todo junto y de golpe, el final no tenia el respiro
+       que tiene el resto del juego, donde cada texto espera. El retraso va por
+       transicion y no por animacion: las animaciones arrancan al agregarse al
+       DOM, y estos parrafos se agregan antes de que el cierre se muestre, asi
+       que se habrian consumido sin que nadie los viera. */
+    f.partes.forEach(function (p, i) {
       var el = document.createElement('p');
       el.textContent = p;
+      el.style.transitionDelay = (i * 1.15).toFixed(2) + 's';
       elCierre.appendChild(el);
     });
-    /* Lo que llego a ver, escrito. El cierre hablaba de "lo que viste" sin
-       mostrarlo nunca, asi que no habia forma de saber que se habia perdido. */
-    var caja = document.createElement('div');
-    caja.className = 'hallazgos';
-    var titu = document.createElement('p');
-    titu.className = 'titu';
-    titu.textContent = 'Viste ' + J.indicios.length + ' de ' + Guion.PASOS;
-    caja.appendChild(titu);
-    if (J.indicios.length) {
-      var ul = document.createElement('ul');
-      J.indicios.forEach(function (ind) {
-        var li = document.createElement('li');
-        // Solo la primera oracion: el listado es un recordatorio, no el texto.
-        li.textContent = ind.split('. ')[0] + '.';
-        ul.appendChild(li);
-      });
-      caja.appendChild(ul);
-    } else {
-      var nada = document.createElement('p');
-      nada.className = 'nada';
-      nada.textContent = 'Nada. Ocho veces algo estuvo a punto de mostrarse.';
-      caja.appendChild(nada);
-    }
-    /* Y lo que se perdio, contado pero no revelado: saber que habia algo es
-       parte de lo que el juego quiere dejar. */
+    /* Aca iba el listado de lo que se vio, con vinetas y un "Viste 8 de 8"
+       arriba. Se saco: despues de tres parrafos en su voz aparecia un
+       inventario con puntaje, que se lee como logros desbloqueados y ademas
+       repetia lo que el parrafo ya nombra en prosa. Lo que se vio se cuenta
+       adentro del texto, con las palabras de ella.
+
+       Lo unico que se conserva de esa caja es el aviso de lo que se perdio,
+       porque eso el texto no lo dice y es parte de lo que el juego quiere
+       dejar: saber que habia algo mas. */
     if (J.perdidos.length) {
       var pp = document.createElement('p');
       pp.className = 'perdido';
       pp.textContent = J.perdidos.length === 1
         ? 'Otro lugar escondía algo y no llegaste a verlo.'
         : 'Otros ' + J.perdidos.length + ' lugares escondían algo y no llegaste a verlo.';
-      caja.appendChild(pp);
+      elCierre.appendChild(pp);
     }
-    elCierre.appendChild(caja);
 
     var firma = document.createElement('p');
     firma.className = 'firma';

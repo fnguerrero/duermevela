@@ -336,7 +336,12 @@ var Guion = (function () {
       vuelta: 'Mi cama, otra vez. Sigue igual de hecha y sigue igual de mía, ' +
               'con la misma arruga en el mismo lado, y yo sigo sin acordarme de ' +
               'haberla dejado acá ni de haberme levantado de ella.',
-      esconde: 'Estoy yo adentro, durmiendo.',
+      /* Sin la palabra: el dibujo ya la muestra ahi. Que se vea es mas fuerte
+         que que se lo digan, y ademas ningun texto del juego nombra lo que
+         esta pasando de verdad — este era el unico que se escapaba. */
+      esconde: 'Estoy yo adentro. Con la cara para el lado de la ventana y ' +
+               'una mano afuera de las sábanas, como la dejo siempre. No me ' +
+               'muevo. Me quedo un rato mirándome.',
       revela: 'puerta'
     }
   };
@@ -431,7 +436,9 @@ var Guion = (function () {
     ruina: 'Los pedazos abajo de los pedazos',
     bandada: 'Los pájaros que se ordenaban cuando los miraba',
     barca: 'La soga atada a nada',
-    cama: 'Yo, dormida'
+    /* La etiqueta va a la cita del cierre, asi que tampoco puede decirlo: si
+       no, el final termina nombrando justo lo unico que el juego nunca nombra. */
+    cama: 'Yo, ahí adentro'
   };
 
   /* De los textos de indicio guardados, a qué lugares corresponden. */
@@ -461,10 +468,10 @@ var Guion = (function () {
         partes: [
           'Abrí los ojos a las cuatro y monedas. Mi cuarto, mi techo, la ' +
           'persiana con la misma raya de luz de siempre.',
-          'Del sueño no me quedó nada. Un campo, cosas grandes, la sensación de ' +
-          'haber estado por entender algo y no haber llegado.',
-          'Me di vuelta y seguí durmiendo. A veces pasa: una estuvo ahí y no vio ' +
-          'nada.'
+          'No me quedó nada. Un campo, cosas grandes, la sensación de haber ' +
+          'estado por entender algo y no haber llegado.',
+          'Me di vuelta y cerré los ojos otra vez. A veces pasa: una estuvo ahí ' +
+          'y no vio nada.'
         ]
       };
     }
@@ -474,8 +481,8 @@ var Guion = (function () {
         partes: [
           'Abrí los ojos a las cuatro y monedas, con la cabeza en una cosa ' +
           'suelta que había visto y no sabía dónde poner.',
-          'No me acordaba del sueño entero. Me acordaba de un detalle, nítido, ' +
-          'de esos que quedan cuando todo lo demás se borra.',
+          'No me acordaba de todo. Me acordaba de un detalle, nítido, de esos ' +
+          'que quedan cuando lo demás se borra.',
           'Me pasa seguido, despierta: retengo la única cosa rara de una ' +
           'escena que a todos los demás les pareció normal.'
         ]
@@ -490,8 +497,7 @@ var Guion = (function () {
           'Nada de lo que había visto encajaba, y todas las cosas que no ' +
           'encajaban fallaban de la misma manera: se acomodaban cuando yo las ' +
           'miraba.' + citaDeVistos(indicios, 2),
-          'Ahí entendí lo primero: había estado durmiendo. Todo eso lo armé yo, ' +
-          'con lo puesto.'
+          'Ahí entendí lo primero: todo eso lo armé yo, con lo puesto.'
         ]
       };
     }
@@ -499,13 +505,11 @@ var Guion = (function () {
       titulo: 'Entendí',
       partes: [
         'Abrí los ojos a las cuatro y monedas, con esa claridad rara de cuando ' +
-        'el sueño te deja algo en la mano.',
-        'Había estado durmiendo, y eso era lo de menos. Lo importante era cómo ' +
-        'me di cuenta: cada cosa de ese lugar estaba esperando que yo la mirara ' +
-        'para terminar de existir.' + citaDeVistos(indicios, 3),
-        'No entendí el sueño: entendí que el sueño lo hice yo. Y que mirar una ' +
-        'cosa hasta que muestra lo que es no es algo que me pasa. Es algo que ' +
-        'hago, y lo vengo haciendo despierta desde siempre, sin ponerle nombre.'
+        'algo te queda en la mano.',
+        'Lo importante era cómo me di cuenta: cada cosa de ese lugar estaba ' +
+        'esperando que yo la mirara para terminar de existir.' +
+        citaDeVistos(indicios, 3),
+        'Me quedé mirando la raya de luz de la persiana un rato largo.'
       ]
     };
   }
@@ -585,11 +589,11 @@ var Guion = (function () {
          invitacion es que sigan ahi, no que vuelva a intentarlo. */
       parrafos: [
         'No viste ninguna. Ocho veces algo estuvo a punto de mostrarse, y las ' +
-        'ocho veces el sueño siguió.',
+        'ocho veces siguió de largo.',
         'No es un reproche ni una lástima: así se atraviesa casi todo. Uno ' +
         'pasa al lado de las cosas raras y sigue de largo, porque tiene cosas ' +
         'que hacer y porque no siempre hay con qué frenar.',
-        'Y sin embargo lo soñaste entero. Todo lo que hubo esta noche lo ' +
+        'Y sin embargo lo hiciste entero. Todo lo que hubo esta noche lo ' +
         'pusiste vos, incluso lo que no llegaste a mirar.',
         'Las cosas siguen ahí. No se van a ningún lado.'
       ]
