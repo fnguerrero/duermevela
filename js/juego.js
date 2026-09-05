@@ -848,11 +848,53 @@
        paso NUEVO. Llamarlo desde aca lo consume, y el paso nuevo se queda sin
        nadie que lo cierre — trabado con jugando=true para siempre. */
     var miPaso = J.paso;
-    luego(2400, function () {
-      if (J.paso !== miPaso) return;
-      if (J.congelado || J.vioAhora) return;
-      J.seguirPaso();
-    });
+    (function respaldo(ms) {
+      luego(ms, function () {
+        if (J.paso !== miPaso) return;
+        if (J.congelado || J.vioAhora) return;
+        /* Y no mientras el jugador todavia esta mirando.
+
+           Este reloj es un cinturon: cierra el paso cuando no paso nada. Pero
+           corria a los 2,4 s aunque la mirada siguiera abierta, y como
+           `seguirPaso` tiene una guarda para no correr dos veces, se la
+           consumia. Despues el jugador completaba el llenado, la revelacion
+           queria cerrar el paso y ya no habia nadie: el juego quedaba con
+           jugando=true para siempre, mostrando lo que escondia un lugar en el
+           que ya no estaba. Pasa apoyando entre 1,4 y 2,4 s —el llenado tarda
+           uno— que es exactamente lo que hace quien lee antes de decidir.
+
+           Como el cinturon no puede desaparecer, en vez de abandonar se
+           vuelve a mirar en medio segundo. */
+        if (mirada.activo && !mirada.resuelto) { respaldo(500); return; }
+        J.seguirPaso();
+      });
+    })(2400);
+  }
+
+  /* El guardian del paso.
+
+     Cerrar un paso depende de una cadena de relojes y callbacks —el texto de
+     lo que escondia, el de la carta, el respiro de despues— y si un eslabon se
+     pierde, `J.jugando` queda en true para siempre: las cartas se reparten
+     pero ninguna se puede jugar, y el juego se siente muerto sin decir nada.
+     Ya paso tres veces por causas distintas, asi que esto no arregla una: mira
+     el resultado.
+
+     Si la mutacion termino, no hay nada congelado, nada esperando un toque y
+     nadie mirando, el paso no tiene ninguna razon para seguir abierto. Se le
+     dan dos segundos por las dudas y se cierra solo. */
+  var abandonado = 0;
+  function vigilarPaso(dt) {
+    var abierto = J.jugando && J.u >= 1 && !J.destino && !J.congelado &&
+                  !esperando && !(mirada && mirada.activo) &&
+                  !elCierre.classList.contains('ver');
+    if (!abierto) { abandonado = 0; return; }
+    abandonado += dt;
+    if (abandonado < 2) return;
+    abandonado = 0;
+    if (J.recorrido[J.recorrido.length - 1] !== J.lugar) J.recorrido.push(J.lugar);
+    if (J.paso >= Guion.PASOS) terminar();
+    else llegar(false);
   }
 
   function terminar() {
@@ -1189,6 +1231,8 @@
         decir(visto, function () {
           J.congelado = false;
           J.vioAhora = null;
+          // Recien ahora el cartel puede decir donde estamos.
+          ponerRotulo(J.lugar);
           luego(1300, function () { if (J.seguirPaso) J.seguirPaso(); });
         });
       }
@@ -1311,6 +1355,7 @@
        final del juego, que es justamente lo que nadie tiene que sospechar
        hasta la ultima pantalla. */
     Cielo.actualizar(cielo, dt, J.paso < 2);
+    vigilarPaso(dt);
 
     /* Camina hasta su marca en la direccion que sea: al cambiar la figura la
        marca se corre, y Bel se acomoda unos pasos en vez de saltar. */
@@ -1373,8 +1418,12 @@
         J.lugar = J.destino.figura;
         J.color = J.destino.color;
         J.destino = null;
-        // El cartel viaja con la figura, no con el paso.
-        ponerRotulo(J.lugar);
+        /* El cartel viaja con la figura, no con el paso — salvo mientras se
+           esta mostrando lo que escondia el lugar ANTERIOR. Ahi el cartel
+           tiene que seguir siendo el de antes: si no, se lee "El agua" arriba
+           de un texto que habla de la calesita, y el juego se contradice justo
+           en el momento que mas importa. Se pone al terminar la revelacion. */
+        if (!J.congelado && !J.vioAhora) ponerRotulo(J.lugar);
       }
     }
     if (J.fogonazo > 0) J.fogonazo = Math.max(0, J.fogonazo - dt * .5 * RITMO);
