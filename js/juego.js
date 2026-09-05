@@ -2316,6 +2316,101 @@
     return { flojas: flojas, ok: flojas.length === 0, tabla: tabla };
   };
 
+  /* Donde cae lo que dibuja cada anomalia.
+
+     `verificarAnomalias` cuenta CUANTOS pixeles cambian; esto mira DONDE. El
+     corte de las vias de la montaña rusa estaba a tres cuartos de E de la via,
+     flotando en el cielo, y pasaba esa verificacion con 3.395 pixeles: se veia
+     algo, pero ese algo no era la cosa. Una anomalia despegada de su figura no
+     cuenta nada — se lee como una estrella fugaz que paso por ahi.
+
+     El metodo: se dibuja la figura sola y se guarda su silueta; se dilata esa
+     silueta unos pixeles (una anomalia puede asomar un poco por fuera, y
+     algunas salen a proposito: el haz del faro va a buscar a Bel, la sombra de
+     la calesita cae en el piso); despues se pinta la anomalia y se mira que
+     fraccion de lo que cambio cae dentro de esa silueta gorda. */
+  window.verificarUbicacion = function () {
+    var W = 1100, H = 700, ESC = 4;              // se mide a un cuarto de escala
+    var w = Math.floor(W / ESC), h = Math.floor(H / ESC);
+    var cv = document.createElement('canvas');
+    cv.width = W; cv.height = H;
+    var c2 = cv.getContext('2d');
+    var piso = H * .83;
+    var E = Math.max(W * .08, Math.min(W * .27, (piso - H * .29) / 2));
+    var fx = W * .5, fy = piso - E, belX = W * .18;
+    var FONDO = '#0b0917';
+
+    function fondo() {
+      c2.setTransform(1, 0, 0, 1, 0, 0);
+      c2.fillStyle = FONDO;
+      c2.fillRect(0, 0, W, H);
+    }
+    // Una foto reducida: true donde el pixel se aparta del fondo.
+    function siluetaDe(datos, base) {
+      var m = new Uint8Array(w * h);
+      for (var y = 0; y < h; y++) {
+        for (var x = 0; x < w; x++) {
+          var i = ((y * ESC) * W + x * ESC) * 4;
+          var d = base
+            ? Math.abs(datos[i] - base[i]) + Math.abs(datos[i+1] - base[i+1]) +
+              Math.abs(datos[i+2] - base[i+2])
+            : Math.abs(datos[i] - 11) + Math.abs(datos[i+1] - 9) + Math.abs(datos[i+2] - 23);
+          if (d > 26) m[y * w + x] = 1;
+        }
+      }
+      return m;
+    }
+    /* Dilatacion en dos pasadas de una dimension: en un solo barrido cuadrado
+       esto tardaba lo suyo en cada lugar, y son catorce. */
+    function engordar(m, r) {
+      var a = new Uint8Array(w * h), b = new Uint8Array(w * h), x, y, k;
+      for (y = 0; y < h; y++) for (x = 0; x < w; x++) {
+        if (!m[y * w + x]) continue;
+        for (k = -r; k <= r; k++) {
+          var xx = x + k;
+          if (xx >= 0 && xx < w) a[y * w + xx] = 1;
+        }
+      }
+      for (y = 0; y < h; y++) for (x = 0; x < w; x++) {
+        if (!a[y * w + x]) continue;
+        for (k = -r; k <= r; k++) {
+          var yy = y + k;
+          if (yy >= 0 && yy < h) b[yy * w + x] = 1;
+        }
+      }
+      return b;
+    }
+
+    var radio = Math.round(E * .10 / ESC);       // lo que puede asomar por fuera
+    var tabla = [], sueltas = [];
+    ['montania', 'platillo', 'calesita', 'laguna', 'faro', 'casa', 'arbol',
+     'reloj', 'luna', 'puerta', 'ruina', 'bandada', 'barca', 'cama'].forEach(function (k) {
+      fondo();
+      Pintores.pintar(c2, k, fx, fy, E, 3, { alPiso: E, tension: 0,
+                                             perfil: Figuras.perfilMontania() });
+      var conFigura = c2.getImageData(0, 0, W, H).data;
+      var gorda = engordar(siluetaDe(conFigura, null), radio);
+
+      Anomalias.pintar(c2, k, fx, fy, E, 3, 1, {}, W, H, belX, piso);
+      var conAnomalia = c2.getImageData(0, 0, W, H).data;
+      var cambio = siluetaDe(conAnomalia, conFigura);
+
+      var total = 0, pegados = 0;
+      for (var i = 0; i < cambio.length; i++) {
+        if (!cambio[i]) continue;
+        total++;
+        if (gorda[i]) pegados++;
+      }
+      var pct = total ? Math.round(pegados / total * 100) : 0;
+      tabla.push({ lugar: k, pegado: pct, puntos: total });
+      // Menos de un quinto pegado: lo que se dibuja esta en otro lado.
+      if (total && pct < 20) sueltas.push({ lugar: k, pegado: pct });
+    });
+
+    tabla.sort(function (a, b) { return a.pegado - b.pegado; });
+    return { tabla: tabla, sueltas: sueltas, ok: !sueltas.length };
+  };
+
   window.verificarTextos = function () {
     var fallas = [];
     var CLAVES = ['montania', 'platillo', 'calesita', 'laguna', 'faro', 'casa',

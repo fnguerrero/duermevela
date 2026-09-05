@@ -4190,15 +4190,56 @@ var Anomalias = (function () {
 
       cx.save();
       cx.globalAlpha = a;
-      // El tramo que falta, insinuado y hueco.
-      cx.setLineDash([E * .04, E * .05]);
-      cx.strokeStyle = 'rgba(214,222,255,' + (.22 * a).toFixed(3) + ')';
-      cx.lineWidth = Math.max(1, E * .012);
-      cx.beginPath();
-      cx.moveTo(px, py);
-      cx.lineTo(px + dx * E * .55, py + dy * E * .55);
-      cx.stroke();
-      cx.setLineDash([]);
+
+      /* Lo que falta no es una linea punteada que sigue derecho: es VIA.
+
+         Con un solo trazo bajando, el ojo lee una estela cayendo — una
+         estrella fugaz que pasa por ahi — y no unas vias cortadas. Dos cosas
+         lo arreglan. Una: se dibuja como via, con sus dos rieles y los
+         durmientes cruzados, que es lo unico que hace que una linea se lea
+         como una via. Dos: SUBE. Una montaña rusa que viene bajando, despues
+         sube; el lomo que seguiria es el que nadie construyo, y hacia arriba
+         ninguna estela cae. */
+      var pasos = 16, ancho = E * .050;
+      function fantasma(i) {
+        var f = i / pasos;
+        // Una curva que arranca en la direccion en que venia y se levanta.
+        var x = px + f * E * .62;
+        var y = py + dy * E * .10 * (1 - f) - Math.pow(f, 1.5) * E * .46;
+        return [x, y];
+      }
+      /* Segmento por segmento, cada uno con su trazo.
+
+         Escrito como un solo path con el alpha cambiando adentro del bucle no
+         funciona: globalAlpha se aplica cuando se hace el stroke, no por
+         punto, asi que valia solo el ultimo — y el ultimo es cero. Los rieles
+         quedaban invisibles y del fantasma se veian nada mas los durmientes,
+         cuatro marquitas sueltas en el aire. */
+      cx.strokeStyle = 'rgba(214,222,255,' + (.55 * a).toFixed(3) + ')';
+      cx.lineWidth = Math.max(1, E * .010);
+      for (var lado = -1; lado <= 1; lado += 2) {
+        for (var i = 0; i < pasos; i++) {
+          var q0 = fantasma(i), q1 = fantasma(i + 1);
+          // El desvanecimiento: lo que esta mas lejos casi no esta.
+          cx.globalAlpha = a * (1 - i / pasos) * .9;
+          cx.beginPath();
+          cx.moveTo(q0[0], q0[1] + lado * ancho * .5);
+          cx.lineTo(q1[0], q1[1] + lado * ancho * .5);
+          cx.stroke();
+        }
+      }
+      // Los durmientes, de a uno por medio, tambien apagandose.
+      cx.lineWidth = Math.max(1, E * .008);
+      for (var j = 0; j <= pasos; j += 2) {
+        var d0 = fantasma(j);
+        cx.globalAlpha = a * (1 - j / pasos) * .70;
+        cx.beginPath();
+        cx.moveTo(d0[0], d0[1] - ancho * .5);
+        cx.lineTo(d0[0], d0[1] + ancho * .5);
+        cx.stroke();
+      }
+
+      cx.globalAlpha = a;
       // El punto exacto donde deja de existir.
       halo(cx, px, py, E * .20, '255,236,190', .30 * a);
       cx.fillStyle = 'rgba(255,240,205,' + (.85 * a).toFixed(3) + ')';
@@ -9636,6 +9677,101 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
 
     tabla.sort(function (a, b) { return a.pixeles - b.pixeles; });
     return { flojas: flojas, ok: flojas.length === 0, tabla: tabla };
+  };
+
+  /* Donde cae lo que dibuja cada anomalia.
+
+     `verificarAnomalias` cuenta CUANTOS pixeles cambian; esto mira DONDE. El
+     corte de las vias de la montaña rusa estaba a tres cuartos de E de la via,
+     flotando en el cielo, y pasaba esa verificacion con 3.395 pixeles: se veia
+     algo, pero ese algo no era la cosa. Una anomalia despegada de su figura no
+     cuenta nada — se lee como una estrella fugaz que paso por ahi.
+
+     El metodo: se dibuja la figura sola y se guarda su silueta; se dilata esa
+     silueta unos pixeles (una anomalia puede asomar un poco por fuera, y
+     algunas salen a proposito: el haz del faro va a buscar a Bel, la sombra de
+     la calesita cae en el piso); despues se pinta la anomalia y se mira que
+     fraccion de lo que cambio cae dentro de esa silueta gorda. */
+  window.verificarUbicacion = function () {
+    var W = 1100, H = 700, ESC = 4;              // se mide a un cuarto de escala
+    var w = Math.floor(W / ESC), h = Math.floor(H / ESC);
+    var cv = document.createElement('canvas');
+    cv.width = W; cv.height = H;
+    var c2 = cv.getContext('2d');
+    var piso = H * .83;
+    var E = Math.max(W * .08, Math.min(W * .27, (piso - H * .29) / 2));
+    var fx = W * .5, fy = piso - E, belX = W * .18;
+    var FONDO = '#0b0917';
+
+    function fondo() {
+      c2.setTransform(1, 0, 0, 1, 0, 0);
+      c2.fillStyle = FONDO;
+      c2.fillRect(0, 0, W, H);
+    }
+    // Una foto reducida: true donde el pixel se aparta del fondo.
+    function siluetaDe(datos, base) {
+      var m = new Uint8Array(w * h);
+      for (var y = 0; y < h; y++) {
+        for (var x = 0; x < w; x++) {
+          var i = ((y * ESC) * W + x * ESC) * 4;
+          var d = base
+            ? Math.abs(datos[i] - base[i]) + Math.abs(datos[i+1] - base[i+1]) +
+              Math.abs(datos[i+2] - base[i+2])
+            : Math.abs(datos[i] - 11) + Math.abs(datos[i+1] - 9) + Math.abs(datos[i+2] - 23);
+          if (d > 26) m[y * w + x] = 1;
+        }
+      }
+      return m;
+    }
+    /* Dilatacion en dos pasadas de una dimension: en un solo barrido cuadrado
+       esto tardaba lo suyo en cada lugar, y son catorce. */
+    function engordar(m, r) {
+      var a = new Uint8Array(w * h), b = new Uint8Array(w * h), x, y, k;
+      for (y = 0; y < h; y++) for (x = 0; x < w; x++) {
+        if (!m[y * w + x]) continue;
+        for (k = -r; k <= r; k++) {
+          var xx = x + k;
+          if (xx >= 0 && xx < w) a[y * w + xx] = 1;
+        }
+      }
+      for (y = 0; y < h; y++) for (x = 0; x < w; x++) {
+        if (!a[y * w + x]) continue;
+        for (k = -r; k <= r; k++) {
+          var yy = y + k;
+          if (yy >= 0 && yy < h) b[yy * w + x] = 1;
+        }
+      }
+      return b;
+    }
+
+    var radio = Math.round(E * .10 / ESC);       // lo que puede asomar por fuera
+    var tabla = [], sueltas = [];
+    ['montania', 'platillo', 'calesita', 'laguna', 'faro', 'casa', 'arbol',
+     'reloj', 'luna', 'puerta', 'ruina', 'bandada', 'barca', 'cama'].forEach(function (k) {
+      fondo();
+      Pintores.pintar(c2, k, fx, fy, E, 3, { alPiso: E, tension: 0,
+                                             perfil: Figuras.perfilMontania() });
+      var conFigura = c2.getImageData(0, 0, W, H).data;
+      var gorda = engordar(siluetaDe(conFigura, null), radio);
+
+      Anomalias.pintar(c2, k, fx, fy, E, 3, 1, {}, W, H, belX, piso);
+      var conAnomalia = c2.getImageData(0, 0, W, H).data;
+      var cambio = siluetaDe(conAnomalia, conFigura);
+
+      var total = 0, pegados = 0;
+      for (var i = 0; i < cambio.length; i++) {
+        if (!cambio[i]) continue;
+        total++;
+        if (gorda[i]) pegados++;
+      }
+      var pct = total ? Math.round(pegados / total * 100) : 0;
+      tabla.push({ lugar: k, pegado: pct, puntos: total });
+      // Menos de un quinto pegado: lo que se dibuja esta en otro lado.
+      if (total && pct < 20) sueltas.push({ lugar: k, pegado: pct });
+    });
+
+    tabla.sort(function (a, b) { return a.pegado - b.pegado; });
+    return { tabla: tabla, sueltas: sueltas, ok: !sueltas.length };
   };
 
   window.verificarTextos = function () {
