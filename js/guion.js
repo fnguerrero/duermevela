@@ -356,9 +356,17 @@ var Guion = (function () {
     // Lo que fue. Los recuerdos: se elige con el mazo entero del tramo.
     { nombre: 'fue', hasta: 3, libre: true,
       lugares: ['arbol', 'calesita', 'laguna', 'luna'] },
-    // Lo que paso. En orden y sin alternativa: la tormenta y lo que quedo.
+    /* Lo que paso. En orden y sin alternativa.
+
+       Primero el derrumbe y despues la barca, y no al reves. Estaba al reves y
+       contaba otra cosa sin querer: como cada carta transforma un lugar en el
+       siguiente, lo que se veia en pantalla era la barca desarmandose en
+       escombros — o sea, lo unico que la sostiene haciendose pedazos. Ahora es
+       al derecho: se cayo algo enorme y no hay explicacion, y de esos mismos
+       pedazos se arma algo que se mece fuerte y no se va a ningun lado. El
+       tramo del dolor termina en lo que la salva y no en lo que se cayo. */
     { nombre: 'paso', hasta: 5, libre: false,
-      orden: ['barca', 'ruina'] },
+      orden: ['ruina', 'barca'] },
     /* Lo que queda. Se vuelve a elegir, con lo que sobro del mazo.
 
        Los pajaros entran aca. Eran el unico de los catorce lugares que no
