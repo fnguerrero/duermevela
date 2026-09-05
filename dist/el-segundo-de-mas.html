@@ -131,6 +131,24 @@
   #relato{transform:translateY(-10px)}
   #relato.ver{opacity:1;transform:translateY(0)}
 
+  /* Lo que un lugar escondia no se lee como un parrafo mas.
+
+     Es el premio de haberse quedado mirando, y hasta ahora usaba exactamente
+     el mismo panel que cualquier otro texto del juego. Ahora entra distinto:
+     italica, mas aire entre renglones, menos ancho —para que el bloque se vea
+     mas corto de lo que es— y una linea fina arriba del color del anillo, que
+     es lo que lo ata al gesto de mirar. */
+  #relato.revela{position:relative;font-style:italic;font-weight:300;
+    line-height:1.62;letter-spacing:.012em;color:#fbf6ea;
+    padding:26px 44px 20px}
+  #relato.revela::before{content:"";position:absolute;left:50%;top:10px;
+    transform:translateX(-50%);width:54px;height:1px;
+    background:linear-gradient(90deg,
+      rgba(120,222,250,0), rgba(120,222,250,.85), rgba(120,222,250,0))}
+  @media (max-width:560px){
+    #relato.revela{padding:22px 26px 18px}
+  }
+
   /* El relato ya no se va solo: espera. Este es el unico aviso de que la
      pelota la tiene el jugador, asi que tiene que verse sin robarle atencion
      al texto — de ahi que aparezca recien despues de un rato y lata despacio. */
@@ -7588,11 +7606,14 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     if (elSeguir) elSeguir.classList.remove('ver');
   }
 
-  function decir(texto, alTerminar) {
+  /* `revela` marca el unico texto que no es narracion sino hallazgo: lo que el
+     lugar escondia. Se pinta distinto para que no se confunda con el resto. */
+  function decir(texto, alTerminar, revela) {
     elRelato.classList.remove('ver');
     cancelarEspera();
     luego(700, function () {
       elRelato.textContent = texto;
+      elRelato.classList.toggle('revela', !!revela);
       elRelato.classList.add('ver');
       if (alTerminar) pedirSeguir(alTerminar, tiempoDeLectura(texto));
     });
@@ -8522,7 +8543,7 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
           // Recien ahora el cartel puede decir donde estamos.
           ponerRotulo(J.lugar);
           luego(1300, function () { if (J.seguirPaso) J.seguirPaso(); });
-        });
+        }, true);
       }
       luego(1400, function () {
         /* Ya no hace falta decir donde queda anotado: la chispa se va hasta el

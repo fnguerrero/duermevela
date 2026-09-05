@@ -300,11 +300,14 @@
     if (elSeguir) elSeguir.classList.remove('ver');
   }
 
-  function decir(texto, alTerminar) {
+  /* `revela` marca el unico texto que no es narracion sino hallazgo: lo que el
+     lugar escondia. Se pinta distinto para que no se confunda con el resto. */
+  function decir(texto, alTerminar, revela) {
     elRelato.classList.remove('ver');
     cancelarEspera();
     luego(700, function () {
       elRelato.textContent = texto;
+      elRelato.classList.toggle('revela', !!revela);
       elRelato.classList.add('ver');
       if (alTerminar) pedirSeguir(alTerminar, tiempoDeLectura(texto));
     });
@@ -1234,7 +1237,7 @@
           // Recien ahora el cartel puede decir donde estamos.
           ponerRotulo(J.lugar);
           luego(1300, function () { if (J.seguirPaso) J.seguirPaso(); });
-        });
+        }, true);
       }
       luego(1400, function () {
         /* Ya no hace falta decir donde queda anotado: la chispa se va hasta el

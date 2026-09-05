@@ -1,0 +1,189 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8">
+<title>El momento de ver — cinco maneras</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap">
+<style>
+  html,body{margin:0;background:#07060e;color:#ece6d8;
+    font-family:'Cormorant Garamond',Georgia,serif}
+  h1{font-size:19px;font-weight:400;letter-spacing:.16em;text-transform:uppercase;
+    color:rgba(220,178,108,.9);margin:18px 0 2px;text-align:center}
+  .sub{text-align:center;color:rgba(236,230,216,.45);font-size:15px;margin:0 0 16px}
+  .fila{display:flex;flex-wrap:wrap;gap:18px;justify-content:center;padding:0 16px 26px}
+  .caso{width:min(620px,46vw)}
+  .marco{position:relative;border:1px solid rgba(220,178,108,.18);border-radius:3px;
+    overflow:hidden}
+  canvas{width:100%;display:block}
+  .rotu{font-size:14px;letter-spacing:.12em;text-transform:uppercase;
+    color:rgba(236,196,132,.9);margin:9px 0 2px;text-align:center}
+  .dice{font-size:14.5px;color:rgba(236,230,216,.55);line-height:1.45;margin:0;
+    text-align:center}
+
+  /* El texto, tal como está hoy en el juego. */
+  .txt{position:absolute;left:50%;transform:translateX(-50%);
+    top:6%;width:84%;margin:0;text-align:center;
+    font-size:clamp(14px,1.5vw,19px);line-height:1.45;color:#f6f1e6;
+    padding:12px 26px;
+    background:radial-gradient(ellipse 62% 74% at 50% 50%,
+      rgba(8,6,14,.93) 0%, rgba(8,6,14,.88) 45%,
+      rgba(8,6,14,.55) 74%, rgba(8,6,14,0) 100%);
+    text-shadow:0 1px 3px rgba(0,0,0,1), 0 2px 16px rgba(0,0,0,.95);
+    transition:opacity .8s}
+
+  /* C · el texto de la revelación, distinto del relato común. */
+  .txt.aparte{font-style:italic;font-weight:300;letter-spacing:.012em;
+    line-height:1.62;color:#fbf6ea;width:74%;padding:26px 30px 22px}
+  .txt.aparte::before{content:"";position:absolute;left:50%;top:9px;
+    transform:translateX(-50%);width:52px;height:1px;
+    background:linear-gradient(90deg,
+      rgba(120,222,250,0), rgba(120,222,250,.85), rgba(120,222,250,0))}
+
+  /* E · el texto cerca de lo que pasó, no arriba del todo. */
+  .txt.cerca{top:auto;bottom:9%;width:70%;
+    font-size:clamp(13px,1.35vw,17px);padding:16px 24px}
+</style>
+</head><body>
+
+<h1>El momento de ver · cinco maneras</h1>
+<p class="sub">La misma revelación de la calesita, con el ciclo del juego. Se repite solo.</p>
+
+<div class="fila" id="fila"></div>
+
+<script src="../js/dibujo.js"></script>
+<script src="../js/bel.js"></script>
+<script src="../js/figuras.js"></script>
+<script src="../js/pintores.js"></script>
+<script src="../js/anomalias.js"></script>
+<script src="../js/instante.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var TEXTO = 'No está apoyada. Se levantó un dedo del piso y sigue girando ' +
+              'ahí arriba, con las luces del borde dando toda la vuelta para ' +
+              'el mismo lado. Cuando aflojo la vista apoya de nuevo, y no ' +
+              'queda marca en la tierra.';
+
+  var CASOS = [
+    { id: 'a', rotu: 'A · como está hoy',
+      dice: 'El texto de lo que escondió usa el mismo panel que cualquier otro.' },
+    { id: 'b', rotu: 'B · el mundo se apaga',
+      dice: 'Todo baja de brillo y queda encendida solo la anomalía.',
+      apaga: true },
+    { id: 'c', rotu: 'C · el texto, distinto',
+      dice: 'Itálica, más aire y una línea fina arriba: se siente otra cosa.',
+      clase: 'aparte' },
+    { id: 'd', rotu: 'D · se escribe',
+      dice: 'Las palabras entran de a poco, como si lo estuviera notando.',
+      escribe: true },
+    { id: 'e', rotu: 'E · cerca de lo que pasó',
+      dice: 'El texto baja al lado de la cosa, en vez de irse arriba del todo.',
+      clase: 'cerca' }
+  ];
+
+  var W = 900, H = 620;
+  var piso = H * .83;
+  var E = Math.max(W * .08, Math.min(W * .27, (piso - H * .29) / 2));
+  var fx = W * .5, belX = W * .18;
+  var escalaBel = (H * .255) / 176;
+
+  var fila = document.getElementById('fila');
+  var casos = CASOS.map(function (c) {
+    var caja = document.createElement('div'); caja.className = 'caso';
+    var marco = document.createElement('div'); marco.className = 'marco';
+    var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    var p = document.createElement('p');
+    p.className = 'txt' + (c.clase ? ' ' + c.clase : '');
+    marco.appendChild(cv); marco.appendChild(p);
+    caja.appendChild(marco);
+    var r = document.createElement('p'); r.className = 'rotu'; r.textContent = c.rotu;
+    var d = document.createElement('p'); d.className = 'dice'; d.textContent = c.dice;
+    caja.appendChild(r); caja.appendChild(d);
+    fila.appendChild(caja);
+    var bel = Bel.crear(belX, piso); bel.mirando = 1;
+    return { cfg: c, cx: cv.getContext('2d'), p: p, bel: bel };
+  });
+
+  /* El ciclo: la anomalía entra, el texto se queda un rato, y todo se suelta. */
+  var CICLO = 11;
+  function fase(u) {
+    if (u < .08) return { rev: u / .08, txt: 0 };
+    if (u < .82) return { rev: 1, txt: Math.min(1, (u - .08) / .06) };
+    if (u < .92) return { rev: 1 - (u - .82) / .10, txt: 1 - (u - .82) / .10 };
+    return { rev: 0, txt: 0 };
+  }
+
+  function escena(c, t, f) {
+    var cx = c.cx;
+    cx.setTransform(1, 0, 0, 1, 0, 0);
+    var g = cx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#0a0817'); g.addColorStop(1, '#0d0b1c');
+    cx.fillStyle = g; cx.fillRect(0, 0, W, H);
+
+    // La calesita, levantada mientras dura la revelación (como en el juego).
+    var fy = piso - E * .68 - E * .17 * f.rev;
+    Pintores.pintar(cx, 'calesita', fx, fy, E, t, { alPiso: E, tension: 0 });
+
+    var s = cx.createLinearGradient(0, piso, 0, H);
+    s.addColorStop(0, 'rgba(7,5,16,0)');
+    s.addColorStop(.6, 'rgba(6,4,14,.72)');
+    s.addColorStop(1, 'rgba(4,3,11,.92)');
+    cx.fillStyle = s; cx.fillRect(0, piso, W, H - piso);
+
+    c.bel.adentro = f.rev;
+    Bel.dibujar(cx, c.bel, belX, piso, escalaBel, 1);
+    Anomalias.pintar(cx, 'calesita', fx, fy, E, t, f.rev, {}, W, H, belX, piso);
+
+    /* B · el mundo se apaga: un velo oscuro con un hueco donde está la cosa.
+       No baja el brillo de la figura, baja el de TODO LO DEMÁS, que es lo que
+       hace que parezca que el sueño se corre para dejarte ver. */
+    if (c.cfg.apaga && f.rev > .01) {
+      var v = cx.createRadialGradient(fx, fy, E * .5, fx, fy, Math.max(W, H) * .62);
+      v.addColorStop(0, 'rgba(4,3,10,0)');
+      v.addColorStop(.42, 'rgba(4,3,10,' + (.52 * f.rev).toFixed(3) + ')');
+      v.addColorStop(1, 'rgba(4,3,10,' + (.88 * f.rev).toFixed(3) + ')');
+      cx.fillStyle = v; cx.fillRect(0, 0, W, H);
+    }
+
+    // El vineteado de siempre, para que se vea como en el juego.
+    var vin = cx.createRadialGradient(W * .5, H * .48, Math.min(W, H) * .30,
+                                      W * .5, H * .48, Math.max(W, H) * .78);
+    vin.addColorStop(0, 'rgba(0,0,0,0)');
+    vin.addColorStop(1, 'rgba(0,0,0,.42)');
+    cx.fillStyle = vin; cx.fillRect(0, 0, W, H);
+  }
+
+  function texto(c, f) {
+    c.p.style.opacity = f.txt.toFixed(2);
+    if (!c.cfg.escribe) {
+      if (c.p.textContent !== TEXTO) c.p.textContent = TEXTO;
+      return;
+    }
+    /* D · se escribe. Por palabras y no por letras: letra a letra se lee como
+       una terminal, y esto tiene que leerse como alguien notando algo. */
+    var palabras = TEXTO.split(' ');
+    var cuantas = Math.round(Math.min(1, f.txt * 1.9) * palabras.length);
+    var parcial = palabras.slice(0, cuantas).join(' ');
+    if (c.p.textContent !== parcial) c.p.textContent = parcial;
+  }
+
+  var t0 = performance.now();
+  function cuadro(ahora) {
+    var t = (ahora - t0) / 1000;
+    var f = fase((t % CICLO) / CICLO);
+    casos.forEach(function (c) { escena(c, t, f); texto(c, f); });
+    requestAnimationFrame(cuadro);
+  }
+  requestAnimationFrame(cuadro);
+
+  window.laminas = function (u) {
+    u = (u === undefined) ? .45 : u;
+    var f = fase(u);
+    casos.forEach(function (c) { escena(c, 3, f); texto(c, f); });
+    return Promise.all(casos.map(function (c) {
+      return fetch('/_captura/revelacion-' + c.cfg.id + '.png',
+        { method: 'POST', body: c.cx.canvas.toDataURL('image/png') });
+    })).then(function () { return 'laminas guardadas (sin el texto, que es HTML)'; });
+  };
+})();
+</script>
+</body></html>
