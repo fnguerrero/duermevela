@@ -1565,7 +1565,13 @@
                   tension: J.tensionSuave,
                   /* Lo que esconden los pajaros no se dibuja encima: se les
                      pide a ellos. Cuanto mas revelado, mas juntos baten. */
-                  sincro: J.lugar === 'bandada' ? J.revelando : 0 };
+                  sincro: J.lugar === 'bandada' ? J.revelando : 0,
+                  /* Y las vias se deshacen en la punta en vez de que se
+                     dibuje encima el tramo que faltaria: lo que no existe no
+                     se dibuja. */
+                  corte: J.lugar === 'montania' ? J.revelando : 0,
+                  // Y la luz del platillo se apaga de verdad, no se tapa.
+                  apaga: J.lugar === 'platillo' ? J.revelando : 0 };
     var u = J.u;
 
     // Halo propio: cada figura tine el aire que la rodea con su color.
@@ -2324,6 +2330,21 @@
                                              perfil: Figuras.perfilMontania() });
       c2.restore();
       var antes = foto();
+
+      /* Lo que se mide es lo que ve el jugador, y en varios lugares eso ya no
+         lo dibuja la anomalia sino la FIGURA: los pajaros se sincronizan, las
+         vias se deshacen en la punta, el platillo apaga su luz. Todo eso se
+         hace en el pintor, porque apagar una luz es dejar de dibujarla y lo
+         que no existe no se dibuja — un parche encima nunca apaga, tapa. Asi
+         que el segundo cuadro se pinta con el lugar ya revelado. */
+      c2.setTransform(1, 0, 0, 1, 0, 0);
+      c2.fillStyle = '#0b0917';
+      c2.fillRect(0, 0, W, H);
+      c2.save();
+      Pintores.pintar(c2, k, fx, fy, E, 3, { alPiso: E, tension: 0,
+                                             perfil: Figuras.perfilMontania(),
+                                             sincro: 1, corte: 1, apaga: 1 });
+      c2.restore();
       Anomalias.pintar(c2, k, fx, fy, E, 3, 1, {}, W, H, belX, piso);
       var cambio = cuantosCambiaron(antes, foto());
       tabla.push({ lugar: k, pixeles: cambio });

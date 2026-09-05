@@ -1,0 +1,191 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8">
+<title>Las vías cortadas — cinco maneras</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap">
+<style>
+  html,body{margin:0;background:#07060e;color:#ece6d8;
+    font-family:'Cormorant Garamond',Georgia,serif}
+  h1{font-size:19px;font-weight:400;letter-spacing:.16em;text-transform:uppercase;
+    color:rgba(220,178,108,.9);margin:18px 0 2px;text-align:center}
+  .sub{text-align:center;color:rgba(236,230,216,.5);font-size:15px;margin:0 0 6px}
+  .dicho{text-align:center;color:rgba(246,241,230,.75);font-size:16px;
+    font-style:italic;max-width:64ch;margin:0 auto 16px;line-height:1.5}
+  .fila{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;padding:0 16px 24px}
+  .caso{width:min(560px,31vw)}
+  canvas{width:100%;display:block;border:1px solid rgba(220,178,108,.18);border-radius:3px}
+  .rotu{font-size:14px;letter-spacing:.12em;text-transform:uppercase;
+    color:rgba(236,196,132,.9);margin:8px 0 2px;text-align:center}
+  .dice{font-size:14.5px;color:rgba(236,230,216,.55);line-height:1.45;margin:0;
+    text-align:center}
+</style>
+</head><body>
+
+<h1>Las vías cortadas · cinco maneras</h1>
+<p class="sub">El ciclo del juego: entra, se queda, se suelta.</p>
+<p class="dicho">"Las vías no terminan en ningún lado. Suben, bajan, y en la punta se cortan
+en el aire, como si nadie se hubiera tomado el trabajo de imaginarles un final.
+Nadie que las mirara desde abajo lo notaría. Yo las estoy mirando desde abajo."</p>
+
+<div class="fila" id="fila"></div>
+
+<script src="../js/dibujo.js"></script>
+<script src="../js/figuras.js"></script>
+<script src="../js/pintores.js"></script>
+<script src="../js/anomalias.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var W = 1100, H = 700;
+  var piso = H * .83;
+  var E = Math.max(W * .08, Math.min(W * .27, (piso - H * .29) / 2));
+  var fx = W * .5, fy = piso - E;
+  var FONDO1 = '#0a0817', FONDO2 = '#0d0b1c';
+
+  var pts = Figuras.perfilMontania();
+  var ult = pts[pts.length - 1], ante = pts[pts.length - 2];
+  function P(p) { return [fx + E * p[0], fy + E * p[1]]; }
+
+  var CASOS = [
+    { id: 'a', rotu: 'A · la de ahora',
+      dice: 'El tramo que falta, dibujado como vía fantasma que sube.' },
+    { id: 'b', rotu: 'B · se deshace en la punta',
+      dice: 'El último pedazo de vía se adelgaza y se apaga. Nada sigue.' },
+    { id: 'c', rotu: 'C · no vuelve al piso',
+      dice: 'Se marca el vacío debajo: la vía termina arriba y no baja nunca.' },
+    { id: 'd', rotu: 'D · el vagón llega y se acaba',
+      dice: 'El vagón avanza hasta la punta y queda ahí, con nada delante.' },
+    { id: 'e', rotu: 'E · solo el punto',
+      dice: 'La punta encendida y nada más. Lo más sobrio.' }
+  ];
+
+  var fila = document.getElementById('fila');
+  var casos = CASOS.map(function (c) {
+    var caja = document.createElement('div'); caja.className = 'caso';
+    var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    caja.appendChild(cv);
+    var r = document.createElement('p'); r.className = 'rotu'; r.textContent = c.rotu;
+    var d = document.createElement('p'); d.className = 'dice'; d.textContent = c.dice;
+    caja.appendChild(r); caja.appendChild(d);
+    fila.appendChild(caja);
+    return { cfg: c, cx: cv.getContext('2d') };
+  });
+
+  function halo(cx, x, y, r, col, alfa) {
+    var g = cx.createRadialGradient(x, y, 0, x, y, Math.max(1, r));
+    g.addColorStop(0, 'rgba(' + col + ',' + alfa.toFixed(3) + ')');
+    g.addColorStop(1, 'rgba(' + col + ',0)');
+    cx.fillStyle = g;
+    cx.beginPath(); cx.arc(x, y, Math.max(1, r), 0, 6.2832); cx.fill();
+  }
+
+  /* B · borrar el ultimo tramo de via y volver a dibujarlo desvanecido.
+     Se tapa con el color del fondo y se redibuja: es la unica forma de tocar
+     una figura desde encima sin meter mano en el pintor. */
+  function deshacer(cx, a) {
+    var p0 = P(pts[pts.length - 3]), p1 = P(ult);
+    var gordo = E * .06;
+    cx.save();
+    cx.globalAlpha = a;
+    cx.strokeStyle = FONDO2;
+    cx.lineWidth = gordo;
+    cx.lineCap = 'round';
+    cx.beginPath(); cx.moveTo(p0[0], p0[1]); cx.lineTo(p1[0], p1[1]); cx.stroke();
+    // Y las vigas de ese tramo tambien se van.
+    cx.lineWidth = gordo * 1.5;
+    cx.beginPath(); cx.moveTo(p1[0], p1[1]); cx.lineTo(p1[0], piso); cx.stroke();
+    // El riel vuelve, apagandose.
+    var pasos = 12;
+    cx.lineCap = 'butt';
+    for (var i = 0; i < pasos; i++) {
+      var f = i / pasos, g = (i + 1) / pasos;
+      cx.globalAlpha = a * (1 - f) * .9;
+      cx.strokeStyle = 'rgba(226,220,246,.95)';
+      cx.lineWidth = Math.max(1, E * .016 * (1 - f * .7));
+      cx.beginPath();
+      cx.moveTo(p0[0] + (p1[0] - p0[0]) * f, p0[1] + (p1[1] - p0[1]) * f);
+      cx.lineTo(p0[0] + (p1[0] - p0[0]) * g, p0[1] + (p1[1] - p0[1]) * g);
+      cx.stroke();
+    }
+    cx.restore();
+  }
+
+  /* C · el vacio de abajo: la via termina arriba y nunca baja. */
+  function sinPiso(cx, a, t) {
+    var p1 = P(ult);
+    cx.save();
+    cx.globalAlpha = a;
+    cx.setLineDash([E * .03, E * .06]);
+    cx.strokeStyle = 'rgba(214,222,255,.30)';
+    cx.lineWidth = Math.max(1, E * .010);
+    cx.beginPath(); cx.moveTo(p1[0], p1[1]); cx.lineTo(p1[0], piso); cx.stroke();
+    cx.setLineDash([]);
+    // Donde tendria que apoyar y no hay nada.
+    cx.strokeStyle = 'rgba(214,222,255,' + (.35 + .15 * Math.sin(t * 2)).toFixed(3) + ')';
+    cx.beginPath();
+    cx.ellipse(p1[0], piso, E * .10, E * .022, 0, 0, 6.2832);
+    cx.stroke();
+    halo(cx, p1[0], p1[1], E * .18, '255,236,190', .30 * a);
+    cx.restore();
+  }
+
+  /* D · el vagon llega hasta el final y se queda. */
+  function vagon(cx, a, t) {
+    var p1 = P(ult), p0 = P(ante);
+    var ang = Math.atan2(p1[1] - p0[1], p1[0] - p0[0]);
+    cx.save();
+    cx.globalAlpha = a;
+    cx.translate(p1[0] - Math.cos(ang) * E * .02, p1[1] - Math.sin(ang) * E * .02);
+    cx.rotate(ang);
+    cx.fillStyle = 'rgba(196,60,66,.95)';
+    cx.fillRect(-E * .13, -E * .045, E * .16, E * .05);
+    cx.fillStyle = 'rgba(232,228,244,.9)';
+    cx.fillRect(-E * .13, -E * .058, E * .16, E * .016);
+    cx.restore();
+    halo(cx, p1[0], p1[1], E * .17, '255,236,190', .26 * a);
+  }
+
+  function escena(c, t, a) {
+    var cx = c.cx;
+    cx.setTransform(1, 0, 0, 1, 0, 0);
+    var g = cx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, FONDO1); g.addColorStop(1, FONDO2);
+    cx.fillStyle = g; cx.fillRect(0, 0, W, H);
+    Pintores.pintar(cx, 'montania', fx, fy, E, t,
+                    { alPiso: E, tension: 0, perfil: pts });
+    var id = c.cfg.id;
+    if (id === 'a') Anomalias.pintar(cx, 'montania', fx, fy, E, t, a, {}, W, H, W * .18, piso);
+    else if (id === 'b') deshacer(cx, a);
+    else if (id === 'c') sinPiso(cx, a, t);
+    else if (id === 'd') vagon(cx, a, t);
+    else if (id === 'e') {
+      var p1 = P(ult);
+      cx.save(); cx.globalAlpha = a;
+      halo(cx, p1[0], p1[1], E * .20, '255,236,190', .30 * a);
+      cx.fillStyle = 'rgba(255,240,205,.85)';
+      cx.beginPath(); cx.arc(p1[0], p1[1], Math.max(1.5, E * .018), 0, 6.2832); cx.fill();
+      cx.restore();
+    }
+  }
+
+  var CICLO = 8;
+  var t0 = performance.now();
+  function cuadro(ahora) {
+    var t = (ahora - t0) / 1000;
+    var u = (t % CICLO) / CICLO;
+    var a = u < .1 ? u / .1 : (u < .86 ? 1 : Math.max(0, 1 - (u - .86) / .1));
+    casos.forEach(function (c) { escena(c, t, a); });
+    requestAnimationFrame(cuadro);
+  }
+  requestAnimationFrame(cuadro);
+
+  window.laminas = function () {
+    casos.forEach(function (c) { escena(c, 3, 1); });
+    return Promise.all(casos.map(function (c) {
+      return fetch('/_captura/vias-' + c.cfg.id + '.png',
+        { method: 'POST', body: c.cx.canvas.toDataURL('image/png') });
+    })).then(function () { return 'laminas de las vias guardadas'; });
+  };
+})();
+</script>
+</body></html>

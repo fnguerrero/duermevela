@@ -113,104 +113,35 @@ var Anomalias = (function () {
     /* Las vías se cortan en el aire. Se dibuja el corte: dos puntas que se
        apagan en la nada, con el aire temblando alrededor de donde deberían
        seguir. */
+    /* Las vias se cortan, y el corte lo hace el pintor: el ultimo tramo se
+       adelgaza y desaparece con sus vigas. Aca queda el aire donde estaba, que
+       es lo unico que se puede dibujar de algo que ya no esta.
+
+       Se probaron las dos maneras de dibujar lo que falta y las dos fallaban.
+       Una linea punteada que sigue: el ojo lee una estela cayendo, una
+       estrella fugaz. Una via fantasma que sube: quedaban dos vias, la real y
+       otra flotando al lado, y ademas contradecia el texto — si el tramo que
+       falta se dibuja, deja de faltar. */
     montania: function (cx, fx, fy, E, t, v) {
       var a = entra(v);
-      /* La punta de la via, calculada del perfil de verdad y no a ojo.
-
-         Estaba en un punto fijo —fx + .92E, fy - .22E— que cae casi tres
-         cuartos de E MAS ARRIBA de donde la via termina realmente. El corte
-         quedaba flotando en el cielo, lejos del riel: se leia como una
-         estrella fugaz y no como unas vias cortadas, que es justo lo que el
-         texto dice. Si la anomalia no esta pegada a la cosa, no es la cosa. */
-      var pts = (typeof Figuras !== 'undefined' && Figuras.perfilMontania)
+      var pts = (typeof Figuras !== 'undefined' && Figuras.perfilMontania())
         ? Figuras.perfilMontania() : null;
       var ult = pts ? pts[pts.length - 1] : [1, .55];
-      var ante = pts ? pts[pts.length - 2] : [.92, .40];
       var px = fx + E * ult[0], py = fy + E * ult[1];
-      // Y lo que falta sigue la direccion en la que la via venia, no una fija.
-      var dx = ult[0] - ante[0], dy = ult[1] - ante[1];
-      var largo = Math.sqrt(dx * dx + dy * dy) || 1;
-      dx /= largo; dy /= largo;
-
       cx.save();
-      cx.globalAlpha = a;
-
-      /* Lo que falta no es una linea punteada que sigue derecho: es VIA.
-
-         Con un solo trazo bajando, el ojo lee una estela cayendo — una
-         estrella fugaz que pasa por ahi — y no unas vias cortadas. Dos cosas
-         lo arreglan. Una: se dibuja como via, con sus dos rieles y los
-         durmientes cruzados, que es lo unico que hace que una linea se lea
-         como una via. Dos: SUBE. Una montaña rusa que viene bajando, despues
-         sube; el lomo que seguiria es el que nadie construyo, y hacia arriba
-         ninguna estela cae. */
-      var pasos = 16, ancho = E * .050;
-      function fantasma(i) {
-        var f = i / pasos;
-        // Una curva que arranca en la direccion en que venia y se levanta.
-        var x = px + f * E * .62;
-        var y = py + dy * E * .10 * (1 - f) - Math.pow(f, 1.5) * E * .46;
-        return [x, y];
-      }
-      /* Segmento por segmento, cada uno con su trazo.
-
-         Escrito como un solo path con el alpha cambiando adentro del bucle no
-         funciona: globalAlpha se aplica cuando se hace el stroke, no por
-         punto, asi que valia solo el ultimo — y el ultimo es cero. Los rieles
-         quedaban invisibles y del fantasma se veian nada mas los durmientes,
-         cuatro marquitas sueltas en el aire. */
-      cx.strokeStyle = 'rgba(214,222,255,' + (.55 * a).toFixed(3) + ')';
-      cx.lineWidth = Math.max(1, E * .010);
-      for (var lado = -1; lado <= 1; lado += 2) {
-        for (var i = 0; i < pasos; i++) {
-          var q0 = fantasma(i), q1 = fantasma(i + 1);
-          // El desvanecimiento: lo que esta mas lejos casi no esta.
-          cx.globalAlpha = a * (1 - i / pasos) * .9;
-          cx.beginPath();
-          cx.moveTo(q0[0], q0[1] + lado * ancho * .5);
-          cx.lineTo(q1[0], q1[1] + lado * ancho * .5);
-          cx.stroke();
-        }
-      }
-      // Los durmientes, de a uno por medio, tambien apagandose.
-      cx.lineWidth = Math.max(1, E * .008);
-      for (var j = 0; j <= pasos; j += 2) {
-        var d0 = fantasma(j);
-        cx.globalAlpha = a * (1 - j / pasos) * .70;
-        cx.beginPath();
-        cx.moveTo(d0[0], d0[1] - ancho * .5);
-        cx.lineTo(d0[0], d0[1] + ancho * .5);
-        cx.stroke();
-      }
-
-      cx.globalAlpha = a;
-      // El punto exacto donde deja de existir.
-      halo(cx, px, py, E * .20, '255,236,190', .30 * a);
-      cx.fillStyle = 'rgba(255,240,205,' + (.85 * a).toFixed(3) + ')';
-      cx.beginPath(); cx.arc(px, py, Math.max(1.5, E * .018), 0, 6.2832); cx.fill();
+      // El aire tiembla donde la via dejo de existir.
+      halo(cx, px, py, E * (.26 + .05 * Math.sin(t * 1.6)), '214,222,255', .14 * a);
       cx.restore();
     },
 
-    /* La luz baja del todo, como quien asiente. */
+    /* La luz baja del todo, como quien asiente. El apagon lo hace el pintor
+       —apagar una luz es dejar de dibujarla— y aca queda el asentir: la cupula
+       se enciende una vez, despacio, y se apaga. Sin eso la anomalia seria
+       apagar una luz, que no se lee como respuesta. */
     platillo: function (cx, fx, fy, E, t, v) {
       var a = entra(v);
-      cx.save();
-      // El haz se cierra sobre si mismo.
-      /* Encima del haz que ya esta pintado se pone uno oscuro que lo tapa:
-         asi la luz se apaga de verdad en vez de apenas afinarse. */
-      var g = cx.createLinearGradient(fx, fy, fx, fy + E * 1.5);
-      g.addColorStop(0, 'rgba(10,10,24,' + (.55 * a).toFixed(3) + ')');
-      g.addColorStop(1, 'rgba(10,10,24,' + (.80 * a).toFixed(3) + ')');
-      cx.fillStyle = g;
-      cx.beginPath();
-      cx.moveTo(fx - E * .34, fy);
-      cx.lineTo(fx + E * .34, fy);
-      cx.lineTo(fx + E * .70, fy + E * 1.5);
-      cx.lineTo(fx - E * .70, fy + E * 1.5);
-      cx.closePath(); cx.fill();
-      /* La cupula se enciende una vez, despacio, y se apaga: es el asentir.
-         Sin esto la anomalia era apagar una luz, que no se lee como respuesta. */
       var pulso = Math.max(0, Math.sin(a * Math.PI));
+      cx.save();
       halo(cx, fx, fy - E * .10, E * (.7 + .5 * pulso), '190,235,255', .34 * pulso);
       cx.fillStyle = 'rgba(226,244,255,' + (.55 * pulso).toFixed(3) + ')';
       cx.beginPath();

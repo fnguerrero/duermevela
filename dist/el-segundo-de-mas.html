@@ -3026,7 +3026,14 @@ var Pintores = (function () {
   }
 
   /* ============ el platillo ============ */
-  function platillo(cx, E, t, alPiso) {
+  /* `apaga` va de 0 a 1 y es lo que este lugar esconde: la luz baja del todo,
+     como quien asiente. Va aca porque apagar una luz es dejar de dibujarla.
+
+     Antes lo hacia la anomalia poniendo un trapecio OSCURO encima del haz, y
+     se veia lo que era: un rectangulo negro pegado sobre la escena, con dos
+     bordes rectos que no eran de nada. Un parche encima nunca apaga; tapa. */
+  function platillo(cx, E, t, alPiso, apaga) {
+    var baja = Math.max(0, Math.min(1, apaga || 0));
     var flota = Math.sin(t * .8) * E * .04;
     /* Y se inclina, muy poco, como algo que se sostiene solo y corrige. Sin
        esto es un disco pegado al aire. */
@@ -3040,9 +3047,10 @@ var Pintores = (function () {
 
     // El cono de luz va primero: todo lo demás se apoya encima.
     var largo = hastaPiso, boca = E * .55 + hastaPiso * .32;
+    var vive = 1 - baja;
     var cono = cx.createLinearGradient(0, E * .1, 0, E * .1 + largo);
-    cono.addColorStop(0, 'rgba(190,225,255,.34)');
-    cono.addColorStop(.45, 'rgba(160,205,255,.13)');
+    cono.addColorStop(0, 'rgba(190,225,255,' + (.34 * vive).toFixed(3) + ')');
+    cono.addColorStop(.45, 'rgba(160,205,255,' + (.13 * vive).toFixed(3) + ')');
     cono.addColorStop(1, 'rgba(140,190,255,0)');
     cx.save();
     cx.globalCompositeOperation = 'lighter';
@@ -3061,15 +3069,15 @@ var Pintores = (function () {
       var yy = E * .12 + largo * (1 - fase);
       var an = E * .28 + (boca - E * .28) * (1 - fase);
       var xx = (rnd() * 2 - 1) * an;
-      var a = Math.sin(fase * Math.PI) * .5;
+      var a = Math.sin(fase * Math.PI) * .5 * vive;
       cx.fillStyle = 'rgba(215,240,255,' + a.toFixed(3) + ')';
       cx.beginPath(); cx.arc(xx, yy, 1.5 + rnd() * 1.6, 0, 6.2832); cx.fill();
     }
     // Charco donde el haz toca el piso.
     if (alPiso && alPiso > E * .4) {
       var ch = cx.createRadialGradient(0, E * .12 + largo, 0, 0, E * .12 + largo, boca);
-      ch.addColorStop(0, 'rgba(200,230,255,.30)');
-      ch.addColorStop(.55, 'rgba(160,200,255,.10)');
+      ch.addColorStop(0, 'rgba(200,230,255,' + (.30 * vive).toFixed(3) + ')');
+      ch.addColorStop(.55, 'rgba(160,200,255,' + (.10 * vive).toFixed(3) + ')');
       ch.addColorStop(1, 'rgba(150,190,255,0)');
       cx.fillStyle = ch;
       cx.beginPath();
@@ -3152,11 +3160,34 @@ var Pintores = (function () {
   }
 
   /* ============ la montaña rusa ============ */
-  function montania(cx, E, t, perfil) {
+  /* `corte` va de 0 a 1 y es lo que este lugar esconde: con 0 la montaña rusa
+     esta entera, y a medida que sube, el ultimo tramo de via se adelgaza, se
+     apaga y desaparece, junto con las vigas que lo sostenian.
+
+     Va aca y no en la anomalia por dos razones. Una: dibujar el tramo que
+     falta —que es lo que se probo antes— CONTRADICE el texto, que dice que
+     nadie se tomo el trabajo de imaginarles un final; si se dibuja, deja de
+     faltar, y ademas quedaban dos vias, la real y una flotando al lado. Dos:
+     tapar el tramo desde encima con el color del fondo no se puede, porque el
+     fondo del juego no es plano — tiene degrade, halo de color y el destello
+     de la carta — y el parche se veria. La unica forma honesta de que algo no
+     este es no dibujarlo. */
+  function montania(cx, E, t, perfil, corte) {
     var pts = perfil;
+    var q = Math.max(0, Math.min(1, corte || 0));
+    // Cuanto de la via se va: el ultimo quinto, de a poco.
+    var desde = pts.length - 1 - Math.round(q * (pts.length - 1) * .20);
+    function vive(i) { return i < desde; }
+    function apagado(i) {
+      // Los ultimos que quedan se van desvaneciendo, no se cortan de golpe.
+      var borde = desde - 1;
+      var d = borde - i;
+      return d < 2 ? Math.max(0, .35 + d * .32) : 1;
+    }
     // Estructura: columnas y cruces de madera.
     cx.lineCap = 'round';
     for (var c = 0; c < pts.length; c += 3) {
+      if (q > 0 && !vive(c)) continue;
       var p = pts[c];
       cx.strokeStyle = 'rgba(96,78,104,.75)';
       cx.lineWidth = E * .016;
@@ -3175,6 +3206,8 @@ var Pintores = (function () {
     }
     // La vía: dos rieles y los durmientes.
     for (var k = 1; k < pts.length; k++) {
+      if (q > 0 && !vive(k)) continue;
+      cx.globalAlpha = q > 0 ? apagado(k) : 1;
       var a = pts[k - 1], b = pts[k];
       cx.strokeStyle = 'rgba(58,48,70,.9)';
       cx.lineWidth = E * .034;
@@ -3188,8 +3221,11 @@ var Pintores = (function () {
       cx.moveTo(a[0] * E, a[1] * E); cx.lineTo(b[0] * E, b[1] * E);
       cx.stroke();
     }
+    cx.globalAlpha = 1;
     // Durmientes: travesanos cortos perpendiculares a la via.
     for (var d = 0; d < pts.length - 1; d += 1) {
+      if (q > 0 && !vive(d)) continue;
+      cx.globalAlpha = q > 0 ? apagado(d) : 1;
       var a2 = pts[d], b2 = pts[d + 1];
       var ang = Math.atan2(b2[1] - a2[1], b2[0] - a2[0]);
       var nx = -Math.sin(ang), ny = Math.cos(ang);
@@ -3200,6 +3236,7 @@ var Pintores = (function () {
       cx.lineTo(a2[0] * E + nx * E * .022, a2[1] * E + ny * E * .022);
       cx.stroke();
     }
+    cx.globalAlpha = 1;
 
     /* El vagon recorre la via. Estaba parado en la estacion y una montana rusa
        quieta no es una montana rusa: es un andamio. */
@@ -4078,8 +4115,8 @@ var Pintores = (function () {
     extra = extra || {};
     cx.save();
     cx.translate(x, y);
-    if (clave === 'montania') montania(cx, E, t, extra.perfil);
-    else if (clave === 'platillo') platillo(cx, E, t, extra.alPiso);
+    if (clave === 'montania') montania(cx, E, t, extra.perfil, extra.corte);
+    else if (clave === 'platillo') platillo(cx, E, t, extra.alPiso, extra.apaga);
     else if (clave === 'bandada') bandada(cx, E, t, extra.sincro);
     else if (PINTORES[clave]) PINTORES[clave](cx, E, t);
     cx.restore();
@@ -4207,104 +4244,35 @@ var Anomalias = (function () {
     /* Las vías se cortan en el aire. Se dibuja el corte: dos puntas que se
        apagan en la nada, con el aire temblando alrededor de donde deberían
        seguir. */
+    /* Las vias se cortan, y el corte lo hace el pintor: el ultimo tramo se
+       adelgaza y desaparece con sus vigas. Aca queda el aire donde estaba, que
+       es lo unico que se puede dibujar de algo que ya no esta.
+
+       Se probaron las dos maneras de dibujar lo que falta y las dos fallaban.
+       Una linea punteada que sigue: el ojo lee una estela cayendo, una
+       estrella fugaz. Una via fantasma que sube: quedaban dos vias, la real y
+       otra flotando al lado, y ademas contradecia el texto — si el tramo que
+       falta se dibuja, deja de faltar. */
     montania: function (cx, fx, fy, E, t, v) {
       var a = entra(v);
-      /* La punta de la via, calculada del perfil de verdad y no a ojo.
-
-         Estaba en un punto fijo —fx + .92E, fy - .22E— que cae casi tres
-         cuartos de E MAS ARRIBA de donde la via termina realmente. El corte
-         quedaba flotando en el cielo, lejos del riel: se leia como una
-         estrella fugaz y no como unas vias cortadas, que es justo lo que el
-         texto dice. Si la anomalia no esta pegada a la cosa, no es la cosa. */
-      var pts = (typeof Figuras !== 'undefined' && Figuras.perfilMontania)
+      var pts = (typeof Figuras !== 'undefined' && Figuras.perfilMontania())
         ? Figuras.perfilMontania() : null;
       var ult = pts ? pts[pts.length - 1] : [1, .55];
-      var ante = pts ? pts[pts.length - 2] : [.92, .40];
       var px = fx + E * ult[0], py = fy + E * ult[1];
-      // Y lo que falta sigue la direccion en la que la via venia, no una fija.
-      var dx = ult[0] - ante[0], dy = ult[1] - ante[1];
-      var largo = Math.sqrt(dx * dx + dy * dy) || 1;
-      dx /= largo; dy /= largo;
-
       cx.save();
-      cx.globalAlpha = a;
-
-      /* Lo que falta no es una linea punteada que sigue derecho: es VIA.
-
-         Con un solo trazo bajando, el ojo lee una estela cayendo — una
-         estrella fugaz que pasa por ahi — y no unas vias cortadas. Dos cosas
-         lo arreglan. Una: se dibuja como via, con sus dos rieles y los
-         durmientes cruzados, que es lo unico que hace que una linea se lea
-         como una via. Dos: SUBE. Una montaña rusa que viene bajando, despues
-         sube; el lomo que seguiria es el que nadie construyo, y hacia arriba
-         ninguna estela cae. */
-      var pasos = 16, ancho = E * .050;
-      function fantasma(i) {
-        var f = i / pasos;
-        // Una curva que arranca en la direccion en que venia y se levanta.
-        var x = px + f * E * .62;
-        var y = py + dy * E * .10 * (1 - f) - Math.pow(f, 1.5) * E * .46;
-        return [x, y];
-      }
-      /* Segmento por segmento, cada uno con su trazo.
-
-         Escrito como un solo path con el alpha cambiando adentro del bucle no
-         funciona: globalAlpha se aplica cuando se hace el stroke, no por
-         punto, asi que valia solo el ultimo — y el ultimo es cero. Los rieles
-         quedaban invisibles y del fantasma se veian nada mas los durmientes,
-         cuatro marquitas sueltas en el aire. */
-      cx.strokeStyle = 'rgba(214,222,255,' + (.55 * a).toFixed(3) + ')';
-      cx.lineWidth = Math.max(1, E * .010);
-      for (var lado = -1; lado <= 1; lado += 2) {
-        for (var i = 0; i < pasos; i++) {
-          var q0 = fantasma(i), q1 = fantasma(i + 1);
-          // El desvanecimiento: lo que esta mas lejos casi no esta.
-          cx.globalAlpha = a * (1 - i / pasos) * .9;
-          cx.beginPath();
-          cx.moveTo(q0[0], q0[1] + lado * ancho * .5);
-          cx.lineTo(q1[0], q1[1] + lado * ancho * .5);
-          cx.stroke();
-        }
-      }
-      // Los durmientes, de a uno por medio, tambien apagandose.
-      cx.lineWidth = Math.max(1, E * .008);
-      for (var j = 0; j <= pasos; j += 2) {
-        var d0 = fantasma(j);
-        cx.globalAlpha = a * (1 - j / pasos) * .70;
-        cx.beginPath();
-        cx.moveTo(d0[0], d0[1] - ancho * .5);
-        cx.lineTo(d0[0], d0[1] + ancho * .5);
-        cx.stroke();
-      }
-
-      cx.globalAlpha = a;
-      // El punto exacto donde deja de existir.
-      halo(cx, px, py, E * .20, '255,236,190', .30 * a);
-      cx.fillStyle = 'rgba(255,240,205,' + (.85 * a).toFixed(3) + ')';
-      cx.beginPath(); cx.arc(px, py, Math.max(1.5, E * .018), 0, 6.2832); cx.fill();
+      // El aire tiembla donde la via dejo de existir.
+      halo(cx, px, py, E * (.26 + .05 * Math.sin(t * 1.6)), '214,222,255', .14 * a);
       cx.restore();
     },
 
-    /* La luz baja del todo, como quien asiente. */
+    /* La luz baja del todo, como quien asiente. El apagon lo hace el pintor
+       —apagar una luz es dejar de dibujarla— y aca queda el asentir: la cupula
+       se enciende una vez, despacio, y se apaga. Sin eso la anomalia seria
+       apagar una luz, que no se lee como respuesta. */
     platillo: function (cx, fx, fy, E, t, v) {
       var a = entra(v);
-      cx.save();
-      // El haz se cierra sobre si mismo.
-      /* Encima del haz que ya esta pintado se pone uno oscuro que lo tapa:
-         asi la luz se apaga de verdad en vez de apenas afinarse. */
-      var g = cx.createLinearGradient(fx, fy, fx, fy + E * 1.5);
-      g.addColorStop(0, 'rgba(10,10,24,' + (.55 * a).toFixed(3) + ')');
-      g.addColorStop(1, 'rgba(10,10,24,' + (.80 * a).toFixed(3) + ')');
-      cx.fillStyle = g;
-      cx.beginPath();
-      cx.moveTo(fx - E * .34, fy);
-      cx.lineTo(fx + E * .34, fy);
-      cx.lineTo(fx + E * .70, fy + E * 1.5);
-      cx.lineTo(fx - E * .70, fy + E * 1.5);
-      cx.closePath(); cx.fill();
-      /* La cupula se enciende una vez, despacio, y se apaga: es el asentir.
-         Sin esto la anomalia era apagar una luz, que no se lee como respuesta. */
       var pulso = Math.max(0, Math.sin(a * Math.PI));
+      cx.save();
       halo(cx, fx, fy - E * .10, E * (.7 + .5 * pulso), '190,235,255', .34 * pulso);
       cx.fillStyle = 'rgba(226,244,255,' + (.55 * pulso).toFixed(3) + ')';
       cx.beginPath();
@@ -9012,7 +8980,13 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
                   tension: J.tensionSuave,
                   /* Lo que esconden los pajaros no se dibuja encima: se les
                      pide a ellos. Cuanto mas revelado, mas juntos baten. */
-                  sincro: J.lugar === 'bandada' ? J.revelando : 0 };
+                  sincro: J.lugar === 'bandada' ? J.revelando : 0,
+                  /* Y las vias se deshacen en la punta en vez de que se
+                     dibuje encima el tramo que faltaria: lo que no existe no
+                     se dibuja. */
+                  corte: J.lugar === 'montania' ? J.revelando : 0,
+                  // Y la luz del platillo se apaga de verdad, no se tapa.
+                  apaga: J.lugar === 'platillo' ? J.revelando : 0 };
     var u = J.u;
 
     // Halo propio: cada figura tine el aire que la rodea con su color.
@@ -9771,6 +9745,21 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
                                              perfil: Figuras.perfilMontania() });
       c2.restore();
       var antes = foto();
+
+      /* Lo que se mide es lo que ve el jugador, y en varios lugares eso ya no
+         lo dibuja la anomalia sino la FIGURA: los pajaros se sincronizan, las
+         vias se deshacen en la punta, el platillo apaga su luz. Todo eso se
+         hace en el pintor, porque apagar una luz es dejar de dibujarla y lo
+         que no existe no se dibuja — un parche encima nunca apaga, tapa. Asi
+         que el segundo cuadro se pinta con el lugar ya revelado. */
+      c2.setTransform(1, 0, 0, 1, 0, 0);
+      c2.fillStyle = '#0b0917';
+      c2.fillRect(0, 0, W, H);
+      c2.save();
+      Pintores.pintar(c2, k, fx, fy, E, 3, { alPiso: E, tension: 0,
+                                             perfil: Figuras.perfilMontania(),
+                                             sincro: 1, corte: 1, apaga: 1 });
+      c2.restore();
       Anomalias.pintar(c2, k, fx, fy, E, 3, 1, {}, W, H, belX, piso);
       var cambio = cuantosCambiaron(antes, foto());
       tabla.push({ lugar: k, pixeles: cambio });
