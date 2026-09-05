@@ -1188,12 +1188,15 @@
           J.perdidos.indexOf(J.esconde) === -1) {
         J.perdidos.push(J.esconde);
       }
+      /* Un solo cartel, igual que al acertar. Antes eran dos: el aviso de que
+         ahi habia algo y, un segundo y medio despues, una guia encima de la
+         escena que explicaba como se hace. La primera vez el aviso dice las dos
+         cosas juntas; la segunda, solo que habia algo; despues se calla. */
       J.siguioDeLargo = (J.siguioDeLargo || 0) + 1;
-      if (J.siguioDeLargo <= 2) {
-        mostrarAviso('seguiste de largo · acá había algo', '');
-        luego(1500, function () {
-          guiar('mirar', 'para ver lo que un lugar esconde, quedate: mantené apretado mientras se transforma', 6200);
-        });
+      if (J.siguioDeLargo === 1) {
+        mostrarAviso('acá había algo · se ve manteniendo apretado', '');
+      } else if (J.siguioDeLargo === 2) {
+        mostrarAviso('acá había algo', '');
       }
     }
     actualizarRestan();
