@@ -2402,9 +2402,20 @@
         if (gorda[i]) pegados++;
       }
       var pct = total ? Math.round(pegados / total * 100) : 0;
-      tabla.push({ lugar: k, pegado: pct, puntos: total });
-      // Menos de un quinto pegado: lo que se dibuja esta en otro lado.
-      if (total && pct < 20) sueltas.push({ lugar: k, pegado: pct });
+      tabla.push({ lugar: k, pegado: pct, puntos: total, tocando: pegados });
+      /* Lo que decide no es la fraccion sino si TOCA.
+
+         Varias anomalias salen de su figura a proposito y esta bien: el haz
+         del faro cruza el cuadro para ir a buscar a Bel, la soga de la barca
+         sube hasta perderse, la sombra de la calesita cae en el piso. Pedirles
+         que esten mayormente encima de la figura seria pedirles que dejen de
+         hacer lo que hacen.
+
+         Lo que no puede pasar es que no toquen nada: eso es lo que le pasaba
+         al corte de las vias, que estaba dibujado en el cielo a tres cuartos
+         de E del riel. Nacia en el aire, y una anomalia que nace en el aire no
+         es de nadie. */
+      if (total && pegados < 12) sueltas.push({ lugar: k, pegado: pct, tocando: pegados });
     });
 
     tabla.sort(function (a, b) { return a.pegado - b.pegado; });
@@ -2913,6 +2924,7 @@
        simuladas no: estas dos miden lo mismo mil veces mejor y en un segundo,
        porque no esperan a que nada se dibuje. verificarCelular queda afuera a
        proposito — necesita que la ventana este en el tamano a probar. */
+    }).then(function () { return Promise.resolve(window.verificarUbicacion()); }).then(function (r) { out.ubicacion = r.ok;
     }).then(function () { return window.verificarReparto(40); }).then(function (r) { out.reparto = r.ok;
     }).then(function () { return window.frecuenciaLugares(300); }).then(function (r) { out.frecuencias = r.ok;
     }).then(function () {

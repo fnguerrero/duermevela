@@ -563,14 +563,25 @@ var Anomalias = (function () {
          verdad que se apaga, y el punto donde termina lleva su propio brillo
          para que se lea que ahi se corta. */
       var a = entra(v);
-      var x0 = fx - E * .34, y0 = fy + E * .06;
+      /* Sale de la proa, no del medio del casco.
+
+         Estaba naciendo en x = -.34E, con la barca que va de -1,01 a +0,86:
+         la soga brotaba del centro del bote como si estuviera atada al piso de
+         adentro. Ahora arranca en la punta de la proa y sube desde ahi, que es
+         de donde sale una soga de amarre. Y es mas corta: la de antes se iba
+         0,4E fuera de la figura, o sea que casi toda la soga pasaba lejos de
+         la barca, y una soga lejos del bote no se lee como atada a el. */
+      /* Medido sobre el dibujo: la punta del casco cae en -0,69E, +0,12E. El
+         -0,86 de antes agarraba el remo que sobresale, no el bote, y la soga
+         volvia a nacer en el aire. */
+      var x0 = fx - E * .66, y0 = fy + E * .10;
       cx.save();
       cx.lineCap = 'round';
       var pasos = 20;
       for (var i = 0; i < pasos; i++) {
         var f = i / pasos, f2 = (i + 1) / pasos;
-        var px = x0 - E * 1.05 * f,  py = y0 - E * .60 * f  + Math.sin(f  * 4 + t) * E * .025;
-        var qx = x0 - E * 1.05 * f2, qy = y0 - E * .60 * f2 + Math.sin(f2 * 4 + t) * E * .025;
+        var px = x0 - E * .30 * f,  py = y0 - E * .68 * f  + Math.sin(f  * 4 + t) * E * .025;
+        var qx = x0 - E * .30 * f2, qy = y0 - E * .68 * f2 + Math.sin(f2 * 4 + t) * E * .025;
         cx.globalAlpha = a * Math.max(0, 1 - f * 1.15);
         cx.strokeStyle = 'rgba(236,220,186,.95)';
         cx.lineWidth = Math.max(1.2, E * .022 * (1 - f * .55));
@@ -578,7 +589,7 @@ var Anomalias = (function () {
       }
       // Donde deja de existir.
       cx.globalAlpha = a;
-      halo(cx, x0 - E * .92, y0 - E * .53, E * .20, '236,220,186', .30 * a);
+      halo(cx, x0 - E * .26, y0 - E * .60, E * .20, '236,220,186', .30 * a);
       cx.restore();
     },
 
