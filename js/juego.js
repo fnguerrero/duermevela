@@ -68,6 +68,30 @@
       bel.adentro = 1;
     }, true);
   });
+  /* Los dos dibujos de la portada.
+
+     La luna va con la fase y el signo REALES de esta noche, no con la del
+     juego: adentro la fase la marca lo que ella va encontrando, pero en la
+     portada tiene que coincidir con el cielo de afuera. La carta va dada
+     vuelta, que es como estan todas antes de empezar. */
+  (function portada() {
+    var cl = document.getElementById('selloLuna');
+    if (cl && typeof Cielo !== 'undefined') {
+      var cx = cl.getContext('2d');
+      /* La luna va un poco mas arriba del centro: abajo lleva el glifo del
+         signo, y centrandola justo el glifo quedaba fuera del recuadro. */
+      var ESC = 2.1, medioX = 150 / ESC, medioY = 108 / ESC;
+      cx.save();
+      cx.scale(ESC, ESC);
+      Cielo.luna(cx, medioX / .135, medioY / .148, 3,
+                 lunaReal ? lunaReal.iluminacion : .5, true,
+                 lunaReal ? lunaReal.signoGlifo : null, 0);
+      cx.restore();
+    }
+    var cc = document.getElementById('cartaPortada');
+    if (cc && typeof Naipes !== 'undefined') Naipes.dorso(cc.getContext('2d'), 300, 470);
+  })();
+
   var cielo = Cielo.crear();
   /* La luna de verdad de esta noche. De todo el calculo de efemerides solo se
      usa el signo: la FASE no es la real, porque en el sueno la marca lo que

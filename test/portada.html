@@ -1,0 +1,169 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8">
+<title>La portada — cuatro maneras</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Cinzel:wght@400;500&family=Italiana&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap">
+<style>
+  :root{--tinta:#ece6d8;--tenue:rgba(236,230,216,.62);--oro:#dcb26c;
+        --oro-suave:rgba(220,178,108,.5)}
+  html,body{margin:0;background:#07060e;color:var(--tinta);
+    font-family:'Cormorant Garamond',Georgia,serif}
+  h1.tit{font-size:19px;font-weight:400;letter-spacing:.16em;text-transform:uppercase;
+    color:rgba(220,178,108,.9);margin:18px 0 2px;text-align:center}
+  .sub{text-align:center;color:rgba(236,230,216,.45);font-size:15px;margin:0 0 16px}
+  .fila{display:flex;flex-wrap:wrap;gap:18px;justify-content:center;padding:0 16px 26px}
+  .caso{width:min(680px,46vw)}
+  .rotu{font-size:14px;letter-spacing:.12em;text-transform:uppercase;
+    color:rgba(236,196,132,.9);margin:9px 0 2px;text-align:center}
+  .dice{font-size:14.5px;color:rgba(236,230,216,.5);line-height:1.45;margin:0;
+    text-align:center}
+
+  /* --- la portada --- */
+  .port{position:relative;aspect-ratio:16/10;overflow:hidden;border-radius:3px;
+    border:1px solid rgba(220,178,108,.18);
+    background:
+      radial-gradient(ellipse 52% 46% at 50% 38%,
+        rgba(7,6,16,.94) 0%, rgba(7,6,16,.88) 46%,
+        rgba(7,6,16,.40) 78%, rgba(7,6,16,0) 100%),
+      radial-gradient(ellipse at 50% 45%, rgba(20,17,38,.86), rgba(5,6,14,.97));
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:2.2%;padding:12% 7% 5%}
+  .selloLuna{position:absolute;top:4.5%;left:50%;transform:translateX(-50%)}
+  .carta{position:absolute;right:3.5%;bottom:6%;transform:rotate(7deg);
+    box-shadow:0 10px 34px rgba(0,0,0,.55);border-radius:3px}
+  .titulo{margin:0;color:#f2ecdc;font-weight:300;line-height:1.05;text-align:center}
+  .bajada{font-style:italic;font-weight:300;color:var(--tenue);max-width:30ch;
+    text-align:center;line-height:1.6;margin:0}
+
+  /* las reglas, sin números y sin caja */
+  .reglas{margin:1.4% 0 0;padding:0;list-style:none;max-width:46ch;
+    display:flex;flex-direction:column;gap:.7em}
+  .reglas li{font-size:clamp(11px,1.15vw,15px);line-height:1.6;text-align:center;
+    color:rgba(240,234,221,.82)}
+  .reglas b{color:rgba(246,226,186,.95);font-weight:600}
+  .boton{font-family:inherit;letter-spacing:.20em;text-transform:uppercase;
+    color:var(--oro);background:transparent;border:1px solid var(--oro-suave);
+    border-radius:2px;padding:2.2% 6%;margin-top:1.6%;
+    font-size:clamp(10px,1.05vw,14px)}
+
+  /* --- las cuatro tipografías del título --- */
+  .t-a .titulo{font-family:'Cormorant Garamond',serif;
+    font-size:clamp(22px,3.5vw,44px);letter-spacing:.08em}
+  .t-b .titulo{font-family:'Cinzel',serif;text-transform:uppercase;
+    font-size:clamp(15px,2.3vw,29px);letter-spacing:.18em;font-weight:400}
+  .t-c .titulo{font-family:'Italiana',serif;
+    font-size:clamp(23px,3.7vw,46px);letter-spacing:.12em}
+  .t-d .titulo{font-family:'Playfair Display',serif;
+    font-size:clamp(21px,3.2vw,40px);letter-spacing:.02em;font-style:italic}
+  /* La del encabezado de esta misma pagina: la tipografia que ya usa el juego,
+     en mayusculas muy espaciadas. Es el tratamiento de las capitales del tarot
+     impreso sin traer una fuente nueva. */
+  .t-e .titulo,.t-f .titulo{font-family:'Cormorant Garamond',serif;
+    text-transform:uppercase;font-weight:400;
+    font-size:clamp(15px,2.35vw,30px);letter-spacing:.26em}
+  .t-e .titulo{color:rgba(226,180,110,.95)}
+  /* La de ahora pero en oro: el tamaño y las minusculas de la A, el color de
+     la E. El nombre conserva el "mas" en minuscula —que es lo que le da el
+     tono de frase dicha en voz baja— y el oro lo emparenta con el rotulo de
+     cada lugar y con el marco de las cartas. */
+  .t-g .titulo{font-family:'Cormorant Garamond',serif;
+    font-size:clamp(22px,3.5vw,44px);letter-spacing:.08em;
+    color:rgba(226,180,110,.95)}
+  .t-f .titulo{color:#f2ecdc}
+</style>
+</head><head></head><body>
+
+<h1 class="tit">La portada · cuatro maneras</h1>
+<p class="sub">Todas con la luna de esta noche, las reglas sin números y el dorso de una carta.
+  Cambia la tipografía del título.</p>
+
+<div class="fila" id="fila"></div>
+
+<script src="../js/dibujo.js"></script>
+<script src="../js/cielo.js"></script>
+<script src="../js/naipes.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var CASOS = [
+    { id: 'g', clase: 't-g', rotu: 'G · la de ahora, en oro',
+      dice: 'El tamaño y las minúsculas de la A, con el color de la E.' },
+    { id: 'e', clase: 't-e', rotu: 'E · la del encabezado, en oro',
+      dice: 'Cormorant en mayúsculas espaciadas. La misma fuente del juego.' },
+    { id: 'f', clase: 't-f', rotu: 'F · la misma, en crema',
+      dice: 'Igual que la E pero en el color del resto de los textos.' },
+    { id: 'a', clase: 't-a', rotu: 'A · Cormorant, la de ahora',
+      dice: 'La misma tipografía del resto del juego. Fina y clásica.' },
+    { id: 'b', clase: 't-b', rotu: 'B · Cinzel, capitales romanas',
+      dice: 'La convención del tarot impreso: mayúsculas espaciadas.' },
+    { id: 'c', clase: 't-c', rotu: 'C · Italiana',
+      dice: 'Art nouveau, muy fina. La más de época.' },
+    { id: 'd', clase: 't-d', rotu: 'D · Playfair itálica',
+      dice: 'Didona de almanaque, con más contraste entre trazos.' }
+  ];
+
+  var REGLAS = [
+    'Elegí una carta. Cambia lo que tenés delante, y eso nuevo es donde vas a estar.',
+    'Mientras cambia, el lugar deja ver lo que esconde. <b>Mantené apretado para ' +
+    'quedarte mirando</b>, y el anillo se llena mientras mirás.',
+    'Mirar o seguir de largo lo elegís vos, y nadie te apura. Lo que llegues a ver ' +
+    'es lo que ella va a entender al final.'
+  ];
+
+  var fila = document.getElementById('fila');
+
+  CASOS.forEach(function (c) {
+    var caja = document.createElement('div'); caja.className = 'caso';
+    var port = document.createElement('div'); port.className = 'port ' + c.clase;
+
+    // La luna de esta noche, como sello.
+    var luna = document.createElement('canvas');
+    luna.className = 'selloLuna';
+    luna.width = 260; luna.height = 260;
+    luna.style.width = '11%'; luna.style.height = 'auto';
+    port.appendChild(luna);
+
+    // El dorso de una carta, dado vuelta en un rincón.
+    var carta = document.createElement('canvas');
+    carta.className = 'carta';
+    carta.width = 300; carta.height = 470;
+    carta.style.width = '11.5%'; carta.style.height = 'auto';
+    port.appendChild(carta);
+
+    var h = document.createElement('h2'); h.className = 'titulo';
+    h.textContent = 'El segundo de más';
+    var b = document.createElement('p'); b.className = 'bajada';
+    b.textContent = 'Llegué a un lugar donde las cosas no terminan de ser lo que parecen.';
+    var ul = document.createElement('ul'); ul.className = 'reglas';
+    REGLAS.forEach(function (r) {
+      var li = document.createElement('li'); li.innerHTML = r; ul.appendChild(li);
+    });
+    var bo = document.createElement('button'); bo.className = 'boton';
+    bo.textContent = 'Entrar';
+
+    port.appendChild(h); port.appendChild(b); port.appendChild(ul); port.appendChild(bo);
+    caja.appendChild(port);
+    var r = document.createElement('p'); r.className = 'rotu'; r.textContent = c.rotu;
+    var d = document.createElement('p'); d.className = 'dice'; d.textContent = c.dice;
+    caja.appendChild(r); caja.appendChild(d);
+    fila.appendChild(caja);
+
+    /* La luna de verdad de esta noche: fase y signo reales, los mismos que
+       calcula el juego. Es el unico adorno de la portada que no es adorno. */
+    var cx = luna.getContext('2d');
+    /* Cielo.luna dibuja siempre en su rincon —lx = W*.135, ly = H*.148— asi
+       que para centrarla en este canvas hay que darle un W y un H que hagan
+       caer ese rincon en el medio. */
+    var ESC = 2.4;
+    var LW = (130 / ESC) / .135, LH = (130 / ESC) / .148;
+    cx.save();
+    cx.scale(ESC, ESC);
+    Cielo.luna(cx, LW, LH, 3, .62, true, '♓', 0);
+    cx.restore();
+
+    var cc = carta.getContext('2d');
+    Naipes.dorso(cc, 300, 470);
+  });
+})();
+</script>
+</body></html>
