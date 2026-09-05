@@ -113,7 +113,23 @@ var Anomalias = (function () {
        seguir. */
     montania: function (cx, fx, fy, E, t, v) {
       var a = entra(v);
-      var px = fx + E * .92, py = fy - E * .22;
+      /* La punta de la via, calculada del perfil de verdad y no a ojo.
+
+         Estaba en un punto fijo —fx + .92E, fy - .22E— que cae casi tres
+         cuartos de E MAS ARRIBA de donde la via termina realmente. El corte
+         quedaba flotando en el cielo, lejos del riel: se leia como una
+         estrella fugaz y no como unas vias cortadas, que es justo lo que el
+         texto dice. Si la anomalia no esta pegada a la cosa, no es la cosa. */
+      var pts = (typeof Figuras !== 'undefined' && Figuras.perfilMontania)
+        ? Figuras.perfilMontania() : null;
+      var ult = pts ? pts[pts.length - 1] : [1, .55];
+      var ante = pts ? pts[pts.length - 2] : [.92, .40];
+      var px = fx + E * ult[0], py = fy + E * ult[1];
+      // Y lo que falta sigue la direccion en la que la via venia, no una fija.
+      var dx = ult[0] - ante[0], dy = ult[1] - ante[1];
+      var largo = Math.sqrt(dx * dx + dy * dy) || 1;
+      dx /= largo; dy /= largo;
+
       cx.save();
       cx.globalAlpha = a;
       // El tramo que falta, insinuado y hueco.
@@ -122,7 +138,7 @@ var Anomalias = (function () {
       cx.lineWidth = Math.max(1, E * .012);
       cx.beginPath();
       cx.moveTo(px, py);
-      cx.lineTo(px + E * .55, py - E * .10);
+      cx.lineTo(px + dx * E * .55, py + dy * E * .55);
       cx.stroke();
       cx.setLineDash([]);
       // El punto exacto donde deja de existir.
