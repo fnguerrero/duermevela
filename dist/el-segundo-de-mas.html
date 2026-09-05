@@ -4100,12 +4100,14 @@ var Anomalias = (function () {
 
      Va en tinta translucida y no en negro pleno: es una persona vista contra
      una lampara, no un recorte pegado encima del vidrio. */
-  function silueta(cx, x, y, alto, alfa) {
+  function silueta(cx, x, y, alto, alfa, sinLuz) {
     if (!(alfa > .01)) return;
     var A = alto;
     cx.save();
-    // La luz que la recorta, apenas mas viva justo detras de ella.
-    halo(cx, x, y - A * .55, A * 1.05, '255,240,205', .26 * alfa);
+    /* La luz que la recorta, apenas mas viva justo detras de ella. En el agua
+       no va: ahi la silueta no es alguien a contraluz sino el hueco de un
+       reflejo, y un halo calido debajo del agua no lo hace nadie. */
+    if (!sinLuz) halo(cx, x, y - A * .55, A * 1.05, '255,240,205', .26 * alfa);
 
     /* TODO el cuerpo es UN SOLO trazo con un solo relleno.
 
@@ -4329,26 +4331,61 @@ var Anomalias = (function () {
     laguna: function (cx, fx, fy, E, t, v, extra, W, H, belX, piso) {
       var a = entra(v);
       if (belX === undefined) return;
+
+      /* El agua devuelve todo menos a ella. Dibujar una ausencia es dificil:
+         antes esto era un ovalo negro con un halo, y un ovalo no se parece a
+         nadie — se leia como una mancha o un agujero, no como el lugar donde
+         tendria que estar una persona.
+
+         Dos cosas lo arreglan. La forma: el hueco tiene silueta humana y esta
+         DADO VUELTA, que es como cae un reflejo. Y el contraste: al lado se
+         dibujan los reflejos que el agua si devuelve —los juncos de la
+         orilla— porque una ausencia solo se lee si al lado hay presencias.
+         Sin nada reflejado alrededor, un hueco es solo agua oscura. */
+      /* Medido sobre el dibujo: la superficie del agua, del lado por el que
+         ella se asoma, cae cerca de +0,48E. El +0,10 de antes estaba por
+         encima del agua, asi que el reflejo que falta flotaba en el aire — y
+         un reflejo fuera del agua no es un reflejo. */
+      var hx = fx - E * .48, hy = fy + E * .72;
+      var alto = E * .58;
+
       cx.save();
       cx.globalAlpha = a;
-      /* Sobre el agua, que se dibuja alrededor de la figura: contra la linea
-         del piso el hueco caia en el vacio, fuera del charco. */
-      /* En el borde del agua del lado de ella: el texto dice "me asomo", asi
-         que el reflejo que falta esta donde ella se asoma, no en el medio. */
-      var hx = fx - E * .80, hy = fy + E * .14;
-      var an = E * .10, alto = E * .30;
-      // Alrededor del hueco el agua sigue devolviendo luz.
-      halo(cx, hx, hy, E * .34, '150,190,255', .16 * a);
-      // Y el hueco: agua sin nadie adentro.
-      cx.fillStyle = 'rgba(6,9,20,' + (.92 * a).toFixed(3) + ')';
-      cx.beginPath();
-      cx.ellipse(hx, hy, an, alto, 0, 0, 6.2832);
-      cx.fill();
-      cx.strokeStyle = 'rgba(170,200,255,' + (.42 * a).toFixed(3) + ')';
-      cx.lineWidth = Math.max(1, E * .010);
-      cx.beginPath();
-      cx.ellipse(hx, hy, an, alto, 0, 0, 6.2832);
-      cx.stroke();
+
+      // Lo que el agua si devuelve: juncos, temblando apenas.
+      cx.strokeStyle = 'rgba(150,190,255,' + (.34 * a).toFixed(3) + ')';
+      cx.lineWidth = Math.max(1, E * .009);
+      /* Los reflejos que si estan, cayendo hacia abajo desde la superficie,
+         que es para donde cae un reflejo cuando el agua se ve en perspectiva. */
+      for (var j = -3; j <= 3; j++) {
+        if (j >= -1 && j <= 1) continue;          // el lugar de ella queda libre
+        var jx = hx + j * E * .15;
+        var largo = E * (.14 + (j % 2 ? .05 : 0));
+        cx.beginPath();
+        cx.moveTo(jx, hy);
+        cx.quadraticCurveTo(jx + Math.sin(t * .9 + j) * E * .02,
+                            hy + largo * .5, jx, hy + largo);
+        cx.stroke();
+      }
+      // Y la luz de la superficie, que tambien se devuelve.
+      halo(cx, hx, hy, E * .40, '150,190,255', .18 * a);
+
+      /* El hueco con su forma, invertido. Va mas oscuro que el agua, no negro:
+         negro pleno se ve como un agujero en la pantalla y esto es agua que no
+         copia, no un pozo. */
+      cx.save();
+      cx.translate(hx, hy);
+      /* Derecha y achatada, no dada vuelta.
+
+         El agua se ve casi desde arriba, en escorzo, asi que lo que cae sobre
+         ella se lee como una sombra tendida y no como un espejo vertical. Dada
+         vuelta, la falda ancha quedaba arriba y la cabeza abajo: la forma se
+         leia como una gota o un signo de exclamacion, nunca como una persona.
+         Derecha y aplastada al 62% se reconoce de una. */
+      cx.scale(1, .62);
+      silueta(cx, 0, 0, alto, .92 * a, true);
+      cx.restore();
+
       cx.restore();
     },
 
