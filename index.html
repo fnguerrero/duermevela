@@ -292,7 +292,15 @@
      Lo que se junta tiene que verse. Antes esto era un renglon gris abajo a la
      derecha y el objetivo del juego quedaba invisible: se jugaba sin saber que
      se estaba juntando ni para que. */
-  #marcador{position:fixed;top:clamp(16px,3vh,30px);left:clamp(16px,3vw,28px);
+  /* El marcador de bolitas se fue.
+
+     Contaba lo mismo que la luna —cuantas cosas vio— y de los dos el que le
+     corresponde a ella es la luna: es astrologa, y la fase le crece con lo que
+     encuentra. Dos contadores para el mismo numero es interfaz de mas encima
+     de un sueño. Queda en el DOM, oculto, porque varias partes del juego lo
+     nombran; lo que se saco es la pantalla. */
+  #marcador{display:none!important}
+  #marcadorViejo{position:fixed;top:clamp(16px,3vh,30px);left:clamp(16px,3vw,28px);
     z-index:6;opacity:0;transition:opacity .8s;pointer-events:none;
     background:rgba(9,7,16,.62);border:1px solid rgba(212,180,120,.20);
     border-radius:3px;padding:10px 14px 9px}

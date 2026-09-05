@@ -255,17 +255,32 @@ var Cielo = (function () {
 
      `ilum` va de 0 a 1. `visible` se apaga cuando el lugar del recorrido ES la
      luna: dos lunas en el mismo cuadro se leen como un error de dibujo. */
-  function luna(cx, W, H, t, ilum, visible, glifo) {
+  /* Donde cae la luna, en una sola cuenta: la usa el dibujo y tambien quien
+     necesite apuntarle desde afuera — la chispa de lo que se vio se va hasta
+     ahi, porque la luna es el marcador. */
+  function dondeLuna(W, H) {
+    return { x: W * .135, y: H * .148,
+             r: Math.max(13, Math.min(W, H) * .036) };
+  }
+
+  /* `pulso` (0 a 1) es lo que la luna hace cuando le llega una chispa: se
+     abre un momento. Es el unico acuse de recibo que queda, ahora que no hay
+     marcador de bolitas: si la luna no se moviera, lo que se vio llegaria a
+     algo que no contesta. */
+  function luna(cx, W, H, t, ilum, visible, glifo, pulso) {
     if (!visible) return;
-    var R = Math.max(13, Math.min(W, H) * .036);
-    var lx = W * .135, ly = H * .148;
+    var donde = dondeLuna(W, H);
+    var R = donde.r;
+    var lx = donde.x, ly = donde.y;
     ilum = Math.max(0, Math.min(1, ilum));
 
     cx.save();
 
     // El halo crece con la fase: una luna nueva casi no ilumina nada.
-    var halo = cx.createRadialGradient(lx, ly, R * .7, lx, ly, R * (3.4 + ilum * 2.2));
-    halo.addColorStop(0, 'rgba(214,222,255,' + (.05 + ilum * .13).toFixed(3) + ')');
+    var p = Math.max(0, Math.min(1, pulso || 0));
+    var halo = cx.createRadialGradient(lx, ly, R * .7, lx, ly,
+                                       R * (3.4 + ilum * 2.2 + p * 2.6));
+    halo.addColorStop(0, 'rgba(214,222,255,' + (.05 + ilum * .13 + p * .22).toFixed(3) + ')');
     halo.addColorStop(1, 'rgba(214,222,255,0)');
     cx.fillStyle = halo;
     cx.beginPath(); cx.arc(lx, ly, R * (3.4 + ilum * 2.2), 0, 6.2832); cx.fill();
@@ -318,7 +333,7 @@ var Cielo = (function () {
     cx.restore();
   }
 
-  return { crear: crear, actualizar: actualizar, dibujar: dibujar, forzar: forzar,
+  return { crear: crear, actualizar: actualizar, dondeLuna: dondeLuna, dibujar: dibujar, forzar: forzar,
            luna: luna, TIPOS: TIPOS };
 })();
 

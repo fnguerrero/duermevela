@@ -571,25 +571,17 @@ var Anomalias = (function () {
     },
 
     /* Cuando los mira, se sincronizan. */
+    /* Los pajaros se sincronizan cuando ella los mira, y eso lo hace el
+       pintor: son ESTOS pajaros los que le hacen caso, no otros. Aca queda
+       nada mas el aire, que late al mismo ritmo que las alas — la misma
+       frecuencia comun a la que se van todos, para que se vea que lo que se
+       puso de acuerdo es el lugar entero y no un grupito. */
     bandada: function (cx, fx, fy, E, t, v) {
       var a = entra(v);
+      var pulso = Math.sin(t * 9) * .5 + .5;
       cx.save();
-      cx.globalAlpha = a;
-      cx.strokeStyle = 'rgba(226,232,255,.85)';
-      cx.lineWidth = Math.max(1, E * .012);
-      cx.lineCap = 'round';
-      // Todas las alas en el MISMO angulo: eso es la anomalia.
-      var bat = Math.sin(t * 3.4) * .5 + .5;
-      for (var i = 0; i < 10; i++) {
-        var x = fx + E * (-.55 + (i % 5) * .28);
-        var y = fy + E * (-.30 + Math.floor(i / 5) * .34);
-        var ala = E * .10 * (.35 + bat * .65);
-        cx.beginPath();
-        cx.moveTo(x - E * .09, y + ala);
-        cx.lineTo(x, y - ala * .5);
-        cx.lineTo(x + E * .09, y + ala);
-        cx.stroke();
-      }
+      cx.globalCompositeOperation = 'lighter';
+      halo(cx, fx, fy, E * (1.15 + pulso * .18), '190,205,255', .085 * a * (.45 + pulso * .55));
       cx.restore();
     },
 

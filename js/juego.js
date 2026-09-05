@@ -156,6 +156,7 @@
     jugando: false,         // hay una jugada en curso: no aceptar otra
     congelado: false,       // la transformacion frenada mientras se lee un indicio
     revelando: 0,           // cuanto se ve la anomalia del lugar, de 0 a 1
+    lunaCrece: 0,           // el pulso de la luna al recibir una chispa
     seguirPaso: null,       // como sigue el paso cuando termine de leerse
     guias: {},              // que avisos de la primera partida ya salieron
     siguioDeLargo: 0,       // cuantas veces eligio no quedarse a mirar
@@ -1110,10 +1111,16 @@
   var chispas = [];
 
   function lanzarChispa(alLlegar) {
-    var r = elMarcador.getBoundingClientRect();
+    /* Se va a la luna, que es donde queda anotado. Antes iba al marcador de
+       bolitas, pero el marcador y la luna contaban lo mismo dos veces —cuantas
+       cosas vio— y de los dos el que le corresponde a ella es la luna: es
+       astrologa, y la fase le crece con lo que encuentra. */
+    var ancho = cv.width / (window.devicePixelRatio || 1);
+    var alto = cv.height / (window.devicePixelRatio || 1);
+    var donde = Cielo.dondeLuna(ancho, alto);
     chispas.push({
-      x0: ejeFigura(), y0: J.ultimaFy || (cv.height / (window.devicePixelRatio || 1)) * .45,
-      x1: r.left + r.width * .5, y1: r.top + r.height * .5,
+      x0: ejeFigura(), y0: J.ultimaFy || alto * .45,
+      x1: donde.x, y1: donde.y,
       t: 0, dur: 1.05, alLlegar: alLlegar
     });
   }
@@ -1198,9 +1205,8 @@
            si late antes, la luz llega a algo que ya paso y el viaje no cuenta
            nada. */
         lanzarChispa(function () {
-          elMarcador.classList.remove('suma');
-          void elMarcador.offsetWidth;
-          elMarcador.classList.add('suma');
+          // El pulso de la luna al recibirla, en vez del latido del marcador.
+          J.lunaCrece = 1;
           actualizarRestan();
         });
       }
@@ -1439,6 +1445,7 @@
         if (!J.congelado && !J.vioAhora) ponerRotulo(J.lugar);
       }
     }
+    if (J.lunaCrece > 0) J.lunaCrece = Math.max(0, J.lunaCrece - dt * .55);
     if (J.fogonazo > 0) J.fogonazo = Math.max(0, J.fogonazo - dt * .5 * RITMO);
     if (J.destello > 0) J.destello = Math.max(0, J.destello - dt * 1.5 * RITMO);
 
@@ -1497,7 +1504,7 @@
        mismo cuadro se leen como un error de dibujo y no como una idea. */
     var enLaLuna = (J.lugar === 'luna') || (J.destino && J.destino.figura === 'luna');
     Cielo.luna(cx, W, H, t, faseLuna(), !enLaLuna,
-               lunaReal ? lunaReal.signoGlifo : null);
+               lunaReal ? lunaReal.signoGlifo : null, J.lunaCrece);
 
     /* En vertical la pantalla es angosta y alta: si el piso se queda abajo del
        todo, queda un tercio de escena y dos tercios de cielo vacío. */
@@ -1555,7 +1562,10 @@
        lee como que el lugar se puso nervioso y no como un filtro. */
     var tt = t * (1 + J.tensionSuave * .85 + J.climax * .6);
     var extra = { perfil: Figuras.perfilMontania(), alPiso: piso - fy,
-                  tension: J.tensionSuave };
+                  tension: J.tensionSuave,
+                  /* Lo que esconden los pajaros no se dibuja encima: se les
+                     pide a ellos. Cuanto mas revelado, mas juntos baten. */
+                  sincro: J.lugar === 'bandada' ? J.revelando : 0 };
     var u = J.u;
 
     // Halo propio: cada figura tine el aire que la rodea con su color.

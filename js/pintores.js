@@ -616,7 +616,16 @@ var Pintores = (function () {
   }
 
   /* ============ la bandada ============ */
-  function bandada(cx, E, t) {
+  /* `sincro` va de 0 a 1 y es lo que el lugar esconde: con 0 cada pajaro bate
+     a su ritmo y con su propia fase, que es lo normal en una bandada; con 1
+     baten todos exactamente juntos.
+
+     Va aca y no en la anomalia porque son ESTOS pajaros los que se sincronizan.
+     La anomalia dibujaba diez pajaros nuevos encima, quietos, en una grilla de
+     cinco por dos y con otra forma: se leian como un bloque pegado sobre la
+     escena y no como la bandada haciendole caso. */
+  function bandada(cx, E, t, sincro) {
+    var s = Math.max(0, Math.min(1, sincro || 0));
     var rnd = sembrado(19);
     for (var i = 0; i < 40; i++) {
       var x0 = (rnd() * 2 - 1) * E * .96;
@@ -624,7 +633,10 @@ var Pintores = (function () {
       var vel = .5 + rnd() * .7;
       // Cada uno vuela a su ritmo y cruza el cuadro.
       var x = x0 + ((t * vel * E * .3) % (E * 2.4)) - E * 1.2;
-      var bat = Math.sin(t * (6 + vel * 5) + i) * .5 + .5;
+      /* La frecuencia de cada uno se acerca a una comun, y la fase propia se
+         apaga: por eso con sincro en 1 el aleteo es identico en los cuarenta. */
+      var frec = (6 + vel * 5) + (9 - (6 + vel * 5)) * s;
+      var bat = Math.sin(t * frec + i * (1 - s)) * .5 + .5;
       var ab = E * (.045 + rnd() * .04);
       cx.strokeStyle = 'rgba(228,222,240,' + (.4 + rnd() * .45).toFixed(2) + ')';
       cx.lineWidth = E * .008;
@@ -1070,6 +1082,7 @@ var Pintores = (function () {
     cx.translate(x, y);
     if (clave === 'montania') montania(cx, E, t, extra.perfil);
     else if (clave === 'platillo') platillo(cx, E, t, extra.alPiso);
+    else if (clave === 'bandada') bandada(cx, E, t, extra.sincro);
     else if (PINTORES[clave]) PINTORES[clave](cx, E, t);
     cx.restore();
   }
