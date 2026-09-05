@@ -143,18 +143,35 @@
     height:34px;transform:translateY(4px)}
   #seguir span{position:absolute;width:1px;height:1px;overflow:hidden;
     clip-path:inset(50%);white-space:nowrap}
-  /* Punta llena y no dos bordes rotados: rotar el cuadrado daba una esquina
-     abierta que a este tamano no se leia como flecha. */
-  #seguir::after{content:"";width:0;height:0;
-    border-left:10px solid transparent;
-    border-right:10px solid transparent;
-    border-top:12px solid rgba(238,204,140,.95);
-    filter:drop-shadow(0 0 8px rgba(216,168,84,.6))
+  /* Contorno y no punta llena. El triangulo relleno, dorado y apuntando para
+     abajo se leia como la SOLAPA DE UN SOBRE — y el sobre es un objeto del
+     juego, el del final, asi que el icono de avanzar parecia anunciarlo en
+     cada paso. Dos trazos en angulo dicen lo mismo y no pueden confundirse con
+     ninguna cosa llena. */
+  /* 17 y no 14: rotado 45 grados un cuadrado de 14 daba una V de 20 px que a
+     esta distancia se leia como una marquita. El triangulo que reemplaza medía
+     20 de ancho, y el chevron tiene que pesar parecido. */
+  #seguir::after{content:"";width:17px;height:17px;
+    border-right:2.5px solid rgba(240,208,146,.95);
+    border-bottom:2.5px solid rgba(240,208,146,.95);
+    border-radius:0 0 2px 0;
+    /* Tambien fuera de los keyframes: con prefers-reduced-motion la animacion
+       se apaga, y si la rotacion viviera solo ahi el chevron volveria a ser
+       una escuadra. */
+    transform:rotate(45deg) translateY(-3px);
+    filter:drop-shadow(0 0 7px rgba(216,168,84,.45))
            drop-shadow(0 1px 2px rgba(0,0,0,.9));
-    animation:latir 2.2s ease-in-out infinite}
+    /* La rotacion va DENTRO de los keyframes y la animacion tiene nombre
+       propio. Habia dos `@keyframes latir` distintos en esta hoja —el del
+       seguir y el del marcador, que hace un scale— y el segundo pisaba al
+       primero: la animacion del marcador le sobreescribia el transform al
+       chevron y lo dejaba sin rotar, como una escuadra. */
+    animation:respiraSeguir 2.2s ease-in-out infinite}
+  @keyframes respiraSeguir{
+    0%,100%{opacity:.60;transform:rotate(45deg) translateY(-3px)}
+    50%{opacity:1;transform:rotate(45deg) translateY(-3px)}
+  }
   #seguir.ver{opacity:1;transform:translateY(0)}
-  @keyframes latir{0%,100%{opacity:.62}50%{opacity:1}}
-
   @media (prefers-reduced-motion:reduce){
     #seguir::after{animation:none}
   }
@@ -386,8 +403,8 @@
      nada, y el medio del cuadro queda para lo que hay que mirar. */
   #guia.abajo{bottom:clamp(26px,7vh,64px)}
 
-  #marcador.suma{animation:latir .7s ease-out}
-  @keyframes latir{
+  #marcador.suma{animation:latirMarcador .7s ease-out}
+  @keyframes latirMarcador{
     0%{transform:scale(1)}
     35%{transform:scale(1.09);border-color:rgba(220,178,108,.85)}
     100%{transform:scale(1)}
