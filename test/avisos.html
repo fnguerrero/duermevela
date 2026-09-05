@@ -1,0 +1,156 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8">
+<title>El seguir y el aviso — variantes</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&display=swap">
+<style>
+  :root{--tinta:#ece6d8;--oro:#dcb26c}
+  html,body{margin:0;background:#0a0817;color:var(--tinta);
+    font-family:'Cormorant Garamond',Georgia,serif}
+  h1{font-size:19px;font-weight:400;letter-spacing:.16em;text-transform:uppercase;
+    color:rgba(220,178,108,.9);margin:20px 0 4px;text-align:center}
+  h2{font-size:14px;font-weight:400;letter-spacing:.18em;text-transform:uppercase;
+    color:rgba(236,230,216,.45);margin:26px 0 10px;text-align:center}
+  .sub{text-align:center;color:rgba(236,230,216,.45);font-size:15px;margin:0 0 6px}
+  .grilla{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;padding:0 16px 10px}
+  .caso{width:min(400px,44vw);background:rgba(255,255,255,.018);
+    border:1px solid rgba(220,178,108,.14);border-radius:4px;padding:16px 14px 12px}
+  .rotu{font-size:13px;letter-spacing:.14em;text-transform:uppercase;
+    color:rgba(236,196,132,.85);margin:0 0 12px;text-align:center}
+  .nota{font-size:14px;color:rgba(236,230,216,.5);margin:10px 0 0;text-align:center}
+
+  /* --- lo que ya existe en el juego, tal cual --- */
+  .relato{width:100%;text-align:center;font-size:17px;line-height:1.45;
+    margin:0;color:#f6f1e6;padding:8px 14px 10px;
+    text-shadow:0 1px 3px rgba(0,0,0,1)}
+  .seguir{margin:0;display:flex;align-items:center;justify-content:center;height:34px}
+
+  /* A · el de hoy: triangulo lleno */
+  .ico-a::after{content:"";width:0;height:0;
+    border-left:10px solid transparent;border-right:10px solid transparent;
+    border-top:12px solid rgba(238,204,140,.95);
+    filter:drop-shadow(0 0 8px rgba(216,168,84,.6)) drop-shadow(0 1px 2px rgba(0,0,0,.9));
+    animation:latir 2.2s ease-in-out infinite}
+
+  /* B · chevron de linea */
+  .ico-b::after{content:"";width:15px;height:15px;
+    border-right:2px solid rgba(238,204,140,.92);
+    border-bottom:2px solid rgba(238,204,140,.92);
+    transform:rotate(45deg) translateY(-3px);
+    filter:drop-shadow(0 0 7px rgba(216,168,84,.45));
+    animation:latir 2.2s ease-in-out infinite}
+
+  /* C · tres puntos que respiran */
+  .ico-c{gap:7px}
+  .ico-c i{width:5px;height:5px;border-radius:50%;
+    background:rgba(238,204,140,.95);
+    box-shadow:0 0 8px rgba(216,168,84,.5);
+    animation:respirar 1.8s ease-in-out infinite}
+  .ico-c i:nth-child(2){animation-delay:.22s}
+  .ico-c i:nth-child(3){animation-delay:.44s}
+
+  /* D · una linea que late */
+  .ico-d::after{content:"";width:34px;height:1.5px;border-radius:1px;
+    background:rgba(238,204,140,.9);
+    box-shadow:0 0 9px rgba(216,168,84,.55);
+    animation:latir 2.4s ease-in-out infinite}
+
+  @keyframes latir{0%,100%{opacity:.55}50%{opacity:1}}
+  @keyframes respirar{0%,100%{opacity:.28;transform:translateY(0)}
+                      50%{opacity:1;transform:translateY(-2px)}}
+
+  /* --- el aviso, con el estilo real del juego --- */
+  .aviso{margin:0 auto;font-size:15px;letter-spacing:.14em;
+    text-transform:uppercase;opacity:1;text-align:center;display:inline-block;
+    background:rgba(9,7,16,.88);padding:7px 15px;border-radius:2px;
+    color:rgba(190,255,205,.98);border:1px solid rgba(150,220,170,.4);
+    text-shadow:0 1px 6px rgba(0,0,0,1)}
+  .centro{text-align:center;min-height:36px;display:flex;align-items:center;
+    justify-content:center}
+
+  /* el marcador, para ver la opcion sin cartel */
+  .marcador{display:inline-flex;align-items:center;gap:8px;
+    border:1px solid rgba(220,178,108,.3);border-radius:3px;padding:6px 10px;
+    background:rgba(9,7,16,.7)}
+  .marcador b{font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+    font-weight:400;color:rgba(236,230,216,.45)}
+  .cuentas{display:flex;gap:4px}
+  .cuenta{width:7px;height:7px;border-radius:50%;
+    border:1px solid rgba(212,180,120,.45)}
+  .cuenta.llena{background:var(--oro);border-color:var(--oro);
+    box-shadow:0 0 9px rgba(220,178,108,.75)}
+  .marcador.suma{animation:latirMarcador 1.4s ease-out infinite}
+  @keyframes latirMarcador{0%{border-color:rgba(220,178,108,.3)}
+    22%{border-color:rgba(220,178,108,.95);box-shadow:0 0 18px rgba(220,178,108,.35)}
+    100%{border-color:rgba(220,178,108,.3)}}
+</style>
+</head><body>
+
+<h1>El seguir y el aviso</h1>
+<p class="sub">Todo animado y con los estilos del juego. Las letras se ven como se van a ver.</p>
+
+<h2>1 · El que dice que hay más</h2>
+<div class="grilla">
+  <div class="caso">
+    <p class="rotu">A · el de hoy</p>
+    <p class="relato">La montaña rusa de la feria a la que me llevaban de chica.
+      Está entera, y eso no puede ser.</p>
+    <p class="seguir ico-a"></p>
+  </div>
+  <div class="caso">
+    <p class="rotu">B · chevron de línea</p>
+    <p class="relato">La montaña rusa de la feria a la que me llevaban de chica.
+      Está entera, y eso no puede ser.</p>
+    <p class="seguir ico-b"></p>
+  </div>
+  <div class="caso">
+    <p class="rotu">C · tres puntos que respiran</p>
+    <p class="relato">La montaña rusa de la feria a la que me llevaban de chica.
+      Está entera, y eso no puede ser.</p>
+    <p class="seguir ico-c"><i></i><i></i><i></i></p>
+  </div>
+  <div class="caso">
+    <p class="rotu">D · una línea que late</p>
+    <p class="relato">La montaña rusa de la feria a la que me llevaban de chica.
+      Está entera, y eso no puede ser.</p>
+    <p class="seguir ico-d"></p>
+  </div>
+</div>
+
+<h2>2 · Lo que dice cuando ve algo</h2>
+<div class="grilla">
+  <div class="caso">
+    <p class="rotu">A · el de hoy</p>
+    <div class="centro"><span class="aviso">lo viste</span></div>
+    <p class="nota">Le habla al jugador, no a ella.</p>
+  </div>
+  <div class="caso">
+    <p class="rotu">B · ahí estaba</p>
+    <div class="centro"><span class="aviso">ahí estaba</span></div>
+    <p class="nota">Confirma sin felicitar, y en su voz.</p>
+  </div>
+  <div class="caso">
+    <p class="rotu">C · eso</p>
+    <div class="centro"><span class="aviso">eso</span></div>
+    <p class="nota">Una palabra, como un pensamiento.</p>
+  </div>
+  <div class="caso">
+    <p class="rotu">D · no me lo imaginé</p>
+    <div class="centro"><span class="aviso">no me lo imaginé</span></div>
+    <p class="nota">La duda adentro, que es el tema.</p>
+  </div>
+  <div class="caso">
+    <p class="rotu">E · sin cartel</p>
+    <div class="centro">
+      <span class="marcador suma"><b>Lo que viste</b>
+        <span class="cuentas">
+          <i class="cuenta llena"></i><i class="cuenta llena"></i><i class="cuenta llena"></i>
+          <i class="cuenta"></i><i class="cuenta"></i><i class="cuenta"></i>
+          <i class="cuenta"></i><i class="cuenta"></i>
+        </span></span>
+    </div>
+    <p class="nota">No dice nada: late el marcador y suma. El premio pasa a ser
+      la anomalía, que es lo que hay que estar mirando.</p>
+  </div>
+</div>
+
+</body></html>

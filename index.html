@@ -368,13 +368,23 @@
      Aparece pegada al anillo la primera vez que hay algo que mirar, y no vuelve
      a aparecer. Sin esto, la primera jugada se pierde siempre: nadie deduce que
      hay que tocar en un momento exacto. */
+  /* Sin caja. Una caja con borde en el medio del dibujo es un cartel de
+     interfaz encima del sueno, y ademas competia con el relato, que tiene la
+     suya arriba. Ahora es texto suelto, chico y en versalitas, con una mancha
+     de fondo que se desvanece —el mismo recurso del relato— para que se lea
+     igual sobre la calesita blanca o sobre el cielo. */
   #guia{position:fixed;left:50%;transform:translateX(-50%);
     bottom:calc(var(--alto-mano) + 14px);margin:0;z-index:7;pointer-events:none;
-    font-size:clamp(13px,1.6vw,16px);letter-spacing:.06em;text-align:center;
-    color:rgba(255,236,190,.95);opacity:0;transition:opacity .5s;
-    background:rgba(9,7,16,.86);padding:8px 16px;border-radius:3px;
-    border:1px solid rgba(220,178,108,.35)}
+    font-size:clamp(11.5px,1.35vw,14px);letter-spacing:.16em;text-align:center;
+    text-transform:uppercase;color:rgba(240,214,164,.82);
+    opacity:0;transition:opacity .5s;padding:10px 30px;max-width:min(720px,92vw);
+    background:radial-gradient(ellipse 66% 78% at 50% 50%,
+      rgba(8,6,14,.86) 0%, rgba(8,6,14,.62) 52%, rgba(8,6,14,0) 100%);
+    text-shadow:0 1px 3px rgba(0,0,0,1), 0 2px 14px rgba(0,0,0,.95)}
   #guia.ver{opacity:1}
+  /* Cuando no hay cartas en pantalla la guia se va bien abajo: ahi no tapa
+     nada, y el medio del cuadro queda para lo que hay que mirar. */
+  #guia.abajo{bottom:clamp(26px,7vh,64px)}
 
   #marcador.suma{animation:latir .7s ease-out}
   @keyframes latir{

@@ -659,6 +659,9 @@
     if (J.guias[clave]) return;
     J.guias[clave] = true;
     elGuia.textContent = texto;
+    /* Si no hay cartas repartidas, la guia se va al pie. Con cartas tiene que
+       quedar arriba de ellas o queda tapada. */
+    elGuia.classList.toggle('abajo', !elMano.querySelector('.carta'));
     elGuia.classList.add('ver');
     luego(duracion || 4600, function () {
       // Solo se apaga si sigue siendo la suya: otra guia pudo tomar el cartel.
@@ -1051,6 +1054,70 @@
     if (elAviso) elAviso.className = '';
   }
 
+  /* La chispa.
+
+     Antes, acertar mostraba un cartel que decia "lo viste". Era una caja de
+     texto en el medio de la pantalla, hablandole al jugador —no a ella— justo
+     en el momento en que hay algo dibujado para mirar. Ahora no dice nada: de
+     lo que acaba de aparecer sale una luz y se va hasta el marcador, y recien
+     cuando llega se enciende la bolita. Se entiende sin una palabra y ademas
+     dice DONDE queda anotado, que es lo que la guia explicaba con texto. */
+  var chispas = [];
+
+  function lanzarChispa(alLlegar) {
+    var r = elMarcador.getBoundingClientRect();
+    chispas.push({
+      x0: ejeFigura(), y0: J.ultimaFy || (cv.height / (window.devicePixelRatio || 1)) * .45,
+      x1: r.left + r.width * .5, y1: r.top + r.height * .5,
+      t: 0, dur: 1.05, alLlegar: alLlegar
+    });
+  }
+
+  function dibujarChispas(cx, dt, W, H) {
+    if (!chispas.length) return;
+    for (var i = chispas.length - 1; i >= 0; i--) {
+      var c = chispas[i];
+      c.t += dt;
+      var u = Math.min(1, c.t / c.dur);
+      // Arranca despacio y llega frenando: una luz que sale, no un proyectil.
+      var e = u * u * (3 - 2 * u);
+      var x = c.x0 + (c.x1 - c.x0) * e;
+      /* La panza. En linea recta se lee como una flecha de interfaz; con la
+         curva se lee como algo que se eleva y despues se guarda. */
+      var y = c.y0 + (c.y1 - c.y0) * e - Math.sin(u * Math.PI) * H * .11;
+      var vida = Math.sin(Math.min(1, u * 1.15) * Math.PI * .92);
+
+      cx.save();
+      // La estela: la misma curva unos pasos atras, cada vez mas tenue.
+      for (var k = 6; k >= 1; k--) {
+        var uk = Math.max(0, u - k * .035);
+        var ek = uk * uk * (3 - 2 * uk);
+        var xk = c.x0 + (c.x1 - c.x0) * ek;
+        var yk = c.y0 + (c.y1 - c.y0) * ek - Math.sin(uk * Math.PI) * H * .11;
+        var ak = vida * (1 - k / 7) * .30;
+        var g = cx.createRadialGradient(xk, yk, 0, xk, yk, Math.max(1, H * .012));
+        g.addColorStop(0, 'rgba(255,236,190,' + ak.toFixed(3) + ')');
+        g.addColorStop(1, 'rgba(255,236,190,0)');
+        cx.fillStyle = g;
+        cx.beginPath(); cx.arc(xk, yk, H * .012, 0, 6.2832); cx.fill();
+      }
+      // Y la luz: halo ancho y un nucleo chico y blanco.
+      var gh = cx.createRadialGradient(x, y, 0, x, y, Math.max(1, H * .042));
+      gh.addColorStop(0, 'rgba(255,240,200,' + (.55 * vida).toFixed(3) + ')');
+      gh.addColorStop(1, 'rgba(255,240,200,0)');
+      cx.fillStyle = gh;
+      cx.beginPath(); cx.arc(x, y, H * .042, 0, 6.2832); cx.fill();
+      cx.fillStyle = 'rgba(255,252,240,' + (.95 * vida).toFixed(3) + ')';
+      cx.beginPath(); cx.arc(x, y, Math.max(1.5, H * .0075), 0, 6.2832); cx.fill();
+      cx.restore();
+
+      if (u >= 1) {
+        if (c.alLlegar) c.alLlegar();
+        chispas.splice(i, 1);
+      }
+    }
+  }
+
   function resolverMirada() {
     if (Instante.vio(mirada)) {
       // Lo que vio es el indicio de ESE lugar, y no se junta dos veces.
@@ -1061,12 +1128,20 @@
         Audio2.tensar(J.tension);
         var iP = J.perdidos.indexOf(J.esconde);
         if (iP !== -1) J.perdidos.splice(iP, 1);
-        // Que el marcador se mueva: si no, sumar un indicio no se siente.
-        elMarcador.classList.remove('suma');
-        void elMarcador.offsetWidth;
-        elMarcador.classList.add('suma');
+        /* El marcador se mueve cuando LLEGA la chispa, no cuando se acierta:
+           si late antes, la luz llega a algo que ya paso y el viaje no cuenta
+           nada. */
+        lanzarChispa(function () {
+          elMarcador.classList.remove('suma');
+          void elMarcador.offsetWidth;
+          elMarcador.classList.add('suma');
+          actualizarRestan();
+        });
       }
-      mostrarAviso('lo viste', 'bien');
+      /* Y se apaga el aviso que pedia mantener apretado. Antes lo tapaba el
+         cartel de "lo viste"; sin ese cartel, la instruccion quedaba puesta
+         despues de haberla cumplido. */
+      ocultarAviso();
       Audio2.acierto();
 
       /* En el faro, y solo en el faro, ella abre los ojos y sonrie apenas.
@@ -1097,7 +1172,10 @@
         });
       }
       luego(1400, function () {
-        guiar('marcador', 'eso queda anotado arriba · cuántas veas decide el final', 5200);
+        /* Ya no hace falta decir donde queda anotado: la chispa se va hasta el
+           marcador a la vista de todos. Queda solo lo que el dibujo no puede
+           contar. */
+        guiar('marcador', 'cuántas veas decide el final', 5200);
       });
 
     } else {
@@ -1203,7 +1281,12 @@
     // Si la ventana cambio de tamano, reajustar antes de dibujar nada.
     if (!sinBucle && revisarTamanio()) pintarNaipes();
 
-    Cielo.actualizar(cielo, dt);
+    /* En los dos primeros lugares no hay naves. Lo raro de ahi tiene que
+       poder explicarse: una montania rusa que sigue en pie, una calesita
+       andando sola. Una nave cruzando el cielo en el primer paso adelanta el
+       final del juego, que es justamente lo que nadie tiene que sospechar
+       hasta la ultima pantalla. */
+    Cielo.actualizar(cielo, dt, J.paso < 2);
 
     /* Camina hasta su marca en la direccion que sea: al cambiar la figura la
        marca se corre, y Bel se acomoda unos pasos en vez de saltar. */
@@ -1613,6 +1696,10 @@
     Bel.dibujar(cx, bel, belPantalla, piso, escalaBel, luzEncima);
 
     if (J.climax > 0) cx.restore();
+
+    /* Lo que vio, viajando hasta el marcador. Va sobre todo el dibujo pero
+       antes del vineteado, para que se apague en los bordes como el resto. */
+    dibujarChispas(cx, dt, W, H);
 
     /* Vineteado: oscurece las esquinas y empuja la vista al centro. Va al
        final, sobre todo lo demas, incluido Bel. */

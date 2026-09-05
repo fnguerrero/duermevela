@@ -21,14 +21,19 @@ var Cielo = (function () {
     };
   }
 
-  /* Elige el próximo evento. Las más llamativas salen menos seguido. */
-  function elegir(c) {
+  /* Elige el próximo evento. Las más llamativas salen menos seguido.
+
+     `sinNave` la saca del sorteo. Al principio del sueño todo tiene que poder
+     pasar por raro pero terrestre: una nave cruzando el cielo en el primer
+     lugar dice de entrada que esto no está pasando, y el juego entero se
+     apoya en que eso se descubra tarde. */
+  function elegir(c, sinNave) {
     var r = Math.random();
     var tipo;
     /* La nave sale seguido y a proposito. No es un guino escondido: es lo que
        ella ve siempre, asi que tiene que estar ahi arriba varias veces por
        partida, sin que el juego la senale nunca. */
-    if (r < .22) tipo = 'nave';
+    if (r < .22) tipo = sinNave ? 'fugaz' : 'nave';
     else if (r < .46) tipo = 'fugaz';
     else if (r < .62) tipo = 'satelite';
     else if (r < .76) tipo = 'viajera';
@@ -56,7 +61,7 @@ var Cielo = (function () {
     c.vistos[tipo] = (c.vistos[tipo] || 0) + 1;
   }
 
-  function actualizar(c, dt) {
+  function actualizar(c, dt, sinNave) {
     if (c.evento) {
       c.evento.t += dt;
       if (c.evento.t >= c.evento.dur) {
@@ -66,7 +71,7 @@ var Cielo = (function () {
       return;
     }
     c.espera -= dt;
-    if (c.espera <= 0) elegir(c);
+    if (c.espera <= 0) elegir(c, sinNave);
   }
 
   /* Curva de aparición y desvanecimiento: entra y sale sin cortes. */

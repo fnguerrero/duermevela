@@ -368,13 +368,23 @@
      Aparece pegada al anillo la primera vez que hay algo que mirar, y no vuelve
      a aparecer. Sin esto, la primera jugada se pierde siempre: nadie deduce que
      hay que tocar en un momento exacto. */
+  /* Sin caja. Una caja con borde en el medio del dibujo es un cartel de
+     interfaz encima del sueno, y ademas competia con el relato, que tiene la
+     suya arriba. Ahora es texto suelto, chico y en versalitas, con una mancha
+     de fondo que se desvanece —el mismo recurso del relato— para que se lea
+     igual sobre la calesita blanca o sobre el cielo. */
   #guia{position:fixed;left:50%;transform:translateX(-50%);
     bottom:calc(var(--alto-mano) + 14px);margin:0;z-index:7;pointer-events:none;
-    font-size:clamp(13px,1.6vw,16px);letter-spacing:.06em;text-align:center;
-    color:rgba(255,236,190,.95);opacity:0;transition:opacity .5s;
-    background:rgba(9,7,16,.86);padding:8px 16px;border-radius:3px;
-    border:1px solid rgba(220,178,108,.35)}
+    font-size:clamp(11.5px,1.35vw,14px);letter-spacing:.16em;text-align:center;
+    text-transform:uppercase;color:rgba(240,214,164,.82);
+    opacity:0;transition:opacity .5s;padding:10px 30px;max-width:min(720px,92vw);
+    background:radial-gradient(ellipse 66% 78% at 50% 50%,
+      rgba(8,6,14,.86) 0%, rgba(8,6,14,.62) 52%, rgba(8,6,14,0) 100%);
+    text-shadow:0 1px 3px rgba(0,0,0,1), 0 2px 14px rgba(0,0,0,.95)}
   #guia.ver{opacity:1}
+  /* Cuando no hay cartas en pantalla la guia se va bien abajo: ahi no tapa
+     nada, y el medio del cuadro queda para lo que hay que mirar. */
+  #guia.abajo{bottom:clamp(26px,7vh,64px)}
 
   #marcador.suma{animation:latir .7s ease-out}
   @keyframes latir{
@@ -2074,14 +2084,19 @@ var Cielo = (function () {
     };
   }
 
-  /* Elige el próximo evento. Las más llamativas salen menos seguido. */
-  function elegir(c) {
+  /* Elige el próximo evento. Las más llamativas salen menos seguido.
+
+     `sinNave` la saca del sorteo. Al principio del sueño todo tiene que poder
+     pasar por raro pero terrestre: una nave cruzando el cielo en el primer
+     lugar dice de entrada que esto no está pasando, y el juego entero se
+     apoya en que eso se descubra tarde. */
+  function elegir(c, sinNave) {
     var r = Math.random();
     var tipo;
     /* La nave sale seguido y a proposito. No es un guino escondido: es lo que
        ella ve siempre, asi que tiene que estar ahi arriba varias veces por
        partida, sin que el juego la senale nunca. */
-    if (r < .22) tipo = 'nave';
+    if (r < .22) tipo = sinNave ? 'fugaz' : 'nave';
     else if (r < .46) tipo = 'fugaz';
     else if (r < .62) tipo = 'satelite';
     else if (r < .76) tipo = 'viajera';
@@ -2109,7 +2124,7 @@ var Cielo = (function () {
     c.vistos[tipo] = (c.vistos[tipo] || 0) + 1;
   }
 
-  function actualizar(c, dt) {
+  function actualizar(c, dt, sinNave) {
     if (c.evento) {
       c.evento.t += dt;
       if (c.evento.t >= c.evento.dur) {
@@ -2119,7 +2134,7 @@ var Cielo = (function () {
       return;
     }
     c.espera -= dt;
-    if (c.espera <= 0) elegir(c);
+    if (c.espera <= 0) elegir(c, sinNave);
   }
 
   /* Curva de aparición y desvanecimiento: entra y sale sin cortes. */
@@ -7885,6 +7900,9 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     if (J.guias[clave]) return;
     J.guias[clave] = true;
     elGuia.textContent = texto;
+    /* Si no hay cartas repartidas, la guia se va al pie. Con cartas tiene que
+       quedar arriba de ellas o queda tapada. */
+    elGuia.classList.toggle('abajo', !elMano.querySelector('.carta'));
     elGuia.classList.add('ver');
     luego(duracion || 4600, function () {
       // Solo se apaga si sigue siendo la suya: otra guia pudo tomar el cartel.
@@ -8277,6 +8295,70 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     if (elAviso) elAviso.className = '';
   }
 
+  /* La chispa.
+
+     Antes, acertar mostraba un cartel que decia "lo viste". Era una caja de
+     texto en el medio de la pantalla, hablandole al jugador —no a ella— justo
+     en el momento en que hay algo dibujado para mirar. Ahora no dice nada: de
+     lo que acaba de aparecer sale una luz y se va hasta el marcador, y recien
+     cuando llega se enciende la bolita. Se entiende sin una palabra y ademas
+     dice DONDE queda anotado, que es lo que la guia explicaba con texto. */
+  var chispas = [];
+
+  function lanzarChispa(alLlegar) {
+    var r = elMarcador.getBoundingClientRect();
+    chispas.push({
+      x0: ejeFigura(), y0: J.ultimaFy || (cv.height / (window.devicePixelRatio || 1)) * .45,
+      x1: r.left + r.width * .5, y1: r.top + r.height * .5,
+      t: 0, dur: 1.05, alLlegar: alLlegar
+    });
+  }
+
+  function dibujarChispas(cx, dt, W, H) {
+    if (!chispas.length) return;
+    for (var i = chispas.length - 1; i >= 0; i--) {
+      var c = chispas[i];
+      c.t += dt;
+      var u = Math.min(1, c.t / c.dur);
+      // Arranca despacio y llega frenando: una luz que sale, no un proyectil.
+      var e = u * u * (3 - 2 * u);
+      var x = c.x0 + (c.x1 - c.x0) * e;
+      /* La panza. En linea recta se lee como una flecha de interfaz; con la
+         curva se lee como algo que se eleva y despues se guarda. */
+      var y = c.y0 + (c.y1 - c.y0) * e - Math.sin(u * Math.PI) * H * .11;
+      var vida = Math.sin(Math.min(1, u * 1.15) * Math.PI * .92);
+
+      cx.save();
+      // La estela: la misma curva unos pasos atras, cada vez mas tenue.
+      for (var k = 6; k >= 1; k--) {
+        var uk = Math.max(0, u - k * .035);
+        var ek = uk * uk * (3 - 2 * uk);
+        var xk = c.x0 + (c.x1 - c.x0) * ek;
+        var yk = c.y0 + (c.y1 - c.y0) * ek - Math.sin(uk * Math.PI) * H * .11;
+        var ak = vida * (1 - k / 7) * .30;
+        var g = cx.createRadialGradient(xk, yk, 0, xk, yk, Math.max(1, H * .012));
+        g.addColorStop(0, 'rgba(255,236,190,' + ak.toFixed(3) + ')');
+        g.addColorStop(1, 'rgba(255,236,190,0)');
+        cx.fillStyle = g;
+        cx.beginPath(); cx.arc(xk, yk, H * .012, 0, 6.2832); cx.fill();
+      }
+      // Y la luz: halo ancho y un nucleo chico y blanco.
+      var gh = cx.createRadialGradient(x, y, 0, x, y, Math.max(1, H * .042));
+      gh.addColorStop(0, 'rgba(255,240,200,' + (.55 * vida).toFixed(3) + ')');
+      gh.addColorStop(1, 'rgba(255,240,200,0)');
+      cx.fillStyle = gh;
+      cx.beginPath(); cx.arc(x, y, H * .042, 0, 6.2832); cx.fill();
+      cx.fillStyle = 'rgba(255,252,240,' + (.95 * vida).toFixed(3) + ')';
+      cx.beginPath(); cx.arc(x, y, Math.max(1.5, H * .0075), 0, 6.2832); cx.fill();
+      cx.restore();
+
+      if (u >= 1) {
+        if (c.alLlegar) c.alLlegar();
+        chispas.splice(i, 1);
+      }
+    }
+  }
+
   function resolverMirada() {
     if (Instante.vio(mirada)) {
       // Lo que vio es el indicio de ESE lugar, y no se junta dos veces.
@@ -8287,12 +8369,20 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
         Audio2.tensar(J.tension);
         var iP = J.perdidos.indexOf(J.esconde);
         if (iP !== -1) J.perdidos.splice(iP, 1);
-        // Que el marcador se mueva: si no, sumar un indicio no se siente.
-        elMarcador.classList.remove('suma');
-        void elMarcador.offsetWidth;
-        elMarcador.classList.add('suma');
+        /* El marcador se mueve cuando LLEGA la chispa, no cuando se acierta:
+           si late antes, la luz llega a algo que ya paso y el viaje no cuenta
+           nada. */
+        lanzarChispa(function () {
+          elMarcador.classList.remove('suma');
+          void elMarcador.offsetWidth;
+          elMarcador.classList.add('suma');
+          actualizarRestan();
+        });
       }
-      mostrarAviso('lo viste', 'bien');
+      /* Y se apaga el aviso que pedia mantener apretado. Antes lo tapaba el
+         cartel de "lo viste"; sin ese cartel, la instruccion quedaba puesta
+         despues de haberla cumplido. */
+      ocultarAviso();
       Audio2.acierto();
 
       /* En el faro, y solo en el faro, ella abre los ojos y sonrie apenas.
@@ -8323,7 +8413,10 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
         });
       }
       luego(1400, function () {
-        guiar('marcador', 'eso queda anotado arriba · cuántas veas decide el final', 5200);
+        /* Ya no hace falta decir donde queda anotado: la chispa se va hasta el
+           marcador a la vista de todos. Queda solo lo que el dibujo no puede
+           contar. */
+        guiar('marcador', 'cuántas veas decide el final', 5200);
       });
 
     } else {
@@ -8429,7 +8522,12 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     // Si la ventana cambio de tamano, reajustar antes de dibujar nada.
     if (!sinBucle && revisarTamanio()) pintarNaipes();
 
-    Cielo.actualizar(cielo, dt);
+    /* En los dos primeros lugares no hay naves. Lo raro de ahi tiene que
+       poder explicarse: una montania rusa que sigue en pie, una calesita
+       andando sola. Una nave cruzando el cielo en el primer paso adelanta el
+       final del juego, que es justamente lo que nadie tiene que sospechar
+       hasta la ultima pantalla. */
+    Cielo.actualizar(cielo, dt, J.paso < 2);
 
     /* Camina hasta su marca en la direccion que sea: al cambiar la figura la
        marca se corre, y Bel se acomoda unos pasos en vez de saltar. */
@@ -8839,6 +8937,10 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     Bel.dibujar(cx, bel, belPantalla, piso, escalaBel, luzEncima);
 
     if (J.climax > 0) cx.restore();
+
+    /* Lo que vio, viajando hasta el marcador. Va sobre todo el dibujo pero
+       antes del vineteado, para que se apague en los bordes como el resto. */
+    dibujarChispas(cx, dt, W, H);
 
     /* Vineteado: oscurece las esquinas y empuja la vista al centro. Va al
        final, sobre todo lo demas, incluido Bel. */
