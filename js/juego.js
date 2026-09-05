@@ -1411,7 +1411,17 @@
          darse cuenta de que aparecio el anillo y reaccionar, que para alguien
          que no juega videojuegos es nada. Se alarga la mutacion y no se toca
          el segundo, que es de lo que se trata el juego. */
-      J.u = Math.min(1, J.u + dt * .28 * RITMO);
+      /* Mientras el jugador sostiene, el mundo se demora.
+
+         La transformacion dura 3,6 s y el llenado tarda 1, asi que habia que
+         haber apoyado el dedo antes de los 2,4: el que se quedaba mirando la
+         escena antes de decidir llegaba tarde siempre. En vez de alargar todo
+         o acortar el llenado —que serian numeros de dificultad— la mutacion
+         baja al 35% mientras hay un dedo apoyado. El que mira ya no pierde por
+         poco, y no es una concesion: es exactamente lo que el juego dice que
+         pasa cuando alguien se queda un segundo de mas. */
+      var demora = (mirada.activo && !mirada.resuelto && mirada.sosteniendo) ? .35 : 1;
+      J.u = Math.min(1, J.u + dt * .28 * RITMO * demora);
       if (J.u >= 1 && J.destino) {
         J.destello = 1;
         /* Apenas termina la mutacion, el lugar pasa a ser el destino. Antes
