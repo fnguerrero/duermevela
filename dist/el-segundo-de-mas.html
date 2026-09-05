@@ -4712,11 +4712,41 @@ var Instante = (function () {
   /* Se conserva el nombre viejo para no romper a quien lo llame. */
   function acerto(i) { return vio(i); }
 
+  /* El color del anillo, en un solo lugar.
+
+     Estaba escrito seis veces a mano y era el mismo dorado que el marcador, el
+     rotulo, el chevron y la guia: lo unico que hay que mirar tenia el color de
+     los carteles de la interfaz. Sacarlo afuera permite ademas compararlo sin
+     tocar el dibujo — test/anillo.html cambia esto y renderiza al lado. */
+  /* Turquesa frio, y no el dorado de antes.
+
+     El anillo estaba pintado del mismo color que el marcador, el rotulo, el
+     chevron y la guia: lo unico que hay que mirar tenia el color de los
+     carteles de la interfaz. Este se despega de todos ellos y del fondo azul
+     noche sin salirse de la paleta.
+
+     Van saturados a proposito: el anillo se dibuja con globalCompositeOperation
+     'lighter', asi que cualquier tono palido se suma hasta el blanco y el
+     color se pierde. Comparalos en test/anillo.html. */
+  var TINTA = {
+    espera: '70,196,235',    // el aro que espera que apoyes
+    lleno: '120,222,250',    // el arco que se va llenando
+    cerca: '80,205,240',     // el resplandor de cuando esta por completarse
+    vio: '150,235,255'       // el anillo que se abre al verlo
+  };
+  function tinta(nueva) {
+    if (nueva) {
+      Object.keys(nueva).forEach(function (k) { TINTA[k] = nueva[k]; });
+    }
+    return TINTA;
+  }
+
   return {
     crear: crear, arrancar: arrancar, actualizar: actualizar,
     apoyar: apoyar, soltar: soltar,
     dibujar: dibujar,
     vio: vio, acerto: acerto, avance: avance, avanceVisible: avanceVisible,
+    tinta: tinta,
     ENTRA: ENTRA, CIERRA: CIERRA, SOSTENER: SOSTENER
   };
 
@@ -4733,7 +4763,7 @@ var Instante = (function () {
          espera y se queda quieto en cuanto alguien apoya — dejar de latir es
          lo que dice "sí, así". */
       var pulso = i.sosteniendo ? 1 : (.5 + .5 * Math.sin(t * 2.6));
-      cx.strokeStyle = 'rgba(236,206,140,' + (.20 + .22 * pulso).toFixed(3) + ')';
+      cx.strokeStyle = 'rgba(' + TINTA.espera + ',' + (.20 + .22 * pulso).toFixed(3) + ')';
       cx.lineWidth = 2;
       cx.beginPath();
       cx.arc(i.x, i.y, i.radio, 0, 6.2832);
@@ -4742,7 +4772,7 @@ var Instante = (function () {
       /* Y el arco que se llena: cuánto se lleva mirando. Empieza arriba y va
          para la derecha, como cualquier cosa que se llena. */
       if (f > 0) {
-        cx.strokeStyle = 'rgba(255,240,200,' + (.55 + .45 * f).toFixed(3) + ')';
+        cx.strokeStyle = 'rgba(' + TINTA.lleno + ',' + (.55 + .45 * f).toFixed(3) + ')';
         cx.lineWidth = 3 + 4 * f;
         cx.lineCap = 'round';
         cx.beginPath();
@@ -4754,9 +4784,9 @@ var Instante = (function () {
       // Cerca del final se enciende: se siente que está por pasar algo.
       if (f > .5) {
         var g = cx.createRadialGradient(i.x, i.y, i.radio * .4, i.x, i.y, i.radio * 1.6);
-        g.addColorStop(0, 'rgba(255,235,180,0)');
-        g.addColorStop(.7, 'rgba(255,230,170,' + (.20 * (f - .5) * 2).toFixed(3) + ')');
-        g.addColorStop(1, 'rgba(255,225,160,0)');
+        g.addColorStop(0, 'rgba(' + TINTA.cerca + ',0)');
+        g.addColorStop(.7, 'rgba(' + TINTA.cerca + ',' + (.20 * (f - .5) * 2).toFixed(3) + ')');
+        g.addColorStop(1, 'rgba(' + TINTA.cerca + ',0)');
         cx.fillStyle = g;
         cx.beginPath(); cx.arc(i.x, i.y, i.radio * 1.6, 0, 6.2832); cx.fill();
       }
@@ -4766,12 +4796,12 @@ var Instante = (function () {
     if (i.destello > 0) {
       var q = i.destello;
       var rr = i.radio * (1 + (1 - q) * 1.5);
-      cx.strokeStyle = 'rgba(255,242,205,' + (q * q * .85).toFixed(3) + ')';
+      cx.strokeStyle = 'rgba(' + TINTA.vio + ',' + (q * q * .85).toFixed(3) + ')';
       cx.lineWidth = 2 + 7 * q;
       cx.beginPath(); cx.arc(i.x, i.y, rr, 0, 6.2832); cx.stroke();
       var g2 = cx.createRadialGradient(i.x, i.y, 0, i.x, i.y, i.radio * 2.2);
-      g2.addColorStop(0, 'rgba(255,240,200,' + (.30 * q).toFixed(3) + ')');
-      g2.addColorStop(1, 'rgba(255,235,190,0)');
+      g2.addColorStop(0, 'rgba(' + TINTA.vio + ',' + (.30 * q).toFixed(3) + ')');
+      g2.addColorStop(1, 'rgba(' + TINTA.vio + ',0)');
       cx.fillStyle = g2;
       cx.beginPath(); cx.arc(i.x, i.y, i.radio * 2.2, 0, 6.2832); cx.fill();
     }

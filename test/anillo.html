@@ -1,0 +1,148 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8">
+<title>El anillo — de qué color</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap">
+<style>
+  html,body{margin:0;background:#07060e;color:#ece6d8;
+    font-family:'Cormorant Garamond',Georgia,serif}
+  h1{font-size:19px;font-weight:400;letter-spacing:.16em;text-transform:uppercase;
+    color:rgba(220,178,108,.9);margin:18px 0 2px;text-align:center}
+  .sub{text-align:center;color:rgba(236,230,216,.45);font-size:15px;margin:0 0 14px}
+  .fila{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;padding:0 14px 22px}
+  .caso{width:min(400px,30vw)}
+  canvas{width:100%;display:block;border:1px solid rgba(220,178,108,.18);border-radius:3px}
+  .rotu{font-size:14px;letter-spacing:.12em;text-transform:uppercase;
+    color:rgba(236,196,132,.9);margin:8px 0 2px;text-align:center}
+  .dice{font-size:14.5px;color:rgba(236,230,216,.55);line-height:1.45;margin:0;
+    text-align:center}
+</style>
+</head><body>
+
+<h1>El anillo · de qué color</h1>
+<p class="sub">El ciclo del juego: espera latiendo, se llena mientras sostenés, se abre al verlo.</p>
+
+<div class="fila" id="fila"></div>
+
+<script src="../js/dibujo.js"></script>
+<script src="../js/bel.js"></script>
+<script src="../js/figuras.js"></script>
+<script src="../js/pintores.js"></script>
+<script src="../js/instante.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  /* Los cuatro candidatos. `espera` es el aro que late, `lleno` el arco que
+     crece, `cerca` el resplandor del final y `vio` el anillo que se abre. */
+  var PALETAS = [
+    { nombre: 'A · el de hoy, dorado',
+      dice: 'El mismo color que el marcador, el rótulo, el chevron y la guía.',
+      t: { espera: '236,206,140', lleno: '255,240,200', cerca: '255,232,175', vio: '255,242,205' } },
+    /* Ojo con la saturacion: el anillo se dibuja en modo `lighter` sobre un
+       fondo oscuro, asi que cualquier color palido termina en blanco y las
+       variantes se ven todas iguales. Estos son los mismos tonos pero con el
+       color subido, que es lo unico que sobrevive a la suma de luz. */
+    { nombre: 'B · plata de luna',
+      dice: 'El color de la luna, que es la que lleva la cuenta de lo que viste.',
+      t: { espera: '120,168,255', lleno: '150,196,255', cerca: '120,175,255', vio: '170,210,255' } },
+    { nombre: 'C · verde agua',
+      dice: 'Lo más lejos del oro de la interfaz. Se despega del todo.',
+      t: { espera: '80,214,180', lleno: '120,238,205', cerca: '90,220,190', vio: '140,246,215' } },
+    { nombre: 'D · violeta del sueño',
+      dice: 'El color del cielo del juego, un tono más vivo.',
+      t: { espera: '168,130,255', lleno: '196,166,255', cerca: '176,140,255', vio: '206,180,255' } },
+
+    { nombre: 'E · turquesa frío',
+      dice: 'Entre el azul y el verde. Es el que más se ve sobre el azul del fondo.',
+      t: { espera: '70,196,235', lleno: '120,222,250', cerca: '80,205,240', vio: '150,235,255' } },
+    { nombre: 'F · pura luz, sin color',
+      dice: 'Blanco apenas frío. No compite con nada: no es un color, es luz.',
+      t: { espera: '226,232,246', lleno: '250,252,255', cerca: '236,242,255', vio: '252,254,255' } },
+    /* La que me interesa que veas: el anillo no tiene color propio, toma el de
+       la carta que acabás de jugar. Cada instante se pinta de lo que estás
+       transformando. Acá se muestra con el naranja de La Rueda, que es la que
+       lleva a la calesita; con otra carta sería otro color. */
+    { nombre: 'G · el color de la carta',
+      dice: 'Toma el color del arcano que jugaste. Acá, el de La Rueda.',
+      t: { espera: '255,170,120', lleno: '255,205,165', cerca: '255,180,130', vio: '255,215,180' } }
+  ];
+
+  var W = 900, H = 620;
+  var piso = H * .83;
+  var E = Math.max(W * .08, Math.min(W * .27, (piso - H * .29) / 2));
+  var fx = W * .5, fy = piso - E, belX = W * .18;
+  var escalaBel = (H * .255) / 176;
+
+  var fila = document.getElementById('fila');
+  var casos = PALETAS.map(function (p) {
+    var caja = document.createElement('div');
+    caja.className = 'caso';
+    var cv = document.createElement('canvas');
+    cv.width = W; cv.height = H;
+    caja.appendChild(cv);
+    var r = document.createElement('p'); r.className = 'rotu'; r.textContent = p.nombre;
+    var d = document.createElement('p'); d.className = 'dice'; d.textContent = p.dice;
+    caja.appendChild(r); caja.appendChild(d);
+    fila.appendChild(caja);
+    var bel = Bel.crear(belX, piso);
+    bel.mirando = 1;
+    return { cx: cv.getContext('2d'), paleta: p, bel: bel, i: Instante.crear() };
+  });
+
+  /* El ciclo, con los tres momentos que hay que juzgar: el aro esperando, el
+     arco llenándose y el destello de cuando lo viste. */
+  var CICLO = 7.0;
+
+  function escena(c, t, u) {
+    var cx = c.cx;
+    cx.setTransform(1, 0, 0, 1, 0, 0);
+    var g = cx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#0a0817');
+    g.addColorStop(1, '#0d0b1c');
+    cx.fillStyle = g;
+    cx.fillRect(0, 0, W, H);
+
+    Pintores.pintar(cx, 'calesita', fx, fy, E, t, { alPiso: E, tension: 0 });
+
+    var s = cx.createLinearGradient(0, piso, 0, H);
+    s.addColorStop(0, 'rgba(7,5,16,0)');
+    s.addColorStop(.6, 'rgba(6,4,14,.72)');
+    s.addColorStop(1, 'rgba(4,3,11,.92)');
+    cx.fillStyle = s;
+    cx.fillRect(0, piso, W, H - piso);
+
+    Bel.dibujar(cx, c.bel, belX, piso, escalaBel, 1);
+
+    // El anillo, con la paleta de este caso.
+    Instante.tinta(c.paleta.t);
+    var i = c.i;
+    i.activo = u < .90;
+    i.resuelto = false;
+    i.x = fx; i.y = fy - E * .10;
+    i.radio = Math.min(W, H) * .13;
+    i.sosteniendo = u > .18 && u < .82;
+    i.lleno = u < .18 ? 0 : Math.min(1, (u - .18) / .62);
+    i.destello = u >= .90 ? Math.max(0, 1 - (u - .90) / .10) : 0;
+    Instante.dibujar(cx, i, t);
+  }
+
+  var t0 = performance.now();
+  function cuadro(ahora) {
+    var t = (ahora - t0) / 1000;
+    var u = (t % CICLO) / CICLO;
+    casos.forEach(function (c) { escena(c, t, u); });
+    requestAnimationFrame(cuadro);
+  }
+  requestAnimationFrame(cuadro);
+
+  window.laminas = function (u) {
+    u = (u === undefined) ? .72 : u;
+    casos.forEach(function (c) { escena(c, 3, u); });
+    return Promise.all(casos.map(function (c, n) {
+      return fetch('/_captura/anillo-' + 'abcdefghij'[n] + '-' + Math.round(u * 100) + '.png',
+        { method: 'POST', body: c.cx.canvas.toDataURL('image/png') });
+    })).then(function () { return 'laminas del anillo guardadas'; });
+  };
+})();
+</script>
+</body></html>
