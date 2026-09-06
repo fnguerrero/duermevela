@@ -379,6 +379,35 @@ var Audio2 = (function () {
     gota(grado === undefined ? 0 : grado, 1, .09, 3.2);
   }
 
+  /* Un trueno. Ruido filtrado que se abre y se apaga largo.
+
+     Lo que hace que un ruido suene a trueno y no a estatica es que el filtro
+     BAJE con el tiempo: al principio pasa todo y suena el chasquido, y a
+     medida que cae solo quedan los graves, que es el retumbe. Y que dure — un
+     trueno corto es un portazo. Va con mucha reverberacion, al reves que el
+     corazon: esto pasa lejos y afuera. */
+  function trueno(fuerza) {
+    if (!activo()) return;
+    var f = sano(fuerza, .6, 0, 1);
+    var t0 = ac.currentTime;
+    var dur = 1.6 + f * 1.4;
+    var n = ac.createBufferSource();
+    n.buffer = ruido(dur);
+    var fl = ac.createBiquadFilter();
+    fl.type = 'lowpass';
+    fl.frequency.setValueAtTime(900 + f * 1400, t0);
+    fl.frequency.exponentialRampToValueAtTime(90, t0 + dur * .8);
+    fl.Q.value = .7;
+    var g = ac.createGain();
+    g.gain.setValueAtTime(.0001, t0);
+    g.gain.exponentialRampToValueAtTime(.06 + f * .07, t0 + .05);
+    g.gain.exponentialRampToValueAtTime(.02 + f * .03, t0 + dur * .35);
+    g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+    n.connect(fl); fl.connect(g);
+    enchufar(g, .75);
+    n.start(t0); n.stop(t0 + dur + .1);
+  }
+
   /* Un latido. Dos golpes, no uno: un corazon hace lub-DUB, y con un solo
      pulso suena a bombo. El segundo llega a los 26 centesimos, es mas corto y
      mas apagado, que es lo que lo vuelve un corazon y no percusion.
@@ -658,7 +687,7 @@ var Audio2 = (function () {
   return {
     prender: prender, apagar: apagar, alternar: alternar, activo: activo,
     gota: gota, roce: roce, golpe: golpe, transformar: transformar,
-    corazon: corazon,
+    corazon: corazon, trueno: trueno,
     dormirColchon: dormirColchon, voces: function () { return vivas; },
     colorDe: colorDe, tic: tic, acierto: acierto, fallo: fallo, volteo: volteo,
     tensar: tensar, tensionAudio: function () { return tensionAudio; },

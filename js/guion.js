@@ -396,11 +396,18 @@ var Guion = (function () {
     },
     barca: {
       nombre: 'La barca',
-      llegada: 'Una barca con la vela puesta, meciéndose fuerte. No hay agua ' +
-               'abajo: se mece igual, como si abajo hubiera una tormenta que ' +
-               'solo ella siente. La vela está tensa de un viento que no me ' +
-               'despeina.',
-      vuelta: 'La barca otra vez, meciéndose sobre nada. Sigue igual de ' +
+      /* Ahora hay agua, y hay temporal. Lo raro deja de ser que no haya nada
+         abajo y pasa a ser que la tormenta no llega hasta ella: la lluvia le
+         pasa al lado sin mojarla y el viento no la despeina. El lugar sigue
+         diciendo lo mismo —eso la sacude a ella y a nadie mas— pero ahora se
+         ve, que era el problema: una barca quieta sobre una elipse gris no
+         mostraba ninguna tormenta, asi que tampoco se notaba que faltara el
+         agua. Una ausencia sin nada alrededor no se lee como ausencia. */
+      llegada: 'Una barca con la vela puesta en el medio de un temporal. El ' +
+               'agua la levanta y la deja caer, y truena. Estoy a tres metros ' +
+               'y no me llega nada: la lluvia me pasa por al lado sin tocarme ' +
+               'y la vela está tensa de un viento que no me despeina.',
+      vuelta: 'La barca otra vez, en la misma tormenta. Sigue igual de ' +
               'sacudida y sigue en el mismo lugar, que es lo raro de todo esto.',
       esconde: 'Está atada, y la soga se pierde en el aire. La sigo con la ' +
                'vista y en algún punto simplemente deja de existir. Eso es lo ' +

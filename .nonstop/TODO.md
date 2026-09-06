@@ -102,6 +102,12 @@ llegada ancla el lugar a algo de ella. Ahí el juego se vuelve genérico.
 - [x] N5 · Camina más despacio cuando la mueve un gesto, y con curva suave · verif: de .13 a .052 del ancho por segundo
 - [x] N6 · La luna gira la cara hacia ella, que es lo que el texto ya decía · verif: rasgos corridos y juntados, con el ojo de su lado más grande
 
+## O · La barca con agua (pedido de Nico)
+
+- [x] O1 · Agua, olas, lluvia, relámpagos y truenos · verif: verificarDibujo y las dos de anomalías en verde
+- [x] O2 · El sentido se corre en vez de perderse: la tormenta es real y lo que no llega es hasta ella · verif: verificarTextos() en verde
+- [x] O3 · `Audio2.trueno()`, con el filtro bajando y separación despareja · verif: existe y suena distinto cada vez
+
 ## D · Cierre
 
 - [x] D1 · `auditarTodo()` en verde · verif: 10 de 10, con `tramos` incluido

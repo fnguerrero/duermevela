@@ -1470,7 +1470,94 @@ var Pintores = (function () {
   }
 
   /* ============ la barca ============ */
+  /* El mar y el temporal, debajo y alrededor de la barca.
+
+     Se dibuja ANTES que ella y en coordenadas propias, para que la barca
+     quede encima flotando y no adentro del agua. Las olas son cuatro filas de
+     crestas a distinta velocidad: con una sola fila el agua se lee como una
+     cinta que se desliza, y lo que hace mar es que las capas no vayan todas
+     juntas. El relampago no es un flash blanco de pantalla —eso es un golpe
+     en los ojos y encima taparia la escena— sino una subida de luz sobre el
+     agua y la vela, que es lo que se ve de verdad cuando cae uno lejos. */
+  function mar(cx, E, t) {
+    /* La linea del agua va justo abajo del casco y no al pie del cuadro: la
+       barca es de las figuras que vuelan —no apoya en el piso— asi que un mar
+       dibujado abajo de todo la dejaba flotando un metro por encima del agua.
+       El agua sigue despues hacia abajo hasta salirse del cuadro, que es lo
+       que la hace mar y no una pileta. */
+    var y0 = E * .17;
+    cx.save();
+
+    var ag = cx.createLinearGradient(0, y0 - E * .06, 0, y0 + E * 1.5);
+    ag.addColorStop(0, 'rgba(38,48,92,.94)');
+    ag.addColorStop(.35, 'rgba(28,36,72,.95)');
+    ag.addColorStop(1, 'rgba(14,18,40,.97)');
+    cx.fillStyle = ag;
+    /* Ancho de sobra: con 4,8E el agua terminaba adentro del cuadro y se veian
+       los dos cantos verticales, o sea una pileta y no un mar. */
+    cx.fillRect(-E * 9, y0 - E * .06, E * 18, E * 3.2);
+
+    /* El relampago: cada tanto, y no siempre en el mismo lado. La cuenta con
+       seno elevado deja el destello corto y el resto del tiempo en cero. */
+    var rayo = Math.pow(Math.max(0, Math.sin(t * .47)), 26) +
+               Math.pow(Math.max(0, Math.sin(t * .31 + 2.1)), 34);
+    if (rayo > .01) {
+      var lx = Math.sin(t * .19) * E * 1.4;
+      /* El resplandor tiene que apagarse ANTES del borde del rectangulo que
+         lo lleva, o el corte se ve — y se veia: en el pico del relampago
+         quedaba un rectangulo claro con dos cantos rectos en el medio del
+         cielo. El radio del gradiente es 3,4E y el rectangulo mide 18 de
+         ancho, asi que muere adentro. */
+      var luz = cx.createRadialGradient(lx, y0 - E * 1.5, E * .1,
+                                        lx, y0 - E * 1.5, E * 3.4);
+      luz.addColorStop(0, 'rgba(196,208,255,' + (rayo * .26).toFixed(3) + ')');
+      luz.addColorStop(.55, 'rgba(180,196,255,' + (rayo * .09).toFixed(3) + ')');
+      luz.addColorStop(1, 'rgba(196,208,255,0)');
+      cx.fillStyle = luz;
+      cx.fillRect(-E * 9, y0 - E * 5, E * 18, E * 8);
+    }
+
+    // Las olas: seis filas, cada una mas rapida y mas grande hacia adelante.
+    for (var f = 0; f < 6; f++) {
+      var yf = y0 + E * (.03 + f * f * .045);
+      var vel = .7 + f * .38;
+      var alto = E * (.014 + f * .011);
+      var largo = E * (.26 + f * .11);
+      cx.strokeStyle = 'rgba(' + Math.round(116 + f * 22) + ',' +
+                       Math.round(146 + f * 26) + ',216,' +
+                       (.20 + f * .06 + rayo * .40).toFixed(3) + ')';
+      cx.lineWidth = Math.max(1, E * (.009 + f * .004));
+      cx.beginPath();
+      for (var x = -E * 2.2; x < E * 2.2; x += largo) {
+        var fase = t * vel + x / largo;
+        cx.moveTo(x, yf + Math.sin(fase) * alto);
+        cx.quadraticCurveTo(x + largo * .5, yf + Math.cos(fase) * alto * 2.2,
+                            x + largo, yf + Math.sin(fase + 1) * alto);
+      }
+      cx.stroke();
+    }
+
+    /* La lluvia. Cae inclinada y toda para el mismo lado: vertical se lee como
+       nieve. Va por delante del agua y por detras de la barca. */
+    var rnd = sembrado(53);
+    cx.strokeStyle = 'rgba(180,200,245,.26)';
+    cx.lineWidth = Math.max(1, E * .0055);
+    cx.beginPath();
+    for (var g = 0; g < 70; g++) {
+      var bx = (rnd() * 2 - 1) * E * 2.1;
+      var caida = ((t * (1.5 + rnd() * .9) + rnd() * 3) % 1);
+      var gy = y0 - E * 2.1 + caida * E * 2.4;
+      if (gy > y0 + E * .04) continue;
+      cx.moveTo(bx, gy);
+      cx.lineTo(bx - E * .045, gy + E * .12);
+    }
+    cx.stroke();
+    cx.restore();
+  }
+
   function barca(cx, E, t) {
+    // El temporal va primero: la barca flota encima de el.
+    mar(cx, E, t);
     /* Se mece fuerte, y de manera despareja.
 
        Era un solo seno de .045 radianes: dos grados y medio, siempre iguales,

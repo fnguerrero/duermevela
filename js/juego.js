@@ -1435,6 +1435,7 @@
     Cielo.actualizar(cielo, dt, J.paso < 2);
     vigilarPaso(dt);
     latirCirculo(dt);
+    tronarBarca(dt);
     gestoDeBel();
 
     /* Camina hasta su marca en la direccion que sea: al cambiar la figura la
@@ -2549,6 +2550,23 @@
        lamina sale con ella parada y parece que el gesto no existe. Es la misma
        trampa que ya tenia el alza de la cabeza. */
     if (sinBucle) bel.gestoU = quiere ? 1 : 0;
+  }
+
+  /* Los truenos de la barca.
+
+     Van por reloj propio y con la misma cuenta que el relampago del dibujo no
+     tendria sentido: un trueno se escucha DESPUES del relampago, no con el.
+     Se tira cada tanto, con la separacion despareja, que es lo unico que hace
+     que una tormenta suene a tormenta y no a loop. */
+  var proximoTrueno = 2.5;
+  function tronarBarca(dt) {
+    if (J.lugar !== 'barca') { proximoTrueno = 2.5; return; }
+    proximoTrueno -= dt;
+    if (proximoTrueno > 0) return;
+    proximoTrueno = 3.4 + Math.random() * 5.2;
+    if (typeof Audio2 !== 'undefined' && Audio2.trueno) {
+      Audio2.trueno(.35 + Math.random() * .5);
+    }
   }
 
   /* El corazon del circulo, que es lo unico del cuerpo que se escucha.
