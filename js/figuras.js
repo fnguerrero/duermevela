@@ -423,7 +423,10 @@ var Figuras = (function () {
      distintos. */
   function circuloHongos() {
     var s = [];
-    var rx = .92, ry = .34, cy = .70, N = 15;
+    /* Tres hongos, los mismos que dibuja el pintor: si la figura de trazos
+       trae quince y el dibujo tres, la transformacion de un lugar a otro
+       muestra doce hongos que despues no estan. */
+    var rx = .92, ry = .34, cy = .70, N = 3;
     // El anillo del pasto pisado.
     for (var i = 0; i < 40; i++) {
       var a0 = i / 40 * 6.2832, a1 = (i + .6) / 40 * 6.2832;

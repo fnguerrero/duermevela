@@ -835,7 +835,12 @@ var Pintores = (function () {
        fiesta, no un mal momento — el color puro se lee como alegre por mas
        que uno lo llame caos. */
     var rx = E * (.92 - h * .13), ry = E * (.34 - h * .05), cy = E * .70;
-    var N = 15;
+    /* Tres hongos y no quince. Con quince el anillo era una cerca y el ojo se
+       iba a contarlos; el circulo no lo hacen ellos, lo hace la marca en el
+       pasto — que es lo que pasa en un corro de verdad, donde lo que se ve
+       todo el año es el anillo de pasto distinto y los hongos salen unos
+       pocos dias. Y deja lugar para lo que importa, que esta en el medio. */
+    var N = 3;
 
     /* El pasto de adentro es de otro verde que el de afuera, que es lo que el
        texto dice y lo que pasa de verdad en un corro: el micelio se come el
@@ -877,72 +882,158 @@ var Pintores = (function () {
       cx.restore();
     }
 
-    /* Y el latido del suelo: los anillos salen del centro hacia afuera, cada
-       vez mas rapido. Con `hondo` en cero no hay ninguno. */
+    /* Y el suelo late en colores que se corren.
+
+       Aca hubo un ida y vuelta: primero era magenta puro y quedaba una fiesta,
+       asi que lo apague; y apagado perdio lo psicodelico, que es justamente lo
+       que el lugar tiene que ser. La salida no es subir la saturacion sino que
+       el COLOR NO SE QUEDE QUIETO. Ocho anillos saliendo del centro, cada uno
+       con su tono, y todos los tonos girando despacio: eso se lee psicodelico
+       aunque cada anillo por separado sea tenue, y no se lee alegre, porque lo
+       inquietante no es el color sino que no para de cambiar. */
     if (h > .01) {
       cx.save();
       cx.globalCompositeOperation = 'lighter';
       cx.translate(0, cy); cx.scale(1, ry / rx);
-      for (var o = 0; o < 3; o++) {
-        var fase = ((t * (.42 + h * .95) + o / 3) % 1);
-        cx.strokeStyle = 'rgba(' + Math.round(150 - h * 40) + ',' +
-                         Math.round(210 - h * 60) + ',' +
-                         Math.round(190 + h * 30) + ',' +
-                         (h * .15 * (1 - fase)).toFixed(3) + ')';
-        cx.lineWidth = E * .012;
-        cx.beginPath(); cx.arc(0, 0, rx * (.12 + fase * .95), 0, 6.2832); cx.stroke();
+      for (var o = 0; o < 8; o++) {
+        var fase = ((t * (.30 + h * .55) + o / 8) % 1);
+        var tono = Math.round((t * 26 + o * 44) % 360);
+        cx.strokeStyle = 'hsla(' + tono + ',' + Math.round(38 + h * 34) + '%,' +
+                         Math.round(52 + h * 8) + '%,' +
+                         (h * .17 * (1 - fase) * (.4 + fase)).toFixed(3) + ')';
+        cx.lineWidth = E * (.010 + fase * .030);
+        cx.beginPath(); cx.arc(0, 0, rx * (.10 + fase * 1.25), 0, 6.2832); cx.stroke();
+      }
+      cx.restore();
+
+      /* Y el aire de encima, con las mismas bandas pero acostadas: lo que
+         hace psicodelica una escena es que el color se mueva por TODO y no
+         solo por un objeto. Se corta contra la sombra del tunel, asi que
+         queda adentro del cono de vision y no invade el resto del cuadro. */
+      cx.save();
+      cx.globalCompositeOperation = 'lighter';
+      /* Desenfocadas, o son platos apilados y no neblina. El gradiente les da
+         el borde blando a los costados pero arriba y abajo la elipse corta en
+         seco, y cinco elipses nitidas una sobre otra se leen como una pila de
+         discos. Mismo remedio que el haz del faro: el filtro hace lo que
+         apilar formas no puede. */
+      if (typeof cx.filter === 'string') cx.filter = 'blur(' + (E * .07).toFixed(1) + 'px)';
+      for (var w = 0; w < 5; w++) {
+        var oy2 = cy - E * (.25 + w * .34) + Math.sin(t * .5 + w) * E * .05;
+        var tw = Math.round((t * 21 + w * 62 + 190) % 360);
+        var gw = cx.createLinearGradient(-rx * 1.3, oy2, rx * 1.3, oy2);
+        gw.addColorStop(0, 'hsla(' + tw + ',60%,55%,0)');
+        gw.addColorStop(.5, 'hsla(' + tw + ',60%,55%,' + (h * .085).toFixed(3) + ')');
+        gw.addColorStop(1, 'hsla(' + ((tw + 60) % 360) + ',60%,55%,0)');
+        cx.fillStyle = gw;
+        cx.beginPath();
+        cx.ellipse(Math.sin(t * .37 + w) * E * .2, oy2,
+                   rx * 1.25, E * (.09 + w * .015), 0, 0, 6.2832);
+        cx.fill();
       }
       cx.restore();
     }
 
     /* El arbol del medio.
 
+       Grande y GORDO, que es lo que Nico pidio y lo que el texto necesita: ella
+       lo abraza, asi que el tronco tiene que ser de abrazar — no una rama
+       parada. El primero media .86E de alto con un tronco de .038E y se veia
+       escualido, un arbolito de vivero al lado del que hace falta ahi.
+
        Aparece ultimo y es lo unico de la escena que no esta mal: crece del
        centro del circulo, respira despacio y su luz es la unica calida que
-       queda cuando todo lo demas se puso frio. Ella no hace nada mas que
-       mirarlo, asi que tampoco hace falta que el haga nada mas que estar. */
+       queda cuando todo lo demas se puso frio y se puso a girar de color. */
     if (ar > .01) {
-      var alt = E * (.86 + respira * .05) * ar;
-      var abre = E * .30 * ar;
+      var alt = E * (1.42 + respira * .045) * ar;
+      var gordo = E * (.155 + respira * .006) * ar;   // medio tronco
+      var abre = E * .62 * ar;
       cx.save();
       cx.globalAlpha = ar;
+
       // La luz que da, que late con la respiracion y no con el corazon.
-      halo(cx, 0, cy - alt * .62, E * (.62 + respira * .12),
-           '236,214,164', .10 + respira * .10);
-      // Tronco.
-      cx.strokeStyle = 'rgba(214,196,168,.88)';
-      cx.lineWidth = E * .038;
-      cx.lineCap = 'round';
+      halo(cx, 0, cy - alt * .58, E * (1.02 + respira * .16),
+           '240,218,168', .11 + respira * .10);
+
+      /* El tronco, con cuerpo: dos lados que se abren abajo en raices y se
+         cierran arriba. Dibujado como una sola forma rellena y no como una
+         linea gruesa, porque una linea no tiene raiz ni se ensancha. */
       cx.beginPath();
-      cx.moveTo(0, cy);
-      cx.quadraticCurveTo(E * .012, cy - alt * .5, 0, cy - alt * .72);
-      cx.stroke();
-      // Ramas: dos pares que se abren, con la punta encendida.
-      var rnd2 = sembrado(17);
-      for (var b = 0; b < 6; b++) {
-        var lado2 = b % 2 ? 1 : -1;
-        var u2 = .40 + Math.floor(b / 2) * .18;
-        var y0b = cy - alt * u2;
-        var largoR = abre * (.62 + rnd2() * .5) * (1 - u2 * .35);
-        var yFin = y0b - alt * (.14 + rnd2() * .08);
-        cx.strokeStyle = 'rgba(206,188,162,' + (.62 + rnd2() * .2).toFixed(2) + ')';
-        cx.lineWidth = E * (.014 - u2 * .006);
+      cx.moveTo(-gordo * 1.85, cy + E * .015);
+      cx.quadraticCurveTo(-gordo * 1.05, cy - alt * .10, -gordo * .82, cy - alt * .34);
+      cx.quadraticCurveTo(-gordo * .66, cy - alt * .60, -gordo * .40, cy - alt * .78);
+      cx.lineTo(gordo * .40, cy - alt * .78);
+      cx.quadraticCurveTo(gordo * .66, cy - alt * .60, gordo * .82, cy - alt * .34);
+      cx.quadraticCurveTo(gordo * 1.05, cy - alt * .10, gordo * 1.85, cy + E * .015);
+      cx.closePath();
+      var corteza = cx.createLinearGradient(-gordo * 1.8, 0, gordo * 1.8, 0);
+      corteza.addColorStop(0, 'rgba(96,74,58,.96)');
+      corteza.addColorStop(.42, 'rgba(168,136,102,.96)');
+      corteza.addColorStop(1, 'rgba(88,68,54,.96)');
+      cx.fillStyle = corteza;
+      cx.fill();
+
+      // Las vetas, que es lo que termina de darle grosor a un tronco.
+      cx.strokeStyle = 'rgba(70,54,44,.34)';
+      cx.lineWidth = E * .008;
+      for (var v2 = -1; v2 <= 1; v2++) {
         cx.beginPath();
-        cx.moveTo(0, y0b);
-        cx.quadraticCurveTo(lado2 * largoR * .6, y0b - alt * .04,
+        cx.moveTo(v2 * gordo * .62, cy);
+        cx.quadraticCurveTo(v2 * gordo * .5, cy - alt * .38,
+                            v2 * gordo * .34, cy - alt * .72);
+        cx.stroke();
+      }
+
+      /* Las ramas: gruesas donde nacen y finas en la punta, con la punta
+         encendida. Salen bien arriba para que el tronco quede libre y se lea
+         el lugar donde ella lo abraza. */
+      var rnd2 = sembrado(17);
+      for (var b = 0; b < 8; b++) {
+        var lado2 = b % 2 ? 1 : -1;
+        var u2 = .74 + Math.floor(b / 2) * .075;
+        var y0b = cy - alt * u2;
+        var largoR = abre * (.55 + rnd2() * .55) * (1.25 - u2 * .5);
+        var yFin = y0b - alt * (.12 + rnd2() * .10);
+        cx.strokeStyle = 'rgba(150,122,94,' + (.78 + rnd2() * .18).toFixed(2) + ')';
+        cx.lineWidth = E * (.030 - (u2 - .74) * .09);
+        cx.lineCap = 'round';
+        cx.beginPath();
+        cx.moveTo(lado2 * gordo * .30, y0b);
+        cx.quadraticCurveTo(lado2 * largoR * .62, y0b - alt * .03,
                             lado2 * largoR, yFin);
         cx.stroke();
-        halo(cx, lado2 * largoR, yFin, E * .05 * (.7 + respira * .5),
-             '246,226,178', .30 + respira * .22);
+        halo(cx, lado2 * largoR, yFin, E * .07 * (.7 + respira * .5),
+             '248,228,180', .28 + respira * .22);
       }
-      // La copa, apenas insinuada: es un arbol de sueño, no un arbol botanico.
-      var copa = cx.createRadialGradient(0, cy - alt * .78, 0,
-                                         0, cy - alt * .78, abre * 1.25);
-      copa.addColorStop(0, 'rgba(228,212,176,' + (.20 + respira * .10).toFixed(3) + ')');
-      copa.addColorStop(1, 'rgba(228,212,176,0)');
+
+      /* La copa: verde propio y no un resplandor crema. Es lo unico vivo del
+         cuadro y tiene que verse vivo. Respira con el resto. */
+      var copaR = abre * (1.22 + respira * .06);
+      var copa = cx.createRadialGradient(0, cy - alt * .92, copaR * .1,
+                                         0, cy - alt * .92, copaR);
+      copa.addColorStop(0, 'rgba(120,168,116,' + (.34 + respira * .10).toFixed(3) + ')');
+      copa.addColorStop(.55, 'rgba(84,132,96,' + (.20 + respira * .07).toFixed(3) + ')');
+      copa.addColorStop(1, 'rgba(70,112,88,0)');
       cx.fillStyle = copa;
       cx.beginPath();
-      cx.arc(0, cy - alt * .78, abre * 1.25, 0, 6.2832); cx.fill();
+      cx.ellipse(0, cy - alt * .92, copaR, copaR * .78, 0, 0, 6.2832);
+      cx.fill();
+
+      /* Y las raices, que lo terminan de plantar. Cortas y cayendo: salieron
+         primero largas y casi horizontales y parecian una barra clavada de
+         lado a lado atravesando el tronco. Una raiz se hunde, no cruza. */
+      cx.strokeStyle = 'rgba(92,72,58,.58)';
+      cx.lineCap = 'round';
+      for (var rz = 0; rz < 4; rz++) {
+        var ld = rz % 2 ? 1 : -1;
+        var lejos = gordo * (1.5 + (rz > 1 ? .55 : 0));
+        cx.lineWidth = E * (.019 - (rz > 1 ? .006 : 0));
+        cx.beginPath();
+        cx.moveTo(ld * gordo * .8, cy - E * .02);
+        cx.quadraticCurveTo(ld * lejos, cy + E * .004,
+                            ld * lejos * 1.12, cy + E * .045);
+        cx.stroke();
+      }
       cx.restore();
     }
 

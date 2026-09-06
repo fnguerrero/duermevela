@@ -86,6 +86,9 @@ llegada ancla el lugar a algo de ella. Ahí el juego se vuelve genérico.
 - [x] M2 · Un árbol aparece en el centro y la respiración con él es lo que la saca · verif: entra a partir del 60% de la revelación y es lo único cálido de la escena
 - [x] M3 · Más oscuro y sombrío: la luz de alrededor se apaga y queda solo lo que mira · verif: se ve el túnel alrededor del círculo
 - [x] M4 · Latidos del corazón que aceleran y se calman · verif: Audio2.corazon(), de 62 a 138 pulsaciones, con reloj propio
+- [x] M5 · El árbol imponente, de abrazar: de .86E a 1.42E y el tronco como forma rellena con raíces · verif: se lee como árbol de abrazar en la lámina
+- [x] M6 · De quince hongos a tres; el círculo lo hace la marca del pasto · verif: la figura de trazos también, o la transformación mostraría doce que no están
+- [x] M7 · Iluminación psicodélica: el color no se queda quieto · verif: ocho anillos y cinco bandas con los tonos girando, desenfocadas
 
 ## D · Cierre
 

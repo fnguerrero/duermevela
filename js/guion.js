@@ -287,9 +287,9 @@ var Guion = (function () {
                'demasiado. El aire se llena de cosas que no llego a ver del ' +
                'todo, el corazón me golpea en las orejas, y esto no baja. No ' +
                'baja nunca. Me estoy muriendo acá adentro y no hay nadie. Y ' +
-               'entonces veo el árbol en el medio: está respirando. Me quedo ' +
-               'mirándolo y respiro cuando él respira. No hago nada más, y ' +
-               'eso alcanza.',
+               'entonces veo el árbol en el medio, enorme, y está respirando. ' +
+               'Lo abrazo. Me quedo pegada al tronco respirando cuando él ' +
+               'respira, y no hago nada más. Eso alcanza.',
       /* Y el unico lugar donde NO mirar tiene su propia respuesta.
 
          En los otros trece, seguir de largo deja constancia de que ahi habia
