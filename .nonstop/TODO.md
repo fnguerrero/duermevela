@@ -126,6 +126,12 @@ llegada ancla el lugar a algo de ella. Ahí el juego se vuelve genérico.
 - [x] Q3 · REGRESIÓN mía: al mover la frase de la carta al arranque, nada limpiaba el texto anterior · verif: partida entera con 8 indicios y 0 errores
 - [x] Q4 · El árbol más alto y más ancho, con copa de hojas y no de resplandor · verif: 18 masas desenfocadas al 7,5% del radio
 
+## R · Leo, el signo de Bel
+
+- [x] R1 · La luna entra en su signo al ver las ocho · verif: el glifo dibujado cambia con los indicios
+- [x] R2 · La constelación de Leo en el cielo, al 4% de los eventos · verif: nueve estrellas en posiciones reales, con Regulus y Denebola destacadas
+- [x] R3 · Queda dicho que el glifo de la luna es el signo lunar de hoy y no el solar de ella · verif: se deja como está, es dato del cielo real
+
 ## D · Cierre
 
 - [x] D1 · `auditarTodo()` en verde · verif: 10 de 10, con `tramos` incluido

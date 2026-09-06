@@ -1619,8 +1619,18 @@
        apaga cuando el lugar del recorrido ES la luna, porque dos lunas en el
        mismo cuadro se leen como un error de dibujo y no como una idea. */
     var enLaLuna = (J.lugar === 'luna') || (J.destino && J.destino.figura === 'luna');
-    Cielo.luna(cx, W, H, t, faseLuna(), !enLaLuna,
-               lunaReal ? lunaReal.signoGlifo : null, J.lunaCrece);
+    /* Y si llego a ver las ocho, la luna entra en su signo.
+
+       La fase ya crece con cada cosa que encuentra; esto es lo mismo pero
+       dicho en el otro idioma de la carta astral. Es un transito real —la Luna
+       pasa por los doce signos cada veintisiete dias— asi que no hay magia
+       inventada: lo que pasa es que el cielo del juego se corrio hasta el suyo.
+
+       Solo lo ve quien completo el juego. Quien no llegue, nunca se entera de
+       que existia, que es como funciona todo lo demas aca. */
+    var glifoLuna = lunaReal ? lunaReal.signoGlifo : null;
+    if (J.indicios.length >= Guion.PASOS) glifoLuna = '♌';
+    Cielo.luna(cx, W, H, t, faseLuna(), !enLaLuna, glifoLuna, J.lunaCrece);
 
     /* En vertical la pantalla es angosta y alta: si el piso se queda abajo del
        todo, queda un tercio de escena y dos tercios de cielo vacío. */

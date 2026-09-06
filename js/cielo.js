@@ -40,7 +40,11 @@ var Cielo = (function () {
     else if (r < .62) tipo = 'satelite';
     else if (r < .76) tipo = 'viajera';
     else if (r < .87) tipo = 'pulso';
-    else if (r < .96) tipo = 'formacion';
+    else if (r < .94) tipo = 'formacion';
+    /* Y de vez en cuando, la constelacion de Leo. Es el unico evento del
+       cielo que no le habla a cualquiera: es el signo de Bel. Sale poco —un
+       4%— porque un guiño que aparece siempre deja de ser un guiño. */
+    else if (r < .98) tipo = 'leo';
     else tipo = 'sombra';
 
     var haciaLaDerecha = Math.random() < .5;
@@ -53,6 +57,7 @@ var Cielo = (function () {
          : tipo === 'pulso' ? 4.5
          : tipo === 'formacion' ? 8
          : tipo === 'nave' ? 13
+         : tipo === 'leo' ? 16
          : 11,                                   // sombra
       dir: haciaLaDerecha ? 1 : -1,
       x0: haciaLaDerecha ? -.12 : 1.12,
@@ -222,6 +227,59 @@ var Cielo = (function () {
       cx.fillStyle = pg;
       cx.beginPath(); cx.arc(px, py, r, 0, 6.2832); cx.fill();
       cx.restore();
+
+    } else if (e.tipo === 'leo') {
+      /* La constelacion de Leo, con las posiciones reales de sus estrellas.
+
+         La forma son dos partes: la HOZ —seis estrellas que arman un signo de
+         interrogacion al reves, que es la cabeza y la melena— y el triangulo
+         del cuerpo, que termina en Denebola, la cola. Regulus va en la base de
+         la hoz y es la mas brillante de las dos que se destacan; las otras
+         siete quedan mas tenues, como se ven de verdad.
+
+         No cruza el cielo como los demas eventos: aparece, se queda quieta y
+         se apaga. Una constelacion no pasa — esta, y uno la encuentra. */
+      var a7 = sobre(u, .26, .26);
+      /* Cada estrella en su lugar: x, y en fracciones del bloque, y cuanto
+         brilla. Regulus y Denebola son las dos que cualquiera ve primero. */
+      var LEO = [
+        [.62, .62, 1.00],   // Regulus
+        [.66, .50,  .48],   // Eta
+        [.70, .38,  .72],   // Algieba
+        [.72, .28,  .52],   // Adhafera
+        [.65, .19,  .46],   // Rasalas
+        [.55, .22,  .40],   // Epsilon
+        [.27, .30,  .62],   // Zosma
+        [.31, .48,  .50],   // Chort
+        [.06, .34,  .88]    // Denebola
+      ];
+      // Las lineas: la hoz primero, y despues el cuerpo.
+      var TRAZOS = [[0,1],[1,2],[2,3],[3,4],[4,5],[0,7],[7,6],[6,8],[2,6]];
+      var lado = Math.min(W, H) * .30;
+      var bx0 = W * e.x0 + (e.dir > 0 ? 0 : -lado * .2);
+      var by0 = H * (e.y0 * .8 + .04);
+      function ex(i) { return bx0 + LEO[i][0] * lado; }
+      function ey(i) { return by0 + LEO[i][1] * lado * .74; }
+
+      cx.save();
+      // Los trazos llegan despues que las estrellas: primero se ven los puntos.
+      var unir = Math.max(0, Math.min(1, (u - .18) / .22));
+      cx.globalAlpha = a7 * unir * .16;
+      cx.strokeStyle = 'rgba(196,206,246,1)';
+      cx.lineWidth = 1;
+      cx.beginPath();
+      TRAZOS.forEach(function (t2) {
+        cx.moveTo(ex(t2[0]), ey(t2[0]));
+        cx.lineTo(ex(t2[1]), ey(t2[1]));
+      });
+      cx.stroke();
+      cx.restore();
+
+      LEO.forEach(function (st, i) {
+        var titila = .82 + .18 * Math.sin(e.t * 1.6 + i * 1.7 + e.semilla);
+        punto(cx, bx0 + st[0] * lado, by0 + st[1] * lado * .74,
+              1.1 + st[2] * 1.5, '214,222,255', a7 * st[2] * titila * .85);
+      });
 
     } else if (e.tipo === 'sombra') {
       // Algo oscuro que pasa por delante de las estrellas y las tapa. No se ve:
