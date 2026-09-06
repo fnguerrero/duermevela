@@ -52,11 +52,14 @@
   #portada{display:flex;flex-direction:column;align-items:center;
     justify-content:center;gap:20px;padding:6vw;
     background:
-      radial-gradient(ellipse 52% 46% at 50% 38%,
-        rgba(7,6,16,.94) 0%, rgba(7,6,16,.88) 46%,
-        rgba(7,6,16,.40) 78%, rgba(7,6,16,0) 100%),
+      /* El velo se cierra sobre la columna de texto y se abre en los costados:
+         asi la escena de atras se ve mas en pantallas anchas, que es donde
+         sobraba vacio, sin que las letras dejen de leerse. */
+      radial-gradient(ellipse 46% 48% at 50% 42%,
+        rgba(7,6,16,.95) 0%, rgba(7,6,16,.90) 52%,
+        rgba(7,6,16,.34) 82%, rgba(7,6,16,0) 100%),
       radial-gradient(ellipse at 50% 45%,
-        rgba(20,17,38,.86), rgba(5,6,14,.97));
+        rgba(20,17,38,.72), rgba(5,6,14,.93));
     pointer-events:auto;
     transition:opacity 1.4s;z-index:6}
   /* Al irse, la portada sale del renderizado. Con opacity:0 sola sigue estando
@@ -81,16 +84,22 @@
     0%,100%{box-shadow:0 0 0 0 rgba(220,178,108,0)}
     50%{box-shadow:0 0 26px 2px rgba(220,178,108,.20)}
   }
-  .bajada{font-size:clamp(17px,2.4vw,21px);font-style:italic;font-weight:300;
-    color:var(--tenue);max-width:30ch;text-align:center;line-height:1.6;margin:0}
+  /* La bajada estaba pegada a las reglas y competia con ellas: mismo cuerpo,
+     mismo ancho. Ahora respira arriba y abajo, y es lo unico en italica. */
+  .bajada{font-size:clamp(18px,2.6vw,23px);font-style:italic;font-weight:300;
+    color:var(--tenue);max-width:32ch;text-align:center;line-height:1.6;
+    margin:.7em 0 1.4em}
   /* Las tres reglas del juego. Sin esto no se entiende que hay que hacer:
      la mecanica del instante no se deduce sola. */
   /* Sin numeros y sin sangria. Los circulos numerados y el bloque alineado a
      la izquierda se leian como el instructivo de una app, que es lo primero
      que ella iba a ver. Las mismas tres frases, centradas y con aire, se leen
      como parte del juego. */
-  .comollo{list-style:none;margin:10px 0 4px;padding:0;
-    max-width:48ch;display:flex;flex-direction:column;gap:15px}
+  /* Medida fija y no "lo que entre": con el ancho libre los tres parrafos
+     salian de dos, cuatro y dos lineas, y se leian como tres bloques
+     irregulares apilados en vez de como una sola cosa. */
+  .comollo{list-style:none;margin:0;padding:0;
+    width:min(46ch,84vw);display:flex;flex-direction:column;gap:17px}
   .comollo li{font-size:clamp(15px,1.75vw,17px);line-height:1.62;
     color:rgba(240,234,221,.84);text-align:center}
   .comollo b{color:rgba(246,226,186,.95);font-weight:600}
@@ -98,11 +107,14 @@
   /* La luna de esta noche, arriba del titulo. Es el unico adorno de la
      portada que no es adorno: fase y signo reales, los mismos que ella puede
      mirar por la ventana. */
-  #selloLuna{width:clamp(64px,7.6vw,104px);height:auto;margin:0 0 -4px;
+  /* La luna mas grande que la carta, y no al reves. La carta es adorno; la
+     luna es el dato — la fase y el signo de esta noche, lo unico de la portada
+     que ella puede ir a comprobar por la ventana. */
+  #selloLuna{width:clamp(88px,11vw,150px);height:auto;margin:0 0 2px;
     opacity:0;animation:asomar 2.4s .3s ease forwards}
   /* Y una carta dada vuelta, que es con lo que se juega. */
-  #cartaPortada{position:absolute;right:clamp(14px,5vw,74px);
-    bottom:clamp(14px,6vh,64px);width:clamp(64px,9vw,124px);height:auto;
+  #cartaPortada{position:absolute;right:clamp(14px,6vw,110px);
+    bottom:clamp(14px,7vh,88px);width:clamp(52px,6vw,86px);height:auto;
     transform:rotate(7deg);border-radius:3px;
     box-shadow:0 10px 34px rgba(0,0,0,.55);
     opacity:0;animation:asomar 2.4s .8s ease forwards}
@@ -112,6 +124,7 @@
     #cartaPortada{display:none}
   }
 
+  #portada .boton{margin-top:1.6em}
   .boton{pointer-events:auto;font-family:inherit;font-size:17px;letter-spacing:.20em;
     touch-action:manipulation;-webkit-tap-highlight-color:transparent;
     text-transform:uppercase;color:var(--oro);background:transparent;cursor:pointer;
