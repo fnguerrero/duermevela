@@ -4520,7 +4520,18 @@ var Anomalias = (function () {
       var a = entra(v);
       var pts = (typeof Figuras !== 'undefined' && Figuras.perfilMontania())
         ? Figuras.perfilMontania() : null;
-      var ult = pts ? pts[pts.length - 1] : [1, .55];
+      /* Donde la via se corta AHORA, no donde terminaba antes.
+
+         Esto apuntaba al ultimo punto del perfil, que es el final de la via
+         entera y esta abajo, casi en el piso. Desde que el corte se deshace
+         hasta la ultima cresta, ese punto quedo ocho tramos mas alla del corte
+         real: el aire temblaba en un lugar donde ya no hay nada, y donde la
+         via se termina de verdad no pasaba nada. La cuenta es la misma que la
+         del pintor —el .31 tiene que moverse con el de alla. */
+      var corte = pts
+        ? Math.max(1, pts.length - 1 - Math.round(a * (pts.length - 1) * .31) - 1)
+        : 0;
+      var ult = pts ? pts[corte] : [1, .55];
       var px = fx + E * ult[0], py = fy + E * ult[1];
       cx.save();
       // El aire tiembla donde la via dejo de existir.
@@ -4806,13 +4817,16 @@ var Anomalias = (function () {
 
       cx.save();
       cx.globalAlpha = a;
-      halo(cx, px, py, E * .27, cuerpo.join(','), .46 * a);
+      /* El halo va primero y manda: mide varias veces el cuerpo, asi que
+         achicar el pajaro sin achicarlo a el no cambia el tamaño que se
+         percibe — que fue lo que paso la vez pasada. */
+      halo(cx, px, py, E * .165, cuerpo.join(','), .50 * a);
       /* Cuerpo: dos curvas y una cola. Chico y nitido, para que se lea — y
          mas chico desde que Nico lo vio en el juego: un pajaro que se posa un
          segundo en la punta de una rama es un detalle, y al tamaño anterior
          competia con el arbol. Lo que lo hace visible no es el tamaño sino
          que el color no se queda quieto. */
-      var r = E * .070;
+      var r = E * .052;
       cx.fillStyle = 'rgba(' + cuerpo.join(',') + ',.95)';
       cx.beginPath();
       cx.ellipse(px, py, r * 1.25, r * .85, -.2, 0, 6.2832);
