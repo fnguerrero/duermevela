@@ -1434,6 +1434,7 @@
        hasta la ultima pantalla. */
     Cielo.actualizar(cielo, dt, J.paso < 2);
     vigilarPaso(dt);
+    latirCirculo(dt);
 
     /* Camina hasta su marca en la direccion que sea: al cambiar la figura la
        marca se corre, y Bel se acomoda unos pasos en vez de saltar. */
@@ -1647,13 +1648,20 @@
                      veian dos luces. El pintor no sabe donde esta Bel, asi que
                      se le pasa en unidades de E desde donde nace el haz. */
                   mira: J.lugar === 'faro' ? J.revelando : 0,
-                  /* Y el circulo entra por un ARCO y no derecho: al medio de
-                     la revelacion esta en lo peor, y al final ya bajo. Es el
-                     unico lugar que se descubre y vuelve, y es a proposito —
-                     lo que esconde es que se pasa, asi que tiene que pasarse
-                     en pantalla y no solo decirse en el parrafo. */
-                  hondo: J.lugar === 'circulo'
-                    ? Math.sin(Math.max(0, Math.min(1, J.revelando)) * Math.PI) : 0,
+                  /* El circulo sube y NO baja solo.
+
+                     Primero era un arco simple —peor al medio, calmo al
+                     final— y estaba mal contado: lo que pasa de verdad en un
+                     momento asi es que no baja, y la certeza de que no se
+                     termina mas es el centro de la cosa. Ahora sube hasta la
+                     mitad, se queda arriba un rato —el rato larguisimo del
+                     texto— y recien afloja al final, cuando aparece el arbol.
+                     Y no vuelve a cero: queda en un cuarto. No es que no haya
+                     pasado nada. */
+                  hondo: J.lugar === 'circulo' ? hondoCirculo(J.revelando) : 0,
+                  /* Y el arbol, que llega ultimo. Es lo que la saca: no baja
+                     solo, baja porque ella encuentra algo y respira con el. */
+                  arbol: J.lugar === 'circulo' ? arbolCirculo(J.revelando) : 0,
                   haciaBel: { dx: (W * J.belX - fx) / E,
                               dy: ((piso - E * .5) - (fy - E * .57)) / E } };
     var u = J.u;
@@ -2374,13 +2382,50 @@
 
      Usa el buffer del canvas y no su tamano en pantalla: con la pestana oculta
      el segundo es cero y la prueba mide sobre la nada. */
+  /* El corazon del circulo, que es lo unico del cuerpo que se escucha.
+
+     Se acelera con lo que aprieta —de 62 pulsaciones a 138— y se calma cuando
+     aparece el arbol, porque lo que la saca de ahi es respirar con el. Es un
+     reloj propio y no el bucle de dibujo: un latido tiene que caer cuando le
+     toca, y si dependiera de los cuadros se aceleraria o se arrastraria con
+     la maquina de cada uno. */
+  var proximoLatido = 0;
+  function latirCirculo(dt) {
+    if (J.lugar !== 'circulo' || !(J.revelando > .04)) { proximoLatido = 0; return; }
+    var f = hondoCirculo(J.revelando);
+    proximoLatido -= dt;
+    if (proximoLatido > 0) return;
+    // De 62 a 138 pulsaciones por minuto.
+    proximoLatido = 60 / (62 + f * 76);
+    if (typeof Audio2 !== 'undefined' && Audio2.corazon) Audio2.corazon(f);
+  }
+
+  /* Cuanto aprieta el circulo, segun lo revelado que este.
+
+     Sube hasta la mitad, se queda arriba —ahi es donde no baja— y afloja al
+     final, cuando el arbol ya esta. Nunca vuelve a cero. */
+  function hondoCirculo(v) {
+    v = Math.max(0, Math.min(1, v || 0));
+    if (v < .5) return v / .5;
+    if (v < .72) return 1;
+    return 1 - (v - .72) / .28 * .74;              // baja hasta .26
+  }
+
+  /* Y cuanto se ve el arbol del medio. Aparece tarde a proposito: primero hay
+     que estar en lo peor, y despues aparece. */
+  function arbolCirculo(v) {
+    v = Math.max(0, Math.min(1, v || 0));
+    if (v < .60) return 0;
+    return Math.min(1, (v - .60) / .26);
+  }
+
   /* El `extra` de un lugar completamente revelado. Lo usan los dos
      verificadores que miden que se ve al descubrir algo: varias revelaciones
      ya no las dibuja la anomalia sino la figura, asi que hay que pedirle a la
      figura que este revelada o se mide de menos. */
   function revelado(fx, fy, E, belX, piso) {
     return { alPiso: E, tension: 0, perfil: Figuras.perfilMontania(),
-             sincro: 1, corte: 1, apaga: 1, mira: 1, hondo: 1,
+             sincro: 1, corte: 1, apaga: 1, mira: 1, hondo: 1, arbol: 1,
              haciaBel: { dx: (belX - fx) / E,
                          dy: ((piso - E * .5) - (fy - E * .57)) / E } };
   }

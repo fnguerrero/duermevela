@@ -379,6 +379,36 @@ var Audio2 = (function () {
     gota(grado === undefined ? 0 : grado, 1, .09, 3.2);
   }
 
+  /* Un latido. Dos golpes, no uno: un corazon hace lub-DUB, y con un solo
+     pulso suena a bombo. El segundo llega a los 26 centesimos, es mas corto y
+     mas apagado, que es lo que lo vuelve un corazon y no percusion.
+
+     `fuerza` va de 0 a 1 y no cambia solo el volumen: cuanto mas fuerte, mas
+     agudo el tono y mas seco el golpe — un corazon acelerado se escucha mas
+     arriba, y eso es la mitad de lo que da miedo. Va casi sin reverberacion a
+     proposito: esto no suena en el campo, suena adentro de la cabeza. */
+  function corazon(fuerza) {
+    if (!activo()) return;
+    var f = sano(fuerza, .5, 0, 1);
+    var t0 = ac.currentTime;
+    function pulso(cuando, vol, dur, hz) {
+      var o = ac.createOscillator();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(hz * 1.7, t0 + cuando);
+      o.frequency.exponentialRampToValueAtTime(hz, t0 + cuando + dur * .55);
+      var g = ac.createGain();
+      g.gain.setValueAtTime(.0001, t0 + cuando);
+      g.gain.exponentialRampToValueAtTime(vol, t0 + cuando + .012);
+      g.gain.exponentialRampToValueAtTime(.0001, t0 + cuando + dur);
+      o.connect(g);
+      enchufar(g, .06);
+      o.start(t0 + cuando); o.stop(t0 + cuando + dur + .05);
+    }
+    var hz = 42 + f * 14;
+    pulso(0, .16 + f * .20, .20 - f * .05, hz);
+    pulso(.26 - f * .05, .09 + f * .12, .15 - f * .04, hz * .92);
+  }
+
   /* Un tic corto. Se usa para marcar el paso del anillo: cuanto mas cerca de
      la marca, mas agudo. Es la unica pista sonora del instante. */
   /* Un numero que no sirve no puede tirar una excepcion.
@@ -628,6 +658,7 @@ var Audio2 = (function () {
   return {
     prender: prender, apagar: apagar, alternar: alternar, activo: activo,
     gota: gota, roce: roce, golpe: golpe, transformar: transformar,
+    corazon: corazon,
     dormirColchon: dormirColchon, voces: function () { return vivas; },
     colorDe: colorDe, tic: tic, acierto: acierto, fallo: fallo, volteo: volteo,
     tensar: tensar, tensionAudio: function () { return tensionAudio; },

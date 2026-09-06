@@ -276,12 +276,20 @@ var Guion = (function () {
                'tiene más verdes de los que yo sabía que había.',
       vuelta: 'El círculo otra vez. Sigue perfecto, y el pasto de adentro ' +
               'sigue siendo de otro verde que el de afuera.',
+      /* No baja solo, y ese era el error: lo que pasa de verdad en un momento
+         asi es que NO baja — la certeza de que no se termina mas es el centro
+         de la cosa, no un rodeo antes del alivio. Lo que salva no es que
+         afloje: es encontrar algo a lo que agarrarse y respirar con el, que
+         es literalmente lo que se hace para salir de ahi. Por eso el arbol
+         aparece en el medio recien al final, y por eso ella no hace nada mas
+         que mirarlo. */
       esconde: 'Los colores se ponen mejores y mejores hasta que se ponen ' +
                'demasiado. El aire se llena de cosas que no llego a ver del ' +
-               'todo, el corazón me golpea en las orejas, y por un rato ' +
-               'larguísimo estoy segura de que esto no se termina más. Y ' +
-               'después baja. Eso es lo único que nadie me había dicho: que ' +
-               'baja. Que ya estaba bajando mientras yo creía que no.',
+               'todo, el corazón me golpea en las orejas, y esto no baja. No ' +
+               'baja nunca. Me estoy muriendo acá adentro y no hay nadie. Y ' +
+               'entonces veo el árbol en el medio: está respirando. Me quedo ' +
+               'mirándolo y respiro cuando él respira. No hago nada más, y ' +
+               'eso alcanza.',
       /* Y el unico lugar donde NO mirar tiene su propia respuesta.
 
          En los otros trece, seguir de largo deja constancia de que ahi habia
@@ -499,7 +507,7 @@ var Guion = (function () {
     faro: 'El haz que frenaba cuando me encontraba',
     casa: 'La luz sin lámparas',
     arbol: 'El pájaro de un color que no existe',
-    circulo: 'Lo que ya se estaba pasando mientras yo creía que no',
+    circulo: 'El árbol que respiraba en el medio del círculo',
     reloj: 'Los números corridos de su hora',
     luna: 'La cara que armaban los cráteres',
     puerta: 'La puerta que volví a abrir sabiendo que no',

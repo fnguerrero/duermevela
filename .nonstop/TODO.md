@@ -80,6 +80,13 @@ llegada ancla el lugar a algo de ella. Ahí el juego se vuelve genérico.
 - [x] L4 · Los pájaros: lo único que todavía le hace caso · verif: ídem
 - [ ] L5 · PENDIENTE: la luna y el platillo dicen lo mismo (alguien que quiere hablarle y no puede). Uno de los dos tendría que decir otra cosa; la luna es de ella por oficio y ahí hay algo sin usar
 
+## M · El círculo, como pasó de verdad
+
+- [x] M1 · No baja solo: la certeza de que no se termina más es el centro, no un rodeo antes del alivio · verif: la curva sube, se queda arriba y solo afloja al final
+- [x] M2 · Un árbol aparece en el centro y la respiración con él es lo que la saca · verif: entra a partir del 60% de la revelación y es lo único cálido de la escena
+- [x] M3 · Más oscuro y sombrío: la luz de alrededor se apaga y queda solo lo que mira · verif: se ve el túnel alrededor del círculo
+- [x] M4 · Latidos del corazón que aceleran y se calman · verif: Audio2.corazon(), de 62 a 138 pulsaciones, con reloj propio
+
 ## D · Cierre
 
 - [x] D1 · `auditarTodo()` en verde · verif: 10 de 10, con `tramos` incluido

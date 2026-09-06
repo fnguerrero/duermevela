@@ -822,8 +822,13 @@ var Pintores = (function () {
      rango, el aire se llena y el suelo late. No lo dibuja la anomalia porque
      lo que cambia no es algo que aparezca encima — es como se ve TODO, y eso
      solo lo puede hacer quien lo dibuja. */
-  function circulo(cx, E, t, hondo) {
+  function circulo(cx, E, t, hondo, arbolito) {
     var h = Math.max(0, Math.min(1, hondo || 0));
+    var ar = Math.max(0, Math.min(1, arbolito || 0));
+    /* La respiracion: cuatro segundos por vuelta, que es el ritmo al que se
+       respira para salir de un ataque de panico y no un adorno. Todo lo que
+       calma en esta escena late con esto. */
+    var respira = (Math.sin(t * 1.55) + 1) / 2;
     /* El anillo se cierra un poco. Es lo que angustia de verdad: no el color
        sino que el lugar se achique alrededor mientras uno esta adentro. Un
        primer intento subio la saturacion hasta el magenta y quedaba una
@@ -839,13 +844,38 @@ var Pintores = (function () {
     suelo.addColorStop(0, 'rgba(' + Math.round(46 + h * 22) + ',' +
                              Math.round(74 - h * 18) + ',' +
                              Math.round(56 + h * 40) + ',' + (.42 + h * .22).toFixed(3) + ')');
-    suelo.addColorStop(.72, 'rgba(38,60,48,' + (.30 + h * .22).toFixed(3) + ')');
+    suelo.addColorStop(.72, 'rgba(' + Math.round(38 - h * 18) + ',' +
+                             Math.round(60 - h * 34) + ',' +
+                             Math.round(48 - h * 10) + ',' +
+                             (.30 + h * .34).toFixed(3) + ')');
     suelo.addColorStop(1, 'rgba(30,48,42,0)');
     cx.save();
     cx.translate(0, cy); cx.scale(1, ry / rx);
     cx.fillStyle = suelo;
     cx.beginPath(); cx.arc(0, 0, rx * 1.05, 0, 6.2832); cx.fill();
     cx.restore();
+
+    /* Y el aire se cierra encima. Nico pidio mas oscuro y mas sombrio, y lo
+       que oscurece una escena no es bajarle el brillo a las cosas: es que la
+       luz de alrededor se apague y quede solo lo que uno esta mirando.
+
+       Ojo con el orden: esto entro primero con un `restore` de mas y un
+       `save` duplicado alrededor, y como el contexto viene trasladado desde
+       `pintar`, ese restore deshacia la traslacion del llamador — la sombra
+       salia como un circulo gigante corrido y el anillo entero se iba a un
+       rincon. Va entre el suelo y el resto, sin tocar ninguna transformacion
+       que no sea suya. */
+    if (h > .01) {
+      cx.save();
+      var sombra = cx.createRadialGradient(0, cy - E * .2, E * .35,
+                                           0, cy - E * .2, E * 2.2);
+      sombra.addColorStop(0, 'rgba(6,4,12,0)');
+      sombra.addColorStop(.5, 'rgba(6,4,12,' + (h * .34).toFixed(3) + ')');
+      sombra.addColorStop(1, 'rgba(4,3,10,' + (h * .72).toFixed(3) + ')');
+      cx.fillStyle = sombra;
+      cx.beginPath(); cx.arc(0, cy - E * .2, E * 2.2, 0, 6.2832); cx.fill();
+      cx.restore();
+    }
 
     /* Y el latido del suelo: los anillos salen del centro hacia afuera, cada
        vez mas rapido. Con `hondo` en cero no hay ninguno. */
@@ -862,6 +892,57 @@ var Pintores = (function () {
         cx.lineWidth = E * .012;
         cx.beginPath(); cx.arc(0, 0, rx * (.12 + fase * .95), 0, 6.2832); cx.stroke();
       }
+      cx.restore();
+    }
+
+    /* El arbol del medio.
+
+       Aparece ultimo y es lo unico de la escena que no esta mal: crece del
+       centro del circulo, respira despacio y su luz es la unica calida que
+       queda cuando todo lo demas se puso frio. Ella no hace nada mas que
+       mirarlo, asi que tampoco hace falta que el haga nada mas que estar. */
+    if (ar > .01) {
+      var alt = E * (.86 + respira * .05) * ar;
+      var abre = E * .30 * ar;
+      cx.save();
+      cx.globalAlpha = ar;
+      // La luz que da, que late con la respiracion y no con el corazon.
+      halo(cx, 0, cy - alt * .62, E * (.62 + respira * .12),
+           '236,214,164', .10 + respira * .10);
+      // Tronco.
+      cx.strokeStyle = 'rgba(214,196,168,.88)';
+      cx.lineWidth = E * .038;
+      cx.lineCap = 'round';
+      cx.beginPath();
+      cx.moveTo(0, cy);
+      cx.quadraticCurveTo(E * .012, cy - alt * .5, 0, cy - alt * .72);
+      cx.stroke();
+      // Ramas: dos pares que se abren, con la punta encendida.
+      var rnd2 = sembrado(17);
+      for (var b = 0; b < 6; b++) {
+        var lado2 = b % 2 ? 1 : -1;
+        var u2 = .40 + Math.floor(b / 2) * .18;
+        var y0b = cy - alt * u2;
+        var largoR = abre * (.62 + rnd2() * .5) * (1 - u2 * .35);
+        var yFin = y0b - alt * (.14 + rnd2() * .08);
+        cx.strokeStyle = 'rgba(206,188,162,' + (.62 + rnd2() * .2).toFixed(2) + ')';
+        cx.lineWidth = E * (.014 - u2 * .006);
+        cx.beginPath();
+        cx.moveTo(0, y0b);
+        cx.quadraticCurveTo(lado2 * largoR * .6, y0b - alt * .04,
+                            lado2 * largoR, yFin);
+        cx.stroke();
+        halo(cx, lado2 * largoR, yFin, E * .05 * (.7 + respira * .5),
+             '246,226,178', .30 + respira * .22);
+      }
+      // La copa, apenas insinuada: es un arbol de sueño, no un arbol botanico.
+      var copa = cx.createRadialGradient(0, cy - alt * .78, 0,
+                                         0, cy - alt * .78, abre * 1.25);
+      copa.addColorStop(0, 'rgba(228,212,176,' + (.20 + respira * .10).toFixed(3) + ')');
+      copa.addColorStop(1, 'rgba(228,212,176,0)');
+      cx.fillStyle = copa;
+      cx.beginPath();
+      cx.arc(0, cy - alt * .78, abre * 1.25, 0, 6.2832); cx.fill();
       cx.restore();
     }
 
@@ -1419,7 +1500,7 @@ var Pintores = (function () {
     if (clave === 'montania') montania(cx, E, t, extra.perfil, extra.corte);
     else if (clave === 'platillo') platillo(cx, E, t, extra.alPiso, extra.apaga);
     else if (clave === 'bandada') bandada(cx, E, t, extra.sincro);
-    else if (clave === 'circulo') circulo(cx, E, t, extra.hondo);
+    else if (clave === 'circulo') circulo(cx, E, t, extra.hondo, extra.arbol);
     else if (clave === 'faro') faro(cx, E, t, extra.mira, extra.haciaBel);
     else if (PINTORES[clave]) PINTORES[clave](cx, E, t);
     cx.restore();

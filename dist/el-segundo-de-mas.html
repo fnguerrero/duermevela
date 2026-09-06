@@ -3947,8 +3947,13 @@ var Pintores = (function () {
      rango, el aire se llena y el suelo late. No lo dibuja la anomalia porque
      lo que cambia no es algo que aparezca encima — es como se ve TODO, y eso
      solo lo puede hacer quien lo dibuja. */
-  function circulo(cx, E, t, hondo) {
+  function circulo(cx, E, t, hondo, arbolito) {
     var h = Math.max(0, Math.min(1, hondo || 0));
+    var ar = Math.max(0, Math.min(1, arbolito || 0));
+    /* La respiracion: cuatro segundos por vuelta, que es el ritmo al que se
+       respira para salir de un ataque de panico y no un adorno. Todo lo que
+       calma en esta escena late con esto. */
+    var respira = (Math.sin(t * 1.55) + 1) / 2;
     /* El anillo se cierra un poco. Es lo que angustia de verdad: no el color
        sino que el lugar se achique alrededor mientras uno esta adentro. Un
        primer intento subio la saturacion hasta el magenta y quedaba una
@@ -3964,13 +3969,38 @@ var Pintores = (function () {
     suelo.addColorStop(0, 'rgba(' + Math.round(46 + h * 22) + ',' +
                              Math.round(74 - h * 18) + ',' +
                              Math.round(56 + h * 40) + ',' + (.42 + h * .22).toFixed(3) + ')');
-    suelo.addColorStop(.72, 'rgba(38,60,48,' + (.30 + h * .22).toFixed(3) + ')');
+    suelo.addColorStop(.72, 'rgba(' + Math.round(38 - h * 18) + ',' +
+                             Math.round(60 - h * 34) + ',' +
+                             Math.round(48 - h * 10) + ',' +
+                             (.30 + h * .34).toFixed(3) + ')');
     suelo.addColorStop(1, 'rgba(30,48,42,0)');
     cx.save();
     cx.translate(0, cy); cx.scale(1, ry / rx);
     cx.fillStyle = suelo;
     cx.beginPath(); cx.arc(0, 0, rx * 1.05, 0, 6.2832); cx.fill();
     cx.restore();
+
+    /* Y el aire se cierra encima. Nico pidio mas oscuro y mas sombrio, y lo
+       que oscurece una escena no es bajarle el brillo a las cosas: es que la
+       luz de alrededor se apague y quede solo lo que uno esta mirando.
+
+       Ojo con el orden: esto entro primero con un `restore` de mas y un
+       `save` duplicado alrededor, y como el contexto viene trasladado desde
+       `pintar`, ese restore deshacia la traslacion del llamador — la sombra
+       salia como un circulo gigante corrido y el anillo entero se iba a un
+       rincon. Va entre el suelo y el resto, sin tocar ninguna transformacion
+       que no sea suya. */
+    if (h > .01) {
+      cx.save();
+      var sombra = cx.createRadialGradient(0, cy - E * .2, E * .35,
+                                           0, cy - E * .2, E * 2.2);
+      sombra.addColorStop(0, 'rgba(6,4,12,0)');
+      sombra.addColorStop(.5, 'rgba(6,4,12,' + (h * .34).toFixed(3) + ')');
+      sombra.addColorStop(1, 'rgba(4,3,10,' + (h * .72).toFixed(3) + ')');
+      cx.fillStyle = sombra;
+      cx.beginPath(); cx.arc(0, cy - E * .2, E * 2.2, 0, 6.2832); cx.fill();
+      cx.restore();
+    }
 
     /* Y el latido del suelo: los anillos salen del centro hacia afuera, cada
        vez mas rapido. Con `hondo` en cero no hay ninguno. */
@@ -3987,6 +4017,57 @@ var Pintores = (function () {
         cx.lineWidth = E * .012;
         cx.beginPath(); cx.arc(0, 0, rx * (.12 + fase * .95), 0, 6.2832); cx.stroke();
       }
+      cx.restore();
+    }
+
+    /* El arbol del medio.
+
+       Aparece ultimo y es lo unico de la escena que no esta mal: crece del
+       centro del circulo, respira despacio y su luz es la unica calida que
+       queda cuando todo lo demas se puso frio. Ella no hace nada mas que
+       mirarlo, asi que tampoco hace falta que el haga nada mas que estar. */
+    if (ar > .01) {
+      var alt = E * (.86 + respira * .05) * ar;
+      var abre = E * .30 * ar;
+      cx.save();
+      cx.globalAlpha = ar;
+      // La luz que da, que late con la respiracion y no con el corazon.
+      halo(cx, 0, cy - alt * .62, E * (.62 + respira * .12),
+           '236,214,164', .10 + respira * .10);
+      // Tronco.
+      cx.strokeStyle = 'rgba(214,196,168,.88)';
+      cx.lineWidth = E * .038;
+      cx.lineCap = 'round';
+      cx.beginPath();
+      cx.moveTo(0, cy);
+      cx.quadraticCurveTo(E * .012, cy - alt * .5, 0, cy - alt * .72);
+      cx.stroke();
+      // Ramas: dos pares que se abren, con la punta encendida.
+      var rnd2 = sembrado(17);
+      for (var b = 0; b < 6; b++) {
+        var lado2 = b % 2 ? 1 : -1;
+        var u2 = .40 + Math.floor(b / 2) * .18;
+        var y0b = cy - alt * u2;
+        var largoR = abre * (.62 + rnd2() * .5) * (1 - u2 * .35);
+        var yFin = y0b - alt * (.14 + rnd2() * .08);
+        cx.strokeStyle = 'rgba(206,188,162,' + (.62 + rnd2() * .2).toFixed(2) + ')';
+        cx.lineWidth = E * (.014 - u2 * .006);
+        cx.beginPath();
+        cx.moveTo(0, y0b);
+        cx.quadraticCurveTo(lado2 * largoR * .6, y0b - alt * .04,
+                            lado2 * largoR, yFin);
+        cx.stroke();
+        halo(cx, lado2 * largoR, yFin, E * .05 * (.7 + respira * .5),
+             '246,226,178', .30 + respira * .22);
+      }
+      // La copa, apenas insinuada: es un arbol de sueño, no un arbol botanico.
+      var copa = cx.createRadialGradient(0, cy - alt * .78, 0,
+                                         0, cy - alt * .78, abre * 1.25);
+      copa.addColorStop(0, 'rgba(228,212,176,' + (.20 + respira * .10).toFixed(3) + ')');
+      copa.addColorStop(1, 'rgba(228,212,176,0)');
+      cx.fillStyle = copa;
+      cx.beginPath();
+      cx.arc(0, cy - alt * .78, abre * 1.25, 0, 6.2832); cx.fill();
       cx.restore();
     }
 
@@ -4544,7 +4625,7 @@ var Pintores = (function () {
     if (clave === 'montania') montania(cx, E, t, extra.perfil, extra.corte);
     else if (clave === 'platillo') platillo(cx, E, t, extra.alPiso, extra.apaga);
     else if (clave === 'bandada') bandada(cx, E, t, extra.sincro);
-    else if (clave === 'circulo') circulo(cx, E, t, extra.hondo);
+    else if (clave === 'circulo') circulo(cx, E, t, extra.hondo, extra.arbol);
     else if (clave === 'faro') faro(cx, E, t, extra.mira, extra.haciaBel);
     else if (PINTORES[clave]) PINTORES[clave](cx, E, t);
     cx.restore();
@@ -5899,6 +5980,36 @@ var Audio2 = (function () {
     gota(grado === undefined ? 0 : grado, 1, .09, 3.2);
   }
 
+  /* Un latido. Dos golpes, no uno: un corazon hace lub-DUB, y con un solo
+     pulso suena a bombo. El segundo llega a los 26 centesimos, es mas corto y
+     mas apagado, que es lo que lo vuelve un corazon y no percusion.
+
+     `fuerza` va de 0 a 1 y no cambia solo el volumen: cuanto mas fuerte, mas
+     agudo el tono y mas seco el golpe — un corazon acelerado se escucha mas
+     arriba, y eso es la mitad de lo que da miedo. Va casi sin reverberacion a
+     proposito: esto no suena en el campo, suena adentro de la cabeza. */
+  function corazon(fuerza) {
+    if (!activo()) return;
+    var f = sano(fuerza, .5, 0, 1);
+    var t0 = ac.currentTime;
+    function pulso(cuando, vol, dur, hz) {
+      var o = ac.createOscillator();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(hz * 1.7, t0 + cuando);
+      o.frequency.exponentialRampToValueAtTime(hz, t0 + cuando + dur * .55);
+      var g = ac.createGain();
+      g.gain.setValueAtTime(.0001, t0 + cuando);
+      g.gain.exponentialRampToValueAtTime(vol, t0 + cuando + .012);
+      g.gain.exponentialRampToValueAtTime(.0001, t0 + cuando + dur);
+      o.connect(g);
+      enchufar(g, .06);
+      o.start(t0 + cuando); o.stop(t0 + cuando + dur + .05);
+    }
+    var hz = 42 + f * 14;
+    pulso(0, .16 + f * .20, .20 - f * .05, hz);
+    pulso(.26 - f * .05, .09 + f * .12, .15 - f * .04, hz * .92);
+  }
+
   /* Un tic corto. Se usa para marcar el paso del anillo: cuanto mas cerca de
      la marca, mas agudo. Es la unica pista sonora del instante. */
   /* Un numero que no sirve no puede tirar una excepcion.
@@ -6148,6 +6259,7 @@ var Audio2 = (function () {
   return {
     prender: prender, apagar: apagar, alternar: alternar, activo: activo,
     gota: gota, roce: roce, golpe: golpe, transformar: transformar,
+    corazon: corazon,
     dormirColchon: dormirColchon, voces: function () { return vivas; },
     colorDe: colorDe, tic: tic, acierto: acierto, fallo: fallo, volteo: volteo,
     tensar: tensar, tensionAudio: function () { return tensionAudio; },
@@ -7598,12 +7710,20 @@ var Guion = (function () {
                'tiene más verdes de los que yo sabía que había.',
       vuelta: 'El círculo otra vez. Sigue perfecto, y el pasto de adentro ' +
               'sigue siendo de otro verde que el de afuera.',
+      /* No baja solo, y ese era el error: lo que pasa de verdad en un momento
+         asi es que NO baja — la certeza de que no se termina mas es el centro
+         de la cosa, no un rodeo antes del alivio. Lo que salva no es que
+         afloje: es encontrar algo a lo que agarrarse y respirar con el, que
+         es literalmente lo que se hace para salir de ahi. Por eso el arbol
+         aparece en el medio recien al final, y por eso ella no hace nada mas
+         que mirarlo. */
       esconde: 'Los colores se ponen mejores y mejores hasta que se ponen ' +
                'demasiado. El aire se llena de cosas que no llego a ver del ' +
-               'todo, el corazón me golpea en las orejas, y por un rato ' +
-               'larguísimo estoy segura de que esto no se termina más. Y ' +
-               'después baja. Eso es lo único que nadie me había dicho: que ' +
-               'baja. Que ya estaba bajando mientras yo creía que no.',
+               'todo, el corazón me golpea en las orejas, y esto no baja. No ' +
+               'baja nunca. Me estoy muriendo acá adentro y no hay nadie. Y ' +
+               'entonces veo el árbol en el medio: está respirando. Me quedo ' +
+               'mirándolo y respiro cuando él respira. No hago nada más, y ' +
+               'eso alcanza.',
       /* Y el unico lugar donde NO mirar tiene su propia respuesta.
 
          En los otros trece, seguir de largo deja constancia de que ahi habia
@@ -7821,7 +7941,7 @@ var Guion = (function () {
     faro: 'El haz que frenaba cuando me encontraba',
     casa: 'La luz sin lámparas',
     arbol: 'El pájaro de un color que no existe',
-    circulo: 'Lo que ya se estaba pasando mientras yo creía que no',
+    circulo: 'El árbol que respiraba en el medio del círculo',
     reloj: 'Los números corridos de su hora',
     luna: 'La cara que armaban los cráteres',
     puerta: 'La puerta que volví a abrir sabiendo que no',
@@ -9509,6 +9629,7 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
        hasta la ultima pantalla. */
     Cielo.actualizar(cielo, dt, J.paso < 2);
     vigilarPaso(dt);
+    latirCirculo(dt);
 
     /* Camina hasta su marca en la direccion que sea: al cambiar la figura la
        marca se corre, y Bel se acomoda unos pasos en vez de saltar. */
@@ -9722,13 +9843,20 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
                      veian dos luces. El pintor no sabe donde esta Bel, asi que
                      se le pasa en unidades de E desde donde nace el haz. */
                   mira: J.lugar === 'faro' ? J.revelando : 0,
-                  /* Y el circulo entra por un ARCO y no derecho: al medio de
-                     la revelacion esta en lo peor, y al final ya bajo. Es el
-                     unico lugar que se descubre y vuelve, y es a proposito —
-                     lo que esconde es que se pasa, asi que tiene que pasarse
-                     en pantalla y no solo decirse en el parrafo. */
-                  hondo: J.lugar === 'circulo'
-                    ? Math.sin(Math.max(0, Math.min(1, J.revelando)) * Math.PI) : 0,
+                  /* El circulo sube y NO baja solo.
+
+                     Primero era un arco simple —peor al medio, calmo al
+                     final— y estaba mal contado: lo que pasa de verdad en un
+                     momento asi es que no baja, y la certeza de que no se
+                     termina mas es el centro de la cosa. Ahora sube hasta la
+                     mitad, se queda arriba un rato —el rato larguisimo del
+                     texto— y recien afloja al final, cuando aparece el arbol.
+                     Y no vuelve a cero: queda en un cuarto. No es que no haya
+                     pasado nada. */
+                  hondo: J.lugar === 'circulo' ? hondoCirculo(J.revelando) : 0,
+                  /* Y el arbol, que llega ultimo. Es lo que la saca: no baja
+                     solo, baja porque ella encuentra algo y respira con el. */
+                  arbol: J.lugar === 'circulo' ? arbolCirculo(J.revelando) : 0,
                   haciaBel: { dx: (W * J.belX - fx) / E,
                               dy: ((piso - E * .5) - (fy - E * .57)) / E } };
     var u = J.u;
@@ -10449,13 +10577,50 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
 
      Usa el buffer del canvas y no su tamano en pantalla: con la pestana oculta
      el segundo es cero y la prueba mide sobre la nada. */
+  /* El corazon del circulo, que es lo unico del cuerpo que se escucha.
+
+     Se acelera con lo que aprieta —de 62 pulsaciones a 138— y se calma cuando
+     aparece el arbol, porque lo que la saca de ahi es respirar con el. Es un
+     reloj propio y no el bucle de dibujo: un latido tiene que caer cuando le
+     toca, y si dependiera de los cuadros se aceleraria o se arrastraria con
+     la maquina de cada uno. */
+  var proximoLatido = 0;
+  function latirCirculo(dt) {
+    if (J.lugar !== 'circulo' || !(J.revelando > .04)) { proximoLatido = 0; return; }
+    var f = hondoCirculo(J.revelando);
+    proximoLatido -= dt;
+    if (proximoLatido > 0) return;
+    // De 62 a 138 pulsaciones por minuto.
+    proximoLatido = 60 / (62 + f * 76);
+    if (typeof Audio2 !== 'undefined' && Audio2.corazon) Audio2.corazon(f);
+  }
+
+  /* Cuanto aprieta el circulo, segun lo revelado que este.
+
+     Sube hasta la mitad, se queda arriba —ahi es donde no baja— y afloja al
+     final, cuando el arbol ya esta. Nunca vuelve a cero. */
+  function hondoCirculo(v) {
+    v = Math.max(0, Math.min(1, v || 0));
+    if (v < .5) return v / .5;
+    if (v < .72) return 1;
+    return 1 - (v - .72) / .28 * .74;              // baja hasta .26
+  }
+
+  /* Y cuanto se ve el arbol del medio. Aparece tarde a proposito: primero hay
+     que estar en lo peor, y despues aparece. */
+  function arbolCirculo(v) {
+    v = Math.max(0, Math.min(1, v || 0));
+    if (v < .60) return 0;
+    return Math.min(1, (v - .60) / .26);
+  }
+
   /* El `extra` de un lugar completamente revelado. Lo usan los dos
      verificadores que miden que se ve al descubrir algo: varias revelaciones
      ya no las dibuja la anomalia sino la figura, asi que hay que pedirle a la
      figura que este revelada o se mide de menos. */
   function revelado(fx, fy, E, belX, piso) {
     return { alPiso: E, tension: 0, perfil: Figuras.perfilMontania(),
-             sincro: 1, corte: 1, apaga: 1, mira: 1, hondo: 1,
+             sincro: 1, corte: 1, apaga: 1, mira: 1, hondo: 1, arbol: 1,
              haciaBel: { dx: (belX - fx) / E,
                          dy: ((piso - E * .5) - (fy - E * .57)) / E } };
   }
