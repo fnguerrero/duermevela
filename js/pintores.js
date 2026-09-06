@@ -803,21 +803,38 @@ var Pintores = (function () {
        punto de la vuelta se lo frena: de .60 de frente y .80 de lado, que es
        donde el haz esta abierto y todavia brilla. Mas de perfil se apagaria. */
     var dirBel = m > 0 && bel.dx < 0 ? -1 : 1;
+    /* Y no frena del todo: llega hasta .92 y no hasta 1, asi que el barrido
+       nunca se clava — sigue derivando despacio. El texto dice que el haz
+       "frena un segundo de mas cuando me pasa por encima", no que se quede
+       fijo apuntandola: un reflector de teatro es otra cosa, y encima delata
+       de una lo que el lugar tendria que dejar entrever.
+
+       El numero sale de la cuenta, no del gusto: el barrido gira a .55 rad/s,
+       asi que lo que queda sin frenar deriva a .55*(1-q). Con .72 daban casi
+       9 grados por segundo — 26 en los tres que dura la revelacion, y el haz
+       se le iba de encima antes de que ella terminara de mirar. Con .92 son
+       2,5 por segundo: se mueve lo suficiente para no parecer clavado y lo
+       poco necesario para no perderla. */
+    var q = m * .92;
     var angPara = Math.atan2(dirBel * .80, .60);
     /* Y la inclinacion: cuanto hay que bajar el haz, que sale horizontal, para
        que toque el piso donde esta ella. Medida desde el eje del propio haz,
        asi que va al reves cuando apunta para el otro lado. */
-    var inclBel = m > 0 ? Math.atan2(bel.dy * dirBel, bel.dx * dirBel) : 0;
+    /* Y el eje del cono no le cae encima: pasa unos grados mas alla, asi ella
+       queda en el flanco de la luz y no en el medio. Que el maximo del haz
+       coincida exacto con donde esta parada es lo que lo hacia obvio. */
+    var inclBel = m > 0
+      ? Math.atan2(bel.dy * dirBel, bel.dx * dirBel) + .085 * dirBel : 0;
     /* Un tercio mas largo que la distancia hasta ella: asi el haz no termina
        en un borde recto justo encima suyo, sino que la pasa apagandose. Lo que
        la alcanza es la parte del cono que todavia tiene cuerpo. */
-    var largoBel = m > 0 ? Math.sqrt(bel.dx * bel.dx + bel.dy * bel.dy) * 1.30 : 0;
+    var largoBel = m > 0 ? Math.sqrt(bel.dx * bel.dx + bel.dy * bel.dy) * 1.34 : 0;
     // Dos haces opuestos que barren. De cada uno solo se ve la parte que
     // apunta hacia adelante. Van en tres capas concentricas, de la mas ancha y
     // tenue a la mas fina y brillante: eso es lo que le da el borde blando.
     cx.save();
     cx.globalCompositeOperation = 'lighter';
-    if (m > 0) { cx.translate(0, -E * .57); cx.rotate(inclBel * m); cx.translate(0, E * .57); }
+    if (m > 0) { cx.translate(0, -E * .57); cx.rotate(inclBel * q); cx.translate(0, E * .57); }
     for (var d = 0; d < 2; d++) {
       var ang = giro + d * Math.PI;
       /* Frenar no es congelar de golpe: el haz sigue viniendo de donde venia y
@@ -825,7 +842,7 @@ var Pintores = (function () {
          entera para llegar a un angulo que tenia al lado. */
       if (m > 0) {
         var falta = (angPara + d * Math.PI) - ang;
-        ang += Math.atan2(Math.sin(falta), Math.cos(falta)) * m;
+        ang += Math.atan2(Math.sin(falta), Math.cos(falta)) * q;
       }
       var frente = Math.cos(ang);
       if (frente <= .05) continue;
@@ -836,14 +853,14 @@ var Pintores = (function () {
 
       for (var capa = 0; capa < 3; capa++) {
         var k = 1 - capa * .34;              // 1, .66, .32
-        /* Apenas mas fuerte al frenar, no mucho: con `lighter` cualquier
-           subida se va a blanco, y un haz blanco y macizo deja de ser luz para
-           ser un bloque gris pegado encima. */
-        var fuerza = (.10 + capa * .09) * frente * (1 + m * .18);
-        /* Al frenar se cierra: un haz que va a buscar a alguien apunta, y
-           apuntar es abrirse menos. Ademas a esta distancia el abanico de
-           antes le pasaba por encima a media escena. */
-        var altoFin = E * (.30 + Math.abs(lado) * .45) * k * (1 - m * .45);
+        /* Y sin subirle el brillo al frenar. Con `lighter` cualquier subida
+           se va a blanco, y un haz que ademas de quedarse se enciende da dos
+           veces la misma noticia. */
+        var fuerza = (.10 + capa * .09) * frente;
+        /* Se cierra un poco, no mucho: cerrado del todo se lee como un
+           reflector que apunta. Ancho y quieto se lee como luz que quedo ahi,
+           que es lo que tiene que parecer. */
+        var altoFin = E * (.30 + Math.abs(lado) * .45) * k * (1 - m * .20);
         var g = cx.createLinearGradient(0, y0, largo * dir, y0);
         g.addColorStop(0, 'rgba(255,244,212,' + (fuerza * 1.7).toFixed(3) + ')');
         g.addColorStop(.35, 'rgba(255,236,190,' + (fuerza * .55).toFixed(3) + ')');
@@ -851,7 +868,7 @@ var Pintores = (function () {
         // Muere antes del borde: un haz cortado por el marco no parece luz.
         // Frenado se apaga igual, solo que un poco mas tarde, porque lo que
         // tiene que alcanzar —ella— esta antes de que el cono se acabe.
-        g.addColorStop(.8, 'rgba(255,232,182,' + (fuerza * (.08 + m * .16)).toFixed(3) + ')');
+        g.addColorStop(.8, 'rgba(255,232,182,' + (fuerza * (.08 + m * .10)).toFixed(3) + ')');
         g.addColorStop(1, 'rgba(255,230,180,0)');
         cx.fillStyle = g;
         cx.beginPath();

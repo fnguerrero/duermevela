@@ -42,14 +42,19 @@ var Anomalias = (function () {
 
      Va en tinta translucida y no en negro pleno: es una persona vista contra
      una lampara, no un recorte pegado encima del vidrio. */
-  function silueta(cx, x, y, alto, alfa, sinLuz) {
+  /* `tinta` es cuanto se marca: 1 es un recorte lleno, y por debajo de eso
+     una sombra que hay que buscar. El hueco del agua necesita leerse —es una
+     ausencia, y una ausencia que no se ve no es nada—; la del faro no, porque
+     es alguien lejos en una ventana iluminada y ahi lo justo es entrever. */
+  function silueta(cx, x, y, alto, alfa, sinLuz, tinta) {
     if (!(alfa > .01)) return;
     var A = alto;
+    var T = (tinta === undefined) ? 1 : tinta;
     cx.save();
     /* La luz que la recorta, apenas mas viva justo detras de ella. En el agua
        no va: ahi la silueta no es alguien a contraluz sino el hueco de un
        reflejo, y un halo calido debajo del agua no lo hace nadie. */
-    if (!sinLuz) halo(cx, x, y - A * .55, A * 1.05, '255,240,205', .26 * alfa);
+    if (!sinLuz) halo(cx, x, y - A * .55, A * 1.05, '255,240,205', .26 * alfa * T);
 
     /* TODO el cuerpo es UN SOLO trazo con un solo relleno.
 
@@ -59,7 +64,7 @@ var Anomalias = (function () {
        parches dibujaban una cara. Aparecian dos ojos y dos cuernos sin que
        nadie los hubiera dibujado. Con un unico fill las subrutas se funden y
        la silueta queda pareja, que es lo unico que una silueta tiene que ser. */
-    cx.fillStyle = 'rgba(16,12,22,' + (.82 * alfa).toFixed(3) + ')';
+    cx.fillStyle = 'rgba(16,12,22,' + (.82 * alfa * T).toFixed(3) + ')';
     cx.beginPath();
 
     /* Vestido: sale de la cintura y se abre en campana. La medida es lo unico
@@ -275,8 +280,12 @@ var Anomalias = (function () {
       var ox = fx - E * .04;
       cx.save();
       cx.globalAlpha = a;
-      // La quietud: el haz no tiembla, late apenas.
-      halo(cx, belX, piso - E * .30, E * (.34 + .04 * Math.sin(t * 1.4)), '255,240,205', .13 * a);
+      /* La quietud: el haz no tiembla, late apenas. Corrido para el mismo
+         lado que el eje del cono y bastante mas tenue: un charco de luz
+         centrado justo en sus pies es la manera mas directa de decir que la
+         estan iluminando a ella, y esto tiene que insinuarse. */
+      halo(cx, belX + E * .13, piso - E * .30,
+           E * (.40 + .04 * Math.sin(t * 1.4)), '255,240,205', .065 * a);
       cx.restore();
 
       /* Y arriba, en la linterna, hay alguien.
@@ -290,7 +299,18 @@ var Anomalias = (function () {
       /* Apoyada en el piso de la linterna, que es el rectangulo iluminado y no
          donde nace el haz: medida contra el origen del haz quedaba parada
          arriba de la cupula, como una antena. */
-      silueta(cx, ox + E * .01, fy - E * .455, E * .20, a);
+      /* Mas chica, mucho menos marcada, y llega ultima.
+
+         Estaba dibujada casi negra sobre el vidrio encendido, que es el maximo
+         contraste que existe en toda la pantalla: no se entreveia a nadie, se
+         leia una figura recortada, y de una. Ahora es una sombra adentro de la
+         luz. Y entra al final de la revelacion —`a` al cubo— para que primero
+         se vea lo del haz y recien despues, si se queda mirando, esto. El que
+         la reconozca la va a reconocer; el que no, ve una ventana prendida.
+
+         Y corrida del centro del vidrio: centrada exacto se leia como un icono
+         puesto ahi a proposito. Descentrada es alguien que esta parado. */
+      silueta(cx, ox - E * .038, fy - E * .455, E * .158, a * a * a, false, .34);
     },
 
     /* Las ventanas están prendidas y adentro no hay nada que las prenda. */

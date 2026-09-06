@@ -3873,21 +3873,38 @@ var Pintores = (function () {
        punto de la vuelta se lo frena: de .60 de frente y .80 de lado, que es
        donde el haz esta abierto y todavia brilla. Mas de perfil se apagaria. */
     var dirBel = m > 0 && bel.dx < 0 ? -1 : 1;
+    /* Y no frena del todo: llega hasta .92 y no hasta 1, asi que el barrido
+       nunca se clava — sigue derivando despacio. El texto dice que el haz
+       "frena un segundo de mas cuando me pasa por encima", no que se quede
+       fijo apuntandola: un reflector de teatro es otra cosa, y encima delata
+       de una lo que el lugar tendria que dejar entrever.
+
+       El numero sale de la cuenta, no del gusto: el barrido gira a .55 rad/s,
+       asi que lo que queda sin frenar deriva a .55*(1-q). Con .72 daban casi
+       9 grados por segundo — 26 en los tres que dura la revelacion, y el haz
+       se le iba de encima antes de que ella terminara de mirar. Con .92 son
+       2,5 por segundo: se mueve lo suficiente para no parecer clavado y lo
+       poco necesario para no perderla. */
+    var q = m * .92;
     var angPara = Math.atan2(dirBel * .80, .60);
     /* Y la inclinacion: cuanto hay que bajar el haz, que sale horizontal, para
        que toque el piso donde esta ella. Medida desde el eje del propio haz,
        asi que va al reves cuando apunta para el otro lado. */
-    var inclBel = m > 0 ? Math.atan2(bel.dy * dirBel, bel.dx * dirBel) : 0;
+    /* Y el eje del cono no le cae encima: pasa unos grados mas alla, asi ella
+       queda en el flanco de la luz y no en el medio. Que el maximo del haz
+       coincida exacto con donde esta parada es lo que lo hacia obvio. */
+    var inclBel = m > 0
+      ? Math.atan2(bel.dy * dirBel, bel.dx * dirBel) + .085 * dirBel : 0;
     /* Un tercio mas largo que la distancia hasta ella: asi el haz no termina
        en un borde recto justo encima suyo, sino que la pasa apagandose. Lo que
        la alcanza es la parte del cono que todavia tiene cuerpo. */
-    var largoBel = m > 0 ? Math.sqrt(bel.dx * bel.dx + bel.dy * bel.dy) * 1.30 : 0;
+    var largoBel = m > 0 ? Math.sqrt(bel.dx * bel.dx + bel.dy * bel.dy) * 1.34 : 0;
     // Dos haces opuestos que barren. De cada uno solo se ve la parte que
     // apunta hacia adelante. Van en tres capas concentricas, de la mas ancha y
     // tenue a la mas fina y brillante: eso es lo que le da el borde blando.
     cx.save();
     cx.globalCompositeOperation = 'lighter';
-    if (m > 0) { cx.translate(0, -E * .57); cx.rotate(inclBel * m); cx.translate(0, E * .57); }
+    if (m > 0) { cx.translate(0, -E * .57); cx.rotate(inclBel * q); cx.translate(0, E * .57); }
     for (var d = 0; d < 2; d++) {
       var ang = giro + d * Math.PI;
       /* Frenar no es congelar de golpe: el haz sigue viniendo de donde venia y
@@ -3895,7 +3912,7 @@ var Pintores = (function () {
          entera para llegar a un angulo que tenia al lado. */
       if (m > 0) {
         var falta = (angPara + d * Math.PI) - ang;
-        ang += Math.atan2(Math.sin(falta), Math.cos(falta)) * m;
+        ang += Math.atan2(Math.sin(falta), Math.cos(falta)) * q;
       }
       var frente = Math.cos(ang);
       if (frente <= .05) continue;
@@ -3906,14 +3923,14 @@ var Pintores = (function () {
 
       for (var capa = 0; capa < 3; capa++) {
         var k = 1 - capa * .34;              // 1, .66, .32
-        /* Apenas mas fuerte al frenar, no mucho: con `lighter` cualquier
-           subida se va a blanco, y un haz blanco y macizo deja de ser luz para
-           ser un bloque gris pegado encima. */
-        var fuerza = (.10 + capa * .09) * frente * (1 + m * .18);
-        /* Al frenar se cierra: un haz que va a buscar a alguien apunta, y
-           apuntar es abrirse menos. Ademas a esta distancia el abanico de
-           antes le pasaba por encima a media escena. */
-        var altoFin = E * (.30 + Math.abs(lado) * .45) * k * (1 - m * .45);
+        /* Y sin subirle el brillo al frenar. Con `lighter` cualquier subida
+           se va a blanco, y un haz que ademas de quedarse se enciende da dos
+           veces la misma noticia. */
+        var fuerza = (.10 + capa * .09) * frente;
+        /* Se cierra un poco, no mucho: cerrado del todo se lee como un
+           reflector que apunta. Ancho y quieto se lee como luz que quedo ahi,
+           que es lo que tiene que parecer. */
+        var altoFin = E * (.30 + Math.abs(lado) * .45) * k * (1 - m * .20);
         var g = cx.createLinearGradient(0, y0, largo * dir, y0);
         g.addColorStop(0, 'rgba(255,244,212,' + (fuerza * 1.7).toFixed(3) + ')');
         g.addColorStop(.35, 'rgba(255,236,190,' + (fuerza * .55).toFixed(3) + ')');
@@ -3921,7 +3938,7 @@ var Pintores = (function () {
         // Muere antes del borde: un haz cortado por el marco no parece luz.
         // Frenado se apaga igual, solo que un poco mas tarde, porque lo que
         // tiene que alcanzar —ella— esta antes de que el cono se acabe.
-        g.addColorStop(.8, 'rgba(255,232,182,' + (fuerza * (.08 + m * .16)).toFixed(3) + ')');
+        g.addColorStop(.8, 'rgba(255,232,182,' + (fuerza * (.08 + m * .10)).toFixed(3) + ')');
         g.addColorStop(1, 'rgba(255,230,180,0)');
         cx.fillStyle = g;
         cx.beginPath();
@@ -4292,14 +4309,19 @@ var Anomalias = (function () {
 
      Va en tinta translucida y no en negro pleno: es una persona vista contra
      una lampara, no un recorte pegado encima del vidrio. */
-  function silueta(cx, x, y, alto, alfa, sinLuz) {
+  /* `tinta` es cuanto se marca: 1 es un recorte lleno, y por debajo de eso
+     una sombra que hay que buscar. El hueco del agua necesita leerse —es una
+     ausencia, y una ausencia que no se ve no es nada—; la del faro no, porque
+     es alguien lejos en una ventana iluminada y ahi lo justo es entrever. */
+  function silueta(cx, x, y, alto, alfa, sinLuz, tinta) {
     if (!(alfa > .01)) return;
     var A = alto;
+    var T = (tinta === undefined) ? 1 : tinta;
     cx.save();
     /* La luz que la recorta, apenas mas viva justo detras de ella. En el agua
        no va: ahi la silueta no es alguien a contraluz sino el hueco de un
        reflejo, y un halo calido debajo del agua no lo hace nadie. */
-    if (!sinLuz) halo(cx, x, y - A * .55, A * 1.05, '255,240,205', .26 * alfa);
+    if (!sinLuz) halo(cx, x, y - A * .55, A * 1.05, '255,240,205', .26 * alfa * T);
 
     /* TODO el cuerpo es UN SOLO trazo con un solo relleno.
 
@@ -4309,7 +4331,7 @@ var Anomalias = (function () {
        parches dibujaban una cara. Aparecian dos ojos y dos cuernos sin que
        nadie los hubiera dibujado. Con un unico fill las subrutas se funden y
        la silueta queda pareja, que es lo unico que una silueta tiene que ser. */
-    cx.fillStyle = 'rgba(16,12,22,' + (.82 * alfa).toFixed(3) + ')';
+    cx.fillStyle = 'rgba(16,12,22,' + (.82 * alfa * T).toFixed(3) + ')';
     cx.beginPath();
 
     /* Vestido: sale de la cintura y se abre en campana. La medida es lo unico
@@ -4525,8 +4547,12 @@ var Anomalias = (function () {
       var ox = fx - E * .04;
       cx.save();
       cx.globalAlpha = a;
-      // La quietud: el haz no tiembla, late apenas.
-      halo(cx, belX, piso - E * .30, E * (.34 + .04 * Math.sin(t * 1.4)), '255,240,205', .13 * a);
+      /* La quietud: el haz no tiembla, late apenas. Corrido para el mismo
+         lado que el eje del cono y bastante mas tenue: un charco de luz
+         centrado justo en sus pies es la manera mas directa de decir que la
+         estan iluminando a ella, y esto tiene que insinuarse. */
+      halo(cx, belX + E * .13, piso - E * .30,
+           E * (.40 + .04 * Math.sin(t * 1.4)), '255,240,205', .065 * a);
       cx.restore();
 
       /* Y arriba, en la linterna, hay alguien.
@@ -4540,7 +4566,18 @@ var Anomalias = (function () {
       /* Apoyada en el piso de la linterna, que es el rectangulo iluminado y no
          donde nace el haz: medida contra el origen del haz quedaba parada
          arriba de la cupula, como una antena. */
-      silueta(cx, ox + E * .01, fy - E * .455, E * .20, a);
+      /* Mas chica, mucho menos marcada, y llega ultima.
+
+         Estaba dibujada casi negra sobre el vidrio encendido, que es el maximo
+         contraste que existe en toda la pantalla: no se entreveia a nadie, se
+         leia una figura recortada, y de una. Ahora es una sombra adentro de la
+         luz. Y entra al final de la revelacion —`a` al cubo— para que primero
+         se vea lo del haz y recien despues, si se queda mirando, esto. El que
+         la reconozca la va a reconocer; el que no, ve una ventana prendida.
+
+         Y corrida del centro del vidrio: centrada exacto se leia como un icono
+         puesto ahi a proposito. Descentrada es alguien que esta parado. */
+      silueta(cx, ox - E * .038, fy - E * .455, E * .158, a * a * a, false, .34);
     },
 
     /* Las ventanas están prendidas y adentro no hay nada que las prenda. */

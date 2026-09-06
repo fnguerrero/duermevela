@@ -1,6 +1,6 @@
 # Informe — tanda 8: lo que quedó abierto
 
-Diez iteraciones, #221 a #230, sobre un presupuesto de 40.
+Catorce iteraciones, #221 a #234, sobre un presupuesto de 40.
 
 ## Qué se hizo
 
@@ -24,6 +24,12 @@ de texto ahora se ancla por el pie, porque con los textos de volver quedaba un
 tercio del celular vacío; y `verificarCelular()` mide los dos textos de cada
 lugar en vez de uno u otro según cuántas veces la corriste.
 
+**Y después, el faro más sutil.** Nico lo miró ya arreglado y pidió dos cosas:
+que no fuera tan obvio que la está iluminando a ella, ni que hay alguien
+adentro del faro. Las dos se medían: el brillo sobre ella era 7,9 veces el de
+alrededor, con el pico clavado en su ángulo sin moverse; y la silueta estaba
+casi negra sobre el vidrio encendido, el máximo contraste de toda la pantalla.
+
 ## Verificación
 
 | Qué | Resultado |
@@ -33,6 +39,9 @@ lugar en vez de uno u otro según cuántas veces la corriste.
 | Las catorce llegadas | todas con Bel adentro; ninguna nombra la pérdida |
 | `verificarCelular()` | 28 mediciones, verde en 375x812, 390x760, 1395x920, 1532x783 |
 | El hueco peor | de 250 px a 186 (23% de la pantalla, contra un límite de 30) |
+| El faro, menos obvio | el pico deriva 5° durante la revelación y ya no cae en ella |
+| La luz sobre ella | estable entre 20,5 y 23,3 — no se clava ni parpadea |
+| La silueta | contraste de 190 a 66; sigue midiendo 34.140 px de cambio |
 | Consola | sin errores |
 | `dist/el-segundo-de-mas.html` | 449,8 KB, abre solo, juega y audita en verde |
 

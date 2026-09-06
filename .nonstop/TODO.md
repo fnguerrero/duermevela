@@ -33,6 +33,11 @@ llegada ancla el lugar a algo de ella. Ahí el juego se vuelve genérico.
 - [x] E1 · El bloque de texto se ancla por el pie: con el texto de volver, que es la mitad de corto, quedaba un tercio de pantalla vacío y el chevron flotando · verif: llegada y vuelta dan el mismo hueco en los 14 lugares
 - [x] E2 · `verificarCelular()` medía un texto u otro según cuántas veces la habías corrido, así que encontraba el caso malo por azar. Mide los dos · verif: 28 mediciones en vez de 14
 
+## F · El faro, más sutil (pedido de Nico)
+
+- [x] F1 · Que no sea tan obvio que la está iluminando a ella · verif: medir cuánto del brillo cae sobre ella contra cuánto cae alrededor
+- [x] F2 · Que no sea tan obvio que hay alguien adentro del faro · verif: medir el contraste de la silueta contra la linterna
+
 ## D · Cierre
 
 - [x] D1 · `auditarTodo()` en verde · verif: todos los sub-resultados ok
