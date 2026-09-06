@@ -322,11 +322,20 @@ var Guion = (function () {
                'de los segundos va para atrás, y las dos me parecen tener razón.',
       vuelta: 'El reloj otra vez. Marca una hora distinta de la de recién, y ' +
               'ninguna de las dos es la de verdad.',
+      /* Termina en el deseo y no en la conclusion.
+
+         Antes cerraba con "nada de lo que paso habria tenido que pasar", que
+         es exactamente lo que se piensa —el trato imposible: si el tiempo se
+         hubiera parado, esto no— y por eso era verdadero. Pero al decirlo
+         entero el lugar se queda sin salida: la frase se contesta sola y
+         cierra la puerta. Cortado en "si se quedara quieto un rato, aunque sea
+         un rato", el deseo queda dicho y sin contestar, que es como se piensa
+         de verdad. Y el juego no agrega ninguna moraleja, que es lo que hace
+         en los otros catorce lugares. */
       esconde: 'Los números se corrieron de su hora: cada uno anda cerca del ' +
                'lugar que le tocaba, sin terminar de estar en ninguno. La culpa ' +
                'de todo la tiene el tiempo, que se empeña en transcurrir. Si se ' +
-               'quedara quieto un rato, aunque sea un rato, nada de lo que pasó ' +
-               'habría tenido que pasar.',
+               'quedara quieto un rato. Aunque sea un rato.',
       revela: 'casa'
     },
     luna: {

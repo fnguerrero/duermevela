@@ -107,6 +107,7 @@ llegada ancla el lugar a algo de ella. Ahí el juego se vuelve genérico.
 - [x] O1 · Agua, olas, lluvia, relámpagos y truenos · verif: verificarDibujo y las dos de anomalías en verde
 - [x] O2 · El sentido se corre en vez de perderse: la tormenta es real y lo que no llega es hasta ella · verif: verificarTextos() en verde
 - [x] O3 · `Audio2.trueno()`, con el filtro bajando y separación despareja · verif: existe y suena distinto cada vez
+- [x] O4 · El reloj corta en el deseo y no en la conclusión · verif: verificarTextos() y auditarTodo() en verde
 
 ## D · Cierre
 
