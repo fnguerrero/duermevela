@@ -269,7 +269,7 @@ var Guion = (function () {
        unico que llega a ver que aflojaba. Es el titulo del juego dicho con la
        mecanica en vez de con palabras. */
     circulo: {
-      nombre: 'El círculo',
+      nombre: 'El instante psicodélico',
       llegada: 'Un anillo de hongos en el pasto, tan redondo que alguien lo ' +
                'tuvo que medir. Me siento en el medio, que es lo que se hace ' +
                'cuando encontrás un círculo así. Desde acá adentro el pasto ' +

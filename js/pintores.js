@@ -898,9 +898,9 @@ var Pintores = (function () {
       for (var o = 0; o < 8; o++) {
         var fase = ((t * (.30 + h * .55) + o / 8) % 1);
         var tono = Math.round((t * 26 + o * 44) % 360);
-        cx.strokeStyle = 'hsla(' + tono + ',' + Math.round(38 + h * 34) + '%,' +
-                         Math.round(52 + h * 8) + '%,' +
-                         (h * .17 * (1 - fase) * (.4 + fase)).toFixed(3) + ')';
+        cx.strokeStyle = 'hsla(' + tono + ',' + Math.round(58 + h * 38) + '%,' +
+                         Math.round(54 + h * 10) + '%,' +
+                         (h * .30 * (1 - fase) * (.4 + fase)).toFixed(3) + ')';
         cx.lineWidth = E * (.010 + fase * .030);
         cx.beginPath(); cx.arc(0, 0, rx * (.10 + fase * 1.25), 0, 6.2832); cx.stroke();
       }
@@ -923,7 +923,7 @@ var Pintores = (function () {
         var tw = Math.round((t * 21 + w * 62 + 190) % 360);
         var gw = cx.createLinearGradient(-rx * 1.3, oy2, rx * 1.3, oy2);
         gw.addColorStop(0, 'hsla(' + tw + ',60%,55%,0)');
-        gw.addColorStop(.5, 'hsla(' + tw + ',60%,55%,' + (h * .085).toFixed(3) + ')');
+        gw.addColorStop(.5, 'hsla(' + tw + ',85%,58%,' + (h * .17).toFixed(3) + ')');
         gw.addColorStop(1, 'hsla(' + ((tw + 60) % 360) + ',60%,55%,0)');
         cx.fillStyle = gw;
         cx.beginPath();
@@ -944,16 +944,25 @@ var Pintores = (function () {
        Aparece ultimo y es lo unico de la escena que no esta mal: crece del
        centro del circulo, respira despacio y su luz es la unica calida que
        queda cuando todo lo demas se puso frio y se puso a girar de color. */
-    if (ar > .01) {
-      var alt = E * (1.42 + respira * .045) * ar;
-      var gordo = E * (.155 + respira * .006) * ar;   // medio tronco
-      var abre = E * .62 * ar;
-      cx.save();
-      cx.globalAlpha = ar;
+    {
+      /* El arbol esta SIEMPRE, no solo al revelar.
 
-      // La luz que da, que late con la respiracion y no con el corazon.
-      halo(cx, 0, cy - alt * .58, E * (1.02 + respira * .16),
-           '240,218,168', .11 + respira * .10);
+         Antes aparecia recien pasado el 60% y el lugar sin revelar eran tres
+         hongos chiquitos y una mancha de pasto — al lado del faro o de la
+         casa, no habia figura. Ahora `ar` no decide si el arbol existe: decide
+         cuanto se le NOTA. Quieto y apagado mientras nada pasa; respirando y
+         encendido cuando ella se queda mirando, que es lo que el texto dice
+         que ve. */
+      var alt = E * (1.42 + respira * .045 * ar);
+      var gordo = E * (.155 + respira * .006 * ar);   // medio tronco
+      var abre = E * .62;
+      cx.save();
+
+      /* La luz que da, que late con la respiracion y no con el corazon. Con
+         el lugar sin revelar es apenas un resplandor; lo que crece con `ar` es
+         cuanto se enciende, no el arbol. */
+      halo(cx, 0, cy - alt * .58, E * (1.02 + respira * .16 * ar),
+           '240,218,168', .045 + ar * (.065 + respira * .10));
 
       /* El tronco, con cuerpo: dos lados que se abren abajo en raices y se
          cierran arriba. Dibujado como una sola forma rellena y no como una
@@ -1002,8 +1011,8 @@ var Pintores = (function () {
         cx.quadraticCurveTo(lado2 * largoR * .62, y0b - alt * .03,
                             lado2 * largoR, yFin);
         cx.stroke();
-        halo(cx, lado2 * largoR, yFin, E * .07 * (.7 + respira * .5),
-             '248,228,180', .28 + respira * .22);
+        halo(cx, lado2 * largoR, yFin, E * .07 * (.7 + respira * .5 * ar),
+             '248,228,180', .10 + ar * (.18 + respira * .22));
       }
 
       /* La copa: verde propio y no un resplandor crema. Es lo unico vivo del
@@ -1011,8 +1020,8 @@ var Pintores = (function () {
       var copaR = abre * (1.22 + respira * .06);
       var copa = cx.createRadialGradient(0, cy - alt * .92, copaR * .1,
                                          0, cy - alt * .92, copaR);
-      copa.addColorStop(0, 'rgba(120,168,116,' + (.34 + respira * .10).toFixed(3) + ')');
-      copa.addColorStop(.55, 'rgba(84,132,96,' + (.20 + respira * .07).toFixed(3) + ')');
+      copa.addColorStop(0, 'rgba(120,168,116,' + (.30 + respira * .10 * ar).toFixed(3) + ')');
+      copa.addColorStop(.55, 'rgba(84,132,96,' + (.18 + respira * .07 * ar).toFixed(3) + ')');
       copa.addColorStop(1, 'rgba(70,112,88,0)');
       cx.fillStyle = copa;
       cx.beginPath();
@@ -1047,12 +1056,19 @@ var Pintores = (function () {
     var semilla = [];
     for (var g = 0; g < N; g++) semilla.push([rnd(), rnd(), rnd()]);
 
+    /* Y los hongos, al PIE del arbol y no formando un anillo.
+
+       El anillo era el tema del lugar cuando el arbol no estaba; ahora el
+       tema es el arbol, y tres hongos separados no forman ningun circulo —
+       forman tres puntos sueltos. Agrupados abajo son lo que son de verdad:
+       lo que crece al pie de un arbol viejo. */
+    var AL_PIE = [[-.62, .04, 1], [.50, -.02, .82], [-.20, .10, .66]];
     orden.forEach(function (i) {
-      var ang = i / N * 6.2832 + .18;
-      var sx = Math.sin(ang) * rx;
-      var sy = cy - Math.cos(ang) * ry;
-      var cerca = (1 - Math.cos(ang)) / 2;          // 0 al fondo, 1 adelante
-      var esc = .62 + cerca * .55;
+      var puesto = AL_PIE[i % AL_PIE.length];
+      var sx = puesto[0] * rx;
+      var sy = cy + puesto[1] * E;
+      var cerca = puesto[2];
+      var esc = .70 + cerca * .45;
       var sem = semilla[i];
       /* Respiran: se estiran y se encogen, todos a destiempo. Con `hondo` el
          desfase se achica y empiezan a hacerlo juntos, que es lo que vuelve
@@ -1107,6 +1123,56 @@ var Pintores = (function () {
            rr + ',' + Math.min(255, gg + 60) + ',' + bb, .10 + h * .07);
       cx.restore();
     });
+
+    // Y al final, con el lugar ya dibujado, se le cambia el color a todo.
+    tenirCirculo(cx, E, t, h, cy, rx);
+  }
+
+  /* La capa que tiñe el lugar entero.
+
+     Todo lo anterior agregaba luces de colores ENCIMA de las cosas, y eso se
+     ve como una escena normal con luces. Lo que hace que una escena parezca
+     vista de otra manera es que las cosas MISMAS cambien de color: el pasto,
+     los hongos, la corteza. Eso no se dibuja sumando: se hace con los modos
+     de fusion `saturation` y `hue`, que toman lo que ya esta pintado y le
+     cambian la saturacion y el tono dejandole la luminancia — o sea las
+     formas se reconocen igual y los colores no son los de nadie.
+
+     Va con gradiente y no con color plano para no tener que recortar: el
+     efecto se desvanece solo hacia los bordes y no deja el filo de un clip.
+
+     Se llama al final del pintor, cuando el lugar ya esta dibujado. */
+  function tenirCirculo(cx, E, t, h, cy, rx) {
+    if (!(h > .01)) return;
+    var y = cy - E * .30, r = E * 2.0;
+    function capa(modo, tono, alfa) {
+      var g = cx.createRadialGradient(0, y, E * .15, 0, y, r);
+      g.addColorStop(0, 'hsla(' + tono + ',100%,50%,' + alfa.toFixed(3) + ')');
+      g.addColorStop(.62, 'hsla(' + tono + ',100%,50%,' + (alfa * .72).toFixed(3) + ')');
+      g.addColorStop(1, 'hsla(' + tono + ',100%,50%,0)');
+      cx.globalCompositeOperation = modo;
+      cx.fillStyle = g;
+      cx.beginPath(); cx.arc(0, y, r, 0, 6.2832); cx.fill();
+    }
+    cx.save();
+    // Primero saturar, que es lo que saca a los colores de su sitio.
+    capa('saturation', 0, h * .96);
+    /* Y despues `color`, que cambia el tono Y la saturacion de una — `hue`
+       solo corria el tono y el resultado quedaba timido, con el arbol
+       marron y los hongos grises debajo de unas luces de colores. Con
+       `color` la corteza deja de ser corteza.
+
+       Dos capas girando a distinta velocidad y no una: con una sola la escena
+       queda teñida de un color parejo, que se lee como un filtro de fotos.
+       Con dos, cada parte del cuadro va por su lado y ningun color se queda
+       quieto, que es lo unico que separa esto de una foto con filtro. */
+    capa('color', Math.round((t * 23) % 360), h * .78);
+    capa('color', Math.round((t * 41 + 140) % 360), h * .42);
+    /* Y un ultimo pase de luz que muerde: `overlay` empuja lo claro hacia el
+       color y deja lo oscuro donde esta, asi que el arbol y los hongos se
+       encienden y el fondo no. */
+    capa('overlay', Math.round((t * 17 + 60) % 360), h * .40);
+    cx.restore();
   }
 
   /* ============ el faro ============ */

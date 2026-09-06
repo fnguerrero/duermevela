@@ -89,6 +89,9 @@ llegada ancla el lugar a algo de ella. Ahí el juego se vuelve genérico.
 - [x] M5 · El árbol imponente, de abrazar: de .86E a 1.42E y el tronco como forma rellena con raíces · verif: se lee como árbol de abrazar en la lámina
 - [x] M6 · De quince hongos a tres; el círculo lo hace la marca del pasto · verif: la figura de trazos también, o la transformación mostraría doce que no están
 - [x] M7 · Iluminación psicodélica: el color no se queda quieto · verif: ocho anillos y cinco bandas con los tonos girando, desenfocadas
+- [x] M8 · El árbol está siempre: sin revelar el lugar eran tres hongos y una mancha · verif: la figura de trazos también lo tiene, o aparecería de la nada
+- [x] M9 · Los hongos al pie del árbol, sin anillo · verif: el anillo con tres puntos no era un anillo
+- [x] M10 · Que parezca que está drogada: las cosas mismas cambian de color, con saturation, color y overlay · verif: en dos instantes el árbol sale lima y cian; sin revelar se ve normal
 
 ## D · Cierre
 

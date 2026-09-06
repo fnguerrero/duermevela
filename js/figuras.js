@@ -423,28 +423,43 @@ var Figuras = (function () {
      distintos. */
   function circuloHongos() {
     var s = [];
-    /* Tres hongos, los mismos que dibuja el pintor: si la figura de trazos
-       trae quince y el dibujo tres, la transformacion de un lugar a otro
-       muestra doce hongos que despues no estan. */
-    var rx = .92, ry = .34, cy = .70, N = 3;
-    // El anillo del pasto pisado.
-    for (var i = 0; i < 40; i++) {
-      var a0 = i / 40 * 6.2832, a1 = (i + .6) / 40 * 6.2832;
-      s.push([Math.sin(a0) * rx, cy - Math.cos(a0) * ry,
-              Math.sin(a1) * rx, cy - Math.cos(a1) * ry, 2, .22]);
+    var rx = .92, cy = .70;
+    /* El arbol del medio, que ahora esta SIEMPRE y por lo tanto es parte de la
+       figura y no de la revelacion. Sin esto, llegar a este lugar desde otro
+       hacia aparecer el arbol de la nada al terminar la transformacion. */
+    var alt = 1.42, gordo = .155;
+    // El tronco, sus dos lados.
+    s.push([-gordo * 1.85, cy, -gordo * .82, cy - alt * .34, 4, .8]);
+    s.push([-gordo * .82, cy - alt * .34, -gordo * .40, cy - alt * .78, 4, .8]);
+    s.push([gordo * 1.85, cy, gordo * .82, cy - alt * .34, 4, .8]);
+    s.push([gordo * .82, cy - alt * .34, gordo * .40, cy - alt * .78, 4, .8]);
+    // Las ramas.
+    for (var b = 0; b < 8; b++) {
+      var lado = b % 2 ? 1 : -1;
+      var u = .74 + Math.floor(b / 2) * .075;
+      var largo = .62 * (.55 + (b % 3) * .18) * (1.25 - u * .5);
+      s.push([lado * gordo * .30, cy - alt * u,
+              lado * largo, cy - alt * (u + .13), 3, .7]);
     }
-    // Y cada hongo: el tallo y el sombrero.
-    for (var k = 0; k < N; k++) {
-      var ang = k / N * 6.2832 + .18;
-      var sx = Math.sin(ang) * rx, sy = cy - Math.cos(ang) * ry;
-      var cerca = (1 - Math.cos(ang)) / 2;
-      var esc = .62 + cerca * .55;
+    // El pasto del claro.
+    for (var k = 0; k < 22; k++) {
+      var a0 = k / 22 * 6.2832;
+      s.push([Math.sin(a0) * rx, cy - Math.cos(a0) * .34,
+              Math.sin(a0 + .18) * rx, cy - Math.cos(a0 + .18) * .34, 2, .18]);
+    }
+    /* Y los tres hongos, al pie del arbol y en los mismos puntos que usa el
+       pintor: si la figura los pone en otro lado, la transformacion los deja
+       llegando a un lugar donde despues no estan. */
+    var AL_PIE = [[-.62, .04, 1], [.50, -.02, .82], [-.20, .10, .66]];
+    AL_PIE.forEach(function (p2) {
+      var sx = p2[0] * rx, sy = cy + p2[1];
+      var esc = .70 + p2[2] * .45;
       var alto = .19 * esc, ancho = .12 * esc;
-      s.push([sx, sy, sx, sy - alto * .92, 3, .6 + cerca * .2]);
-      s.push([sx - ancho, sy - alto * .92, sx, sy - alto * 1.3, 3, .7 + cerca * .2]);
-      s.push([sx, sy - alto * 1.3, sx + ancho, sy - alto * .92, 3, .7 + cerca * .2]);
-      s.push([sx - ancho, sy - alto * .92, sx + ancho, sy - alto * .92, 2, .5]);
-    }
+      s.push([sx, sy, sx, sy - alto * .92, 3, .7]);
+      s.push([sx - ancho, sy - alto * .92, sx, sy - alto * 1.3, 3, .8]);
+      s.push([sx, sy - alto * 1.3, sx + ancho, sy - alto * .92, 3, .8]);
+      s.push([sx - ancho, sy - alto * .92, sx + ancho, sy - alto * .92, 2, .55]);
+    });
     return s;
   }
 
