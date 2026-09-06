@@ -159,7 +159,7 @@ var Guion = (function () {
       nombre: 'La montaña rusa',
       llegada: 'La montaña rusa de la feria a la que me llevaban. Está entera, y ' +
                'eso no puede ser: la desarmaron cuando yo era chica, me acuerdo ' +
-               'del terreno pelado después. Y sin embargo acá está, con las ' +
+               'del baldío que quedó. Y sin embargo acá está, con las ' +
                'luces prendidas y el vagón esperando arriba de todo.',
       vuelta: 'Otra vez la montaña rusa. Está igual que hace un rato, y hace un ' +
               'rato ya estaba mal.',
