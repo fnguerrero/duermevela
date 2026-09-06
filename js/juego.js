@@ -1895,6 +1895,11 @@
        antes del vineteado, para que se apague en los bordes como el resto. */
     dibujarChispas(cx, dt, W, H);
 
+    /* Y en el instante psicodelico, el cuadro entero se deforma. Va aca,
+       despues de todo y antes del vineteado, para que el vineteado caiga
+       parejo sobre la imagen ya torcida. */
+    deformarPsico(cx, W, H, t);
+
     /* Vineteado: oscurece las esquinas y empuja la vista al centro. Va al
        final, sobre todo lo demas, incluido Bel. */
     var vin = cx.createRadialGradient(W * .5, H * .48, Math.min(W, H) * .30,
@@ -2070,6 +2075,11 @@
       J.indicios = [];
       for (var qi = 0; qi < opciones.indicios; qi++) J.indicios.push('prueba' + qi);
     }
+    /* Cuanto de lo que el lugar esconde esta a la vista. Sin esto no habia
+       forma de capturar el instante psicodelico en su peor momento: todo lo
+       que hace —el color, la deformacion, el arbol, el corazon— cuelga de
+       este numero, y el unico modo de llegar era jugando hasta ahi. */
+    if (opciones.revelando !== undefined) J.revelando = opciones.revelando;
     if (opciones.empuje !== undefined) bel.empuje = opciones.empuje;
     if (opciones.asombro !== undefined) bel.asombro = opciones.asombro;
     // El modo captura tambien reajusta: si no, una captura tras un resize sale
@@ -2382,6 +2392,96 @@
 
      Usa el buffer del canvas y no su tamano en pantalla: con la pestana oculta
      el segundo es cero y la prueba mide sobre la nada. */
+  /* La deformacion del instante psicodelico.
+
+     Cambiarle el color a las cosas no alcanzaba, y Nico tenia razon: con solo
+     color queda una escena normal con luces puestas. Lo que hace que una
+     imagen se lea alterada es que la GEOMETRIA se mueva — que las lineas
+     rectas dejen de serlo. Las dos tecnicas vienen del juego psicodelico que
+     el mismo hizo y que funciona:
+
+     Una, ondular por franjas: se copia el cuadro y se lo redibuja en tiras
+     horizontales, cada una corrida un poco, con un abombado de barril hacia
+     los bordes. Dos, separar los canales: dos copias, una multiplicada por
+     rojo y otra por cian, sumadas de nuevo pero corridas — reconstruyen la
+     imagen con los bordes en colores, que es lo que mas psicodelico lee.
+
+     Se aplica al cuadro ENTERO y no solo a la figura, a proposito: ella
+     tambien esta adentro de eso. Y solo mientras dura la revelacion de ese
+     lugar, asi que el resto del juego no paga nada. */
+  var lienzosPsico = {};
+  function lienzoPsico(clave, W, H) {
+    var l = lienzosPsico[clave];
+    if (!l) { l = lienzosPsico[clave] = { cv: document.createElement('canvas') }; }
+    if (l.cv.width !== W || l.cv.height !== H) { l.cv.width = W; l.cv.height = H; }
+    if (!l.cx) l.cx = l.cv.getContext('2d');
+    return l;
+  }
+
+  function deformarPsico(cx, W, H, t) {
+    if (J.lugar !== 'circulo') return;
+    var n = hondoCirculo(J.revelando);
+    if (!(n > .05)) return;
+
+    // La copia de lo que hay, a tamaño de pantalla y no de pixeles fisicos.
+    var src = lienzoPsico('copia', Math.round(W), Math.round(H));
+    src.cx.setTransform(1, 0, 0, 1, 0, 0);
+    src.cx.clearRect(0, 0, W, H);
+    src.cx.drawImage(cx.canvas, 0, 0, cx.canvas.width, cx.canvas.height, 0, 0, W, H);
+
+    // Uno · ondular por franjas.
+    var filas = Math.max(6, Math.round(10 + n * 34));
+    var altoF = H / filas;
+    var onda = n * 13;
+    cx.save();
+    cx.fillStyle = '#07060e';
+    cx.fillRect(0, 0, W, H);
+    for (var i = 0; i < filas; i++) {
+      var y = i * altoF;
+      var dx = Math.sin(t * 1.15 + i * .34) * onda +
+               Math.sin(t * .61 + i * .13) * onda * .6;
+      /* Barril: las filas lejos del centro se ensanchan, asi que las
+         verticales dejan de ser verticales y el cuadro se abomba como visto a
+         traves de un vidrio grueso. Sale del ancho de destino del mismo
+         drawImage, o sea gratis. */
+      var vC = (y + altoF / 2) / H - .5;
+      var anchoDest = W * (1 + vC * vC * n * .10);
+      cx.drawImage(src.cv, 0, y, W, altoF + 1,
+                   dx - (anchoDest - W) / 2, y, anchoDest, altoF + 1);
+    }
+    cx.restore();
+
+    // Dos · separar el rojo del cian, ya pasado cierto grado.
+    if (n > .40) {
+      var k = (n - .40) / .60;
+      var d = 1 + k * 8;
+      var src2 = lienzoPsico('canal', Math.round(W), Math.round(H));
+      src2.cx.setTransform(1, 0, 0, 1, 0, 0);
+      src2.cx.clearRect(0, 0, W, H);
+      src2.cx.drawImage(cx.canvas, 0, 0, cx.canvas.width, cx.canvas.height, 0, 0, W, H);
+
+      var R = lienzoPsico('rojo', Math.round(W), Math.round(H));
+      var C = lienzoPsico('cian', Math.round(W), Math.round(H));
+      [[R, '#f00'], [C, '#0ff']].forEach(function (par) {
+        var l = par[0];
+        l.cx.setTransform(1, 0, 0, 1, 0, 0);
+        l.cx.globalCompositeOperation = 'source-over';
+        l.cx.clearRect(0, 0, W, H);
+        l.cx.drawImage(src2.cv, 0, 0);
+        l.cx.globalCompositeOperation = 'multiply';
+        l.cx.fillStyle = par[1];
+        l.cx.fillRect(0, 0, W, H);
+        l.cx.globalCompositeOperation = 'source-over';
+      });
+      cx.save();
+      cx.globalCompositeOperation = 'lighter';
+      cx.globalAlpha = .20 + k * .32;
+      cx.drawImage(R.cv, -d, 0);
+      cx.drawImage(C.cv, d, 0);
+      cx.restore();
+    }
+  }
+
   /* El corazon del circulo, que es lo unico del cuerpo que se escucha.
 
      Se acelera con lo que aprieta —de 62 pulsaciones a 138— y se calma cuando

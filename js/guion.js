@@ -270,12 +270,16 @@ var Guion = (function () {
        mecanica en vez de con palabras. */
     circulo: {
       nombre: 'El instante psicodélico',
-      llegada: 'Un anillo de hongos en el pasto, tan redondo que alguien lo ' +
-               'tuvo que medir. Me siento en el medio, que es lo que se hace ' +
-               'cuando encontrás un círculo así. Desde acá adentro el pasto ' +
-               'tiene más verdes de los que yo sabía que había.',
-      vuelta: 'El círculo otra vez. Sigue perfecto, y el pasto de adentro ' +
-              'sigue siendo de otro verde que el de afuera.',
+      /* El texto describia un anillo de hongos, que era el lugar antes de que
+         el arbol pasara a estar siempre. Un texto que nombra algo que ya no
+         se dibuja es peor que un texto flojo: manda a buscar lo que no hay. */
+      llegada: 'Un árbol solo en el medio del pasto, más grande de lo que un ' +
+               'árbol tiene que ser, con tres hongos creciéndole al pie. Me ' +
+               'siento abajo, que es lo que se hace cuando encontrás un árbol ' +
+               'así. Desde acá el pasto tiene más verdes de los que yo sabía ' +
+               'que había.',
+      vuelta: 'El árbol otra vez. Sigue igual de grande, y el pasto de abajo ' +
+              'sigue siendo de otro verde que el de alrededor.',
       /* No baja solo, y ese era el error: lo que pasa de verdad en un momento
          asi es que NO baja — la certeza de que no se termina mas es el centro
          de la cosa, no un rodeo antes del alivio. Lo que salva no es que
