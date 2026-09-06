@@ -186,6 +186,7 @@
     revelando: 0,           // cuanto se ve la anomalia del lugar, de 0 a 1
     lunaCrece: 0,           // el pulso de la luna al recibir una chispa
     seguirPaso: null,       // como sigue el paso cuando termine de leerse
+    cerrarPaso: null,       // el cierre corto, cuando la revelacion ya se leyo
     guias: {},              // que avisos de la primera partida ya salieron
     siguioDeLargo: 0,       // cuantas veces eligio no quedarse a mirar
     ultimoTic: -1,          // para no repetir el tic del anillo
@@ -338,6 +339,7 @@
       elRelato.textContent = texto;
       elRelato.classList.toggle('revela', !!revela);
       elRelato.classList.add('ver');
+      mirarPanel();
       if (alTerminar) pedirSeguir(alTerminar, tiempoDeLectura(texto));
     });
   }
@@ -538,7 +540,7 @@
   }
 
   function empezar() {
-    J.avanzarPaso = null;
+    J.avanzarPaso = null; J.seguirPaso = null; J.cerrarPaso = null;
     document.getElementById('portada').classList.add('ido');
     luego(1500, function () {
       J.recorrido.push(J.lugar);
@@ -552,11 +554,66 @@
      nombre se ponia recien al avanzar de paso. Antes ese hueco duraba unos
      segundos; desde que el relato espera al jugador, dura lo que el tarde en
      leer — y en el medio la pantalla muestra un lugar con el nombre de otro. */
+  /* El vigilante del panel.
+
+     El cartel y el texto tienen que hablar SIEMPRE del mismo lugar. Es el
+     desajuste que mas veces volvio y el que ninguna prueba cazaba:
+     verificarRotulo compara el cartel contra el dibujo, y daba verde mientras
+     en pantalla se leia "La luna" arriba del parrafo del pajaro del arbol
+     —el cartel y el dibujo estaban de acuerdo entre ellos, y el que sobraba
+     era el tercero.
+
+     Mira desde adentro y no desde afuera. Observarlo por el DOM no sirve: la
+     partida simulada corre acelerada y vacia varios relojes en un mismo tick,
+     asi que tanto el muestreo como el MutationObserver ven solo el estado
+     final y se pierden justo el intermedio, que es el roto. Aca se pregunta en
+     el mismo momento en que el panel cambia, dure lo que dure ese estado.
+
+     Vale tambien jugando a mano: `window.vigilarPanel(true)` y despues
+     `window.mezclasPanel()`. */
+  var vigilando = false, mezclasPanel = [], DUENIO = null;
+
+  function duenioDelTexto(txt) {
+    if (!DUENIO) {
+      DUENIO = {};
+      Object.keys(Guion.LUGARES).forEach(function (k) {
+        var l = Guion.LUGARES[k];
+        ['llegada', 'vuelta', 'esconde', 'esquiva'].forEach(function (campo) {
+          if (l[campo]) DUENIO[l[campo]] = k;
+        });
+      });
+    }
+    return DUENIO[txt] || null;
+  }
+
+  function mirarPanel() {
+    if (!vigilando) return;
+    if (!elRelato.classList.contains('ver')) return;
+    if (!elRotulo.classList.contains('ver')) return;
+    /* Las frases de las cartas no son de ningun lugar a proposito —"se
+       encendio" sirve saliendo de cualquier lado— asi que no se juzgan. */
+    var duenio = duenioDelTexto(elRelato.textContent);
+    if (!duenio) return;
+    var l = Guion.lugar(duenio);
+    if (l && l.nombre !== elRotulo.textContent) {
+      mezclasPanel.push({ rotulo: elRotulo.textContent, texto: duenio,
+                          dibujando: J.lugar, paso: J.paso });
+    }
+  }
+
+  window.vigilarPanel = function (si) {
+    vigilando = si !== false;
+    if (vigilando) mezclasPanel = [];
+    return vigilando;
+  };
+  window.mezclasPanel = function () { return mezclasPanel.slice(); };
+
   function ponerRotulo(clave) {
     var l = Guion.lugar(clave);
     if (!l) return;
     if (elRotulo.textContent !== l.nombre) elRotulo.textContent = l.nombre;
     elRotulo.classList.add('ver');
+    mirarPanel();
   }
 
   /* Bel aparece en el lugar donde está. `primera` distingue el arranque del
@@ -915,8 +972,25 @@
       else llegar(false);
     };
 
+    /* Cuando el jugador SI encontro lo que el lugar escondia, el paso se
+       cierra por aca y no por seguirPaso.
+
+       Ahi ya leyo, y no queda nada mas para leer: la frase de la carta se dijo
+       al arrancar la mutacion. Pasar igual por seguirPaso le pedia un segundo
+       toque para nada, y esa espera —que dura lo que el jugador tarde— era la
+       ventana donde el cartel ya decia el nombre del lugar nuevo y abajo
+       seguia puesto el hallazgo del lugar viejo. */
+    J.cerrarPaso = function (ms) {
+      if (yaSiguio || yaAvanzo) return;
+      yaSiguio = true;
+      luego(ms || 900, J.avanzarPaso);
+    };
+
     J.seguirPaso = function () {
-      if (yaSiguio) return;
+      /* Tambien contra `yaAvanzo`: el respaldo de mas abajo puede llegar
+         despues de que la revelacion cerro el paso por su cuenta, y sin esta
+         guarda pediria un toque encima del texto de llegada del lugar nuevo. */
+      if (yaSiguio || yaAvanzo) return;
       yaSiguio = true;
       /* La frase de la carta ya se dijo al arrancar la mutacion, asi que aca
          solo queda esperar. Antes se decia en este punto y hacia dos cosas
@@ -1336,9 +1410,17 @@
         decir(visto, function () {
           J.congelado = false;
           J.vioAhora = null;
+          /* El hallazgo se va con el lugar que lo escondia, en el mismo
+             instante en que el cartel pasa a nombrar el lugar nuevo. Las dos
+             cosas tienen que moverse juntas: si el texto se queda —y se
+             quedaba, hasta el toque siguiente— en pantalla conviven el nombre
+             de un lugar y el parrafo de otro. Es la misma mezcla de siempre,
+             ahora por este camino. */
+          elRelato.classList.remove('ver');
           // Recien ahora el cartel puede decir donde estamos.
           ponerRotulo(J.lugar);
-          luego(1300, function () { if (J.seguirPaso) J.seguirPaso(); });
+          if (J.cerrarPaso) J.cerrarPaso(900);
+          else luego(1300, function () { if (J.seguirPaso) J.seguirPaso(); });
         }, true);
       }
       luego(1400, function () {
@@ -2462,6 +2544,43 @@
     });
   };
 
+  /* Que el CARTEL y el TEXTO hablen del mismo lugar.
+
+     verificarRotulo compara el cartel contra lo que se dibuja, y por eso daba
+     verde mientras en pantalla se leia "La luna" arriba del parrafo del pajaro
+     del arbol: el cartel y el dibujo estaban de acuerdo entre ellos, y el que
+     sobraba era el tercero. Nadie miraba el tercero.
+
+     Aca se mira el panel entero. Cada parrafo del guion —la llegada, la
+     vuelta, lo que el lugar esconde— pertenece a un lugar y a uno solo, asi
+     que si el texto puesto se puede atribuir, el cartel tiene que decir ese
+     mismo. Las frases de las cartas no pertenecen a ningun lugar a proposito
+     —"se encendio" sirve saliendo de cualquier lado— y por eso se saltean. */
+  window.verificarPanel = function (cuantas) {
+    cuantas = cuantas || 3;
+    window.vigilarPanel(true);
+    function una(i) {
+      return window.pruebaPartida({
+        mirar: true,
+        elegir: function (j, n) { return (i + j) % n; }
+      });
+    }
+    var cadena = Promise.resolve();
+    for (var i = 0; i < cuantas; i++) {
+      (function (k) { cadena = cadena.then(function () { return una(k); }); })(i);
+    }
+    return cadena.then(function () {
+      /* Un respiro: el ultimo texto puede llegar despues de que la partida se
+         dio por terminada. */
+      return luegoPromesa(400);
+    }).then(function () {
+      var m = window.mezclasPanel();
+      window.vigilarPanel(false);
+      return { partidas: cuantas, mezclas: m.length, muestra: m.slice(0, 3),
+               ok: m.length === 0 };
+    });
+  };
+
   /* Corre varias partidas y comprueba que el arco se cumpla siempre: que los
      recuerdos vengan primero, que el tramo del medio sea el que toca y en el
      orden que toca, y que lo que queda venga despues. Sin esto, una carta mal
@@ -3367,6 +3486,7 @@
     }).then(function () { return Promise.resolve(window.auditar()); }).then(function (r) { out.contenido = r.ok;
     }).then(function () { return Promise.resolve(window.verificarTextos()); }).then(function (r) { out.textos = r.ok;
     }).then(function () { return window.verificarRotulo(); }).then(function (r) { out.rotulo = r.desajustes === 0;
+    }).then(function () { return window.verificarPanel(); }).then(function (r) { out.panel = r.mezclas === 0;
     }).then(function () { return window.verificarTramos(2); }).then(function (r) { out.tramos = r.fallos === 0;
     /* El reparto y las frecuencias entran a la auditoria y las partidas
        simuladas no: estas dos miden lo mismo mil veces mejor y en un segundo,
