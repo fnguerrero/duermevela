@@ -1505,26 +1505,69 @@ var Pintores = (function () {
      juntas. El relampago no es un flash blanco de pantalla —eso es un golpe
      en los ojos y encima taparia la escena— sino una subida de luz sobre el
      agua y la vela, que es lo que se ve de verdad cuando cae uno lejos. */
-  function mar(cx, E, t) {
+  /* Un lienzo aparte para el agua.
+
+     Es la unica forma de recortarla con el borde desvanecido: una mascara
+     aplicada sobre el contexto de la escena borraria tambien el cielo que ya
+     esta pintado detras. Se reusa entre cuadros — crear un lienzo por cuadro
+     es basura para el recolector sesenta veces por segundo. */
+  var lienzoMar = null, marCx = null;
+  function lienzoDelMar(an, al, esc) {
+    if (!lienzoMar) {
+      lienzoMar = document.createElement('canvas');
+      marCx = lienzoMar.getContext('2d');
+    }
+    var w = Math.max(2, Math.ceil(an * esc)), h = Math.max(2, Math.ceil(al * esc));
+    if (lienzoMar.width !== w || lienzoMar.height !== h) {
+      lienzoMar.width = w; lienzoMar.height = h;
+    } else {
+      marCx.setTransform(1, 0, 0, 1, 0, 0);
+      marCx.clearRect(0, 0, w, h);
+    }
+    return marCx;
+  }
+
+  function mar(cx, E, t, orilla, haciaBel) {
     /* La linea del agua va justo abajo del casco y no al pie del cuadro: la
        barca es de las figuras que vuelan —no apoya en el piso— asi que un mar
-       dibujado abajo de todo la dejaba flotando un metro por encima del agua.
-       El agua sigue despues hacia abajo hasta salirse del cuadro, que es lo
-       que la hace mar y no una pileta. */
+       dibujado abajo de todo la dejaba flotando un metro por encima del agua. */
     var y0 = E * .17;
-    cx.save();
 
-    var ag = cx.createLinearGradient(0, y0 - E * .06, 0, y0 + E * 1.5);
-    ag.addColorStop(0, 'rgba(38,48,92,.94)');
-    ag.addColorStop(.35, 'rgba(28,36,72,.95)');
-    ag.addColorStop(1, 'rgba(14,18,40,.97)');
-    cx.fillStyle = ag;
-    /* Ancho de sobra: con 4,8E el agua terminaba adentro del cuadro y se veian
-       los dos cantos verticales, o sea una pileta y no un mar. */
-    cx.fillRect(-E * 9, y0 - E * .06, E * 18, E * 3.2);
+    /* Y el agua llega hasta la ORILLA, que es la linea del piso de la escena:
+       la misma donde ella esta parada. Antes seguia hasta el pie del cuadro. */
+    var pie = (orilla || E * 1.02);
+    if (pie < y0 + E * .30) pie = y0 + E * .30;
+    var hondo = pie - y0;
 
-    /* El relampago: cada tanto, y no siempre en el mismo lado. La cuenta con
-       seno elevado deja el destello corto y el resto del tiempo en cero. */
+    /* Y el temporal NO ocupa la pantalla: es un pedazo de mar del tamano de la
+       barca, con el borde desvanecido, en el medio de una escena seca.
+
+       Es lo que dice el texto y no una licencia: "estoy a tres metros y no me
+       llega nada, la lluvia me pasa por al lado sin tocarme". Un mar de lado a
+       lado lo contradecia — se la veia parada adentro del agua mientras leia
+       que el agua no la alcanzaba. Recortado, el lugar se vuelve lo que es: la
+       tormenta existe, es de la barca, y termina antes de ella.
+
+       El borde se calcula contra donde ESTA parada y no contra un numero fijo:
+       ella se va acercando a medida que encuentra cosas, y un ancho fijo la
+       hubiera alcanzado en la segunda mitad de la partida. */
+    var lejos = (haciaBel === undefined || haciaBel === null)
+                ? 2.2 : Math.abs(haciaBel);
+    var rx = Math.max(1.20, Math.min(2.0, lejos - .26));
+
+    /* Un margen transparente alrededor del contenido. Sin el, el ultimo pixel
+       del lienzo lleva algo de agua y el navegador lo estira al escalar el
+       drawImage: quedaba una linea vertical de un pixel en cada costado,
+       tenue pero recta, que es justo lo que este recorte viene a sacar. */
+    var mrg = E * .16;
+    var techo = y0 - E * .26;
+    var anchoL = rx * 2 * E + mrg * 2, altoL = (pie - techo) + mrg * 2;
+    var m = (typeof cx.getTransform === 'function') ? cx.getTransform() : null;
+    var esc = m ? Math.max(.5, Math.abs(m.a)) : 1;
+    var q = lienzoDelMar(anchoL, altoL, esc);
+    // El lienzo trabaja en las mismas coordenadas que el pintor.
+    q.setTransform(esc, 0, 0, esc, (rx * E + mrg) * esc, (-techo + mrg) * esc);
+
     /* Cuatro relampagos con periodos que no son multiplos entre si: asi caen
        seguido pero nunca a intervalos parejos, que es lo que separa una
        tormenta de una luz que parpadea. */
@@ -1532,86 +1575,120 @@ var Pintores = (function () {
                Math.pow(Math.max(0, Math.sin(t * .31 + 2.1)), 28) +
                Math.pow(Math.max(0, Math.sin(t * .73 + 4.4)), 34) +
                Math.pow(Math.max(0, Math.sin(t * 1.09 + 1.2)), 44);
+
+    var ag = q.createLinearGradient(0, y0 - E * .06, 0, pie);
+    ag.addColorStop(0, 'rgba(38,48,92,.94)');
+    ag.addColorStop(.35, 'rgba(28,36,72,.95)');
+    ag.addColorStop(1, 'rgba(14,18,40,.97)');
+    q.fillStyle = ag;
+    q.fillRect(-rx * E, y0 - E * .06, rx * 2 * E, hondo + E * .06);
+
+    /* Las olas: siete filas con CUERPO y no lineas sueltas. Dibujadas como
+       trazos quedaban curvas de nivel de un mapa. Se reparten entre el
+       horizonte y la orilla —apretadas arriba, separadas abajo— que es como se
+       ve una superficie de agua en escorzo. */
+    for (var f = 0; f < 7; f++) {
+      var yf = y0 + hondo * (f * f) / 36 * .98;
+      var vel = .85 + f * .42;
+      var alto = hondo * (.030 + f * .020);
+      var largo = E * (.24 + f * .10);
+      var claro = .055 + f * .016 + rayo * .10;
+
+      q.fillStyle = 'rgba(' + Math.round(96 + f * 16) + ',' +
+                    Math.round(126 + f * 20) + ',200,' + claro.toFixed(3) + ')';
+      q.beginPath();
+      q.moveTo(-rx * E, pie);
+      for (var x = -rx * E; x < rx * E; x += largo) {
+        var fase = t * vel + x / largo;
+        q.lineTo(x, yf + Math.sin(fase) * alto);
+        q.quadraticCurveTo(x + largo * .5, yf + Math.cos(fase) * alto * 2.4,
+                           x + largo, yf + Math.sin(fase + 1) * alto);
+      }
+      q.lineTo(rx * E, pie);
+      q.closePath();
+      q.fill();
+
+      // Y la cresta, que es lo que se ve blanco cuando el agua esta picada.
+      q.strokeStyle = 'rgba(' + Math.round(150 + f * 14) + ',' +
+                      Math.round(180 + f * 16) + ',238,' +
+                      (.26 + f * .05 + rayo * .45).toFixed(3) + ')';
+      q.lineWidth = Math.max(1, E * (.010 + f * .004));
+      q.beginPath();
+      for (var x2 = -rx * E; x2 < rx * E; x2 += largo) {
+        var fa2 = t * vel + x2 / largo;
+        q.moveTo(x2, yf + Math.sin(fa2) * alto);
+        q.quadraticCurveTo(x2 + largo * .5, yf + Math.cos(fa2) * alto * 2.4,
+                           x2 + largo, yf + Math.sin(fa2 + 1) * alto);
+      }
+      q.stroke();
+    }
+
+    /* Y el recorte, con forma de mancha y no de rectangulo.
+
+       Con un desvanecido solo a los costados seguia leyendose una pileta: el
+       horizonte y la orilla quedaban rectos de punta a punta y el ojo cierra
+       los cuatro lados igual. Una elipse deja el agua honda en el medio y la
+       apaga en todo el contorno, asi que ni el horizonte ni la orilla llegan
+       nunca a un canto. */
+    q.globalCompositeOperation = 'destination-out';
+    q.save();
+    q.translate(0, y0 + hondo * .46);
+    q.scale(rx * E, hondo * .82);
+    var mR = q.createRadialGradient(0, 0, 0, 0, 0, 1);
+    mR.addColorStop(0, 'rgba(0,0,0,0)');
+    mR.addColorStop(.52, 'rgba(0,0,0,0)');
+    mR.addColorStop(1, 'rgba(0,0,0,1)');
+    q.fillStyle = mR;
+    q.fillRect(-1.8, -1.8, 3.6, 3.6);
+    q.restore();
+    q.globalCompositeOperation = 'source-over';
+
+    cx.save();
+    cx.drawImage(lienzoMar, -rx * E - mrg, techo - mrg, anchoL, altoL);
+
+    /* La lluvia va derecho sobre la escena y no por el lienzo: cada gota lleva
+       su propia transparencia segun cuan lejos del temporal cae, y asi se
+       apaga sola hacia los costados sin necesitar recorte. Cae inclinada y
+       toda para el mismo lado —vertical se lee como nieve— y solo sobre la
+       barca, que es de donde sale que a ella no la moje. */
+    var rnd = sembrado(53);
+    var rlluvia = rx * 1.05;
+    cx.lineWidth = Math.max(1, E * .0055);
+    for (var g = 0; g < 90; g++) {
+      var bx = (rnd() * 2 - 1) * rlluvia * E;
+      var caida = ((t * (1.5 + rnd() * .9) + rnd() * 3) % 1);
+      var gy = y0 - E * 2.3 + caida * E * 2.5;
+      if (gy > y0 + E * .04) continue;
+      var lejosG = Math.abs(bx) / (rlluvia * E);
+      var aG = (1 - lejosG * lejosG * lejosG) * .32;
+      if (aG <= .012) continue;
+      cx.strokeStyle = 'rgba(180,200,245,' + aG.toFixed(3) + ')';
+      cx.beginPath();
+      cx.moveTo(bx, gy);
+      cx.lineTo(bx - E * .045, gy + E * .12);
+      cx.stroke();
+    }
+
+    /* El relampago va por fuera del recorte: es luz en el cielo y alcanza a
+       todo lo que hay en cuadro, incluida ella. Lo unico que no la toca es el
+       agua. El resplandor tiene que apagarse ANTES del borde del rectangulo
+       que lo lleva, o el corte se ve. */
     if (rayo > .01) {
       var lx = Math.sin(t * .19) * E * 1.4;
-      /* El resplandor tiene que apagarse ANTES del borde del rectangulo que
-         lo lleva, o el corte se ve — y se veia: en el pico del relampago
-         quedaba un rectangulo claro con dos cantos rectos en el medio del
-         cielo. El radio del gradiente es 3,4E y el rectangulo mide 18 de
-         ancho, asi que muere adentro. */
       var luz = cx.createRadialGradient(lx, y0 - E * 1.5, E * .1,
                                         lx, y0 - E * 1.5, E * 3.4);
       luz.addColorStop(0, 'rgba(196,208,255,' + (rayo * .26).toFixed(3) + ')');
       luz.addColorStop(.55, 'rgba(180,196,255,' + (rayo * .09).toFixed(3) + ')');
       luz.addColorStop(1, 'rgba(196,208,255,0)');
       cx.fillStyle = luz;
-      cx.fillRect(-E * 9, y0 - E * 5, E * 18, E * 8);
+      cx.fillRect(-E * 3.6, y0 - E * 5, E * 7.2, E * 8);
     }
-
-    /* Las olas: siete filas con CUERPO y no lineas sueltas.
-
-       Dibujadas como trazos quedaban curvas de nivel de un mapa: el ojo ve
-       lineas y no agua. Cada fila es ahora una franja rellena que baja desde
-       su cresta hasta la fila siguiente, con la cresta marcada encima. El
-       relleno es lo que hace volumen; el trazo solo, contorno. */
-    for (var f = 0; f < 7; f++) {
-      var yf = y0 + E * (.02 + f * f * .038);
-      var vel = .85 + f * .42;
-      var alto = E * (.026 + f * .017);
-      var largo = E * (.24 + f * .10);
-      var claro = .055 + f * .016 + rayo * .10;
-
-      // El cuerpo de la ola.
-      cx.fillStyle = 'rgba(' + Math.round(96 + f * 16) + ',' +
-                     Math.round(126 + f * 20) + ',200,' + claro.toFixed(3) + ')';
-      cx.beginPath();
-      cx.moveTo(-E * 2.6, yf + E * .5);
-      for (var x = -E * 2.6; x < E * 2.6; x += largo) {
-        var fase = t * vel + x / largo;
-        cx.lineTo(x, yf + Math.sin(fase) * alto);
-        cx.quadraticCurveTo(x + largo * .5, yf + Math.cos(fase) * alto * 2.4,
-                            x + largo, yf + Math.sin(fase + 1) * alto);
-      }
-      cx.lineTo(E * 2.6, yf + E * .5);
-      cx.closePath();
-      cx.fill();
-
-      // Y la cresta, que es lo que se ve blanco cuando el agua esta picada.
-      cx.strokeStyle = 'rgba(' + Math.round(150 + f * 14) + ',' +
-                       Math.round(180 + f * 16) + ',238,' +
-                       (.26 + f * .05 + rayo * .45).toFixed(3) + ')';
-      cx.lineWidth = Math.max(1, E * (.010 + f * .004));
-      cx.beginPath();
-      for (var x2 = -E * 2.6; x2 < E * 2.6; x2 += largo) {
-        var fa2 = t * vel + x2 / largo;
-        cx.moveTo(x2, yf + Math.sin(fa2) * alto);
-        cx.quadraticCurveTo(x2 + largo * .5, yf + Math.cos(fa2) * alto * 2.4,
-                            x2 + largo, yf + Math.sin(fa2 + 1) * alto);
-      }
-      cx.stroke();
-    }
-
-    /* La lluvia. Cae inclinada y toda para el mismo lado: vertical se lee como
-       nieve. Va por delante del agua y por detras de la barca. */
-    var rnd = sembrado(53);
-    cx.strokeStyle = 'rgba(180,200,245,.26)';
-    cx.lineWidth = Math.max(1, E * .0055);
-    cx.beginPath();
-    for (var g = 0; g < 70; g++) {
-      var bx = (rnd() * 2 - 1) * E * 2.1;
-      var caida = ((t * (1.5 + rnd() * .9) + rnd() * 3) % 1);
-      var gy = y0 - E * 2.1 + caida * E * 2.4;
-      if (gy > y0 + E * .04) continue;
-      cx.moveTo(bx, gy);
-      cx.lineTo(bx - E * .045, gy + E * .12);
-    }
-    cx.stroke();
     cx.restore();
   }
 
-  function barca(cx, E, t) {
+  function barca(cx, E, t, orilla, haciaBel) {
     // El temporal va primero: la barca flota encima de el.
-    mar(cx, E, t);
+    mar(cx, E, t, orilla, haciaBel);
     /* Se mece fuerte, y de manera despareja.
 
        Era un solo seno de .045 radianes: dos grados y medio, siempre iguales,
@@ -1806,6 +1883,8 @@ var Pintores = (function () {
     else if (clave === 'bandada') bandada(cx, E, t, extra.sincro);
     else if (clave === 'circulo') circulo(cx, E, t, extra.hondo, extra.arbol);
     else if (clave === 'faro') faro(cx, E, t, extra.mira, extra.haciaBel);
+    else if (clave === 'barca') barca(cx, E, t, extra.alPiso,
+                                      extra.haciaBel && extra.haciaBel.dx);
     else if (PINTORES[clave]) PINTORES[clave](cx, E, t);
     cx.restore();
   }

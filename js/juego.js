@@ -2581,6 +2581,64 @@
     });
   };
 
+  /* Que el temporal de la barca no la alcance.
+
+     El texto de ese lugar dice "estoy a tres metros y no me llega nada: la
+     lluvia me pasa por al lado sin tocarme". Si el agua le llega, el lugar se
+     contradice solo — y se contradecia: el mar iba de lado a lado y ella
+     quedaba parada adentro.
+
+     Se revisan las NUEVE escenas y no la del arranque: ella se acerca a la
+     figura con cada cosa que encuentra, asi que un borde que la esquiva con
+     cero indicios puede estar encima suyo con ocho.
+
+     Y se compara contra el agua misma —el punto mas brillante de esa fila— y
+     no contra un rincon oscuro de la pantalla. La primera version de esta
+     prueba tomaba como fondo un punto del borde izquierdo, y con el mar de
+     lado a lado ESE punto tambien tenia agua: la referencia se movia junto con
+     lo que se queria medir y la prueba daba verde justo en el caso que venia a
+     cazar. Contra el maximo de la fila, en cambio, mojada da 60% y seca 15%. */
+  window.verificarBarca = function () {
+    var d = cv.width / Math.max(1, W);
+    var malos = [], medidas = [];
+    for (var n = 0; n <= Guion.PASOS; n++) {
+      window.instante('barca', null, { t: 3, indicios: n });
+      var bx = J.belX * W;
+      /* La altura de medicion es el medio del agua: arriba esta el cielo y
+         abajo el piso, y los dos darian verde sin probar nada. */
+      var fy = J.ultimaFy || H * .44;
+      var yAgua = fy + (H * .84 - fy) * .5;
+
+      /* La fila entera de una sola lectura. Pidiendo pixel por pixel eran mil
+         cuatrocientos getImageData por corrida y cada uno sincroniza contra la
+         GPU: la auditoria se colgaba minutos en este solo paso. */
+      var fila = cx.getImageData(0, Math.round(yAgua * d), cv.width, 1).data;
+      function brilloEn(px) {
+        var i = Math.max(0, Math.min(cv.width - 1, Math.round(px * d))) * 4;
+        return fila[i] + fila[i + 1] + fila[i + 2];
+      }
+
+      var agua = 1;
+      for (var px = W * .02; px < W * .98; px += 8) {
+        var v = brilloEn(px);
+        if (v > agua) agua = v;
+      }
+      /* A los dos lados: que no la alcance por la derecha no dice nada de la
+         izquierda, y el agua es una mancha que crece para los dos lados. Se
+         mide a cuarenta pixeles, afuera de su cuerpo —que mide unos treinta de
+         medio ancho— para no estar midiendola a ella. */
+      var cerca = Math.max(brilloEn(bx + 40), brilloEn(bx - 40));
+      var parte = cerca / agua;
+      medidas.push({ indicios: n, agua: agua, junto: cerca,
+                     parte: +parte.toFixed(3) });
+      if (parte > .35) {
+        malos.push({ indicios: n, belPx: Math.round(bx), parte: +parte.toFixed(3) });
+      }
+    }
+    return { escenas: medidas, mojada: malos.length, muestra: malos.slice(0, 3),
+             ok: malos.length === 0 };
+  };
+
   /* Corre varias partidas y comprueba que el arco se cumpla siempre: que los
      recuerdos vengan primero, que el tramo del medio sea el que toca y en el
      orden que toca, y que lo que queda venga despues. Sin esto, una carta mal
@@ -3486,7 +3544,8 @@
     }).then(function () { return Promise.resolve(window.auditar()); }).then(function (r) { out.contenido = r.ok;
     }).then(function () { return Promise.resolve(window.verificarTextos()); }).then(function (r) { out.textos = r.ok;
     }).then(function () { return window.verificarRotulo(); }).then(function (r) { out.rotulo = r.desajustes === 0;
-    }).then(function () { return window.verificarPanel(); }).then(function (r) { out.panel = r.mezclas === 0;
+    }).then(function () { return window.verificarPanel(2); }).then(function (r) { out.panel = r.mezclas === 0;
+    }).then(function () { return Promise.resolve(window.verificarBarca()); }).then(function (r) { out.barca = r.ok;
     }).then(function () { return window.verificarTramos(2); }).then(function (r) { out.tramos = r.fallos === 0;
     /* El reparto y las frecuencias entran a la auditoria y las partidas
        simuladas no: estas dos miden lo mismo mil veces mejor y en un segundo,
