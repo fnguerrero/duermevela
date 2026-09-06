@@ -72,6 +72,14 @@ llegada ancla el lugar a algo de ella. Ahí el juego se vuelve genérico.
 - [x] K2 · El dibujo se leía como un plano técnico: columnas con peso, menos cruces y la vía dominando · verif: se lee como montaña rusa en 375x812
 - [x] K3 · La etiqueta del cierre, acorde al símbolo nuevo · verif: "El recorrido al que nadie le imaginó un final"
 
+## L · Auditoría de significado (los 15 lugares)
+
+- [x] L1 · Relevar qué simboliza cada lugar para ella, con el criterio que salió de la montaña rusa · verif: tabla de 15; tres hablaban del decorado y una era redundante
+- [x] L2 · La calesita: gira sin apoyarse y no deja marca — seguir andando por inercia · verif: verificarTextos() en verde
+- [x] L3 · La puerta: abrirla sabiendo que del otro lado no está lo que busca · verif: ídem
+- [x] L4 · Los pájaros: lo único que todavía le hace caso · verif: ídem
+- [ ] L5 · PENDIENTE: la luna y el platillo dicen lo mismo (alguien que quiere hablarle y no puede). Uno de los dos tendría que decir otra cosa; la luna es de ella por oficio y ahí hay algo sin usar
+
 ## D · Cierre
 
 - [x] D1 · `auditarTodo()` en verde · verif: 10 de 10, con `tramos` incluido

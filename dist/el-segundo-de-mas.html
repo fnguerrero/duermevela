@@ -7527,10 +7527,14 @@ var Guion = (function () {
       vuelta: 'La calesita otra vez, con los mismos caballitos en el mismo ' +
               'orden. Ninguno se movió de lugar, ni siquiera los que estaban a ' +
               'mitad de subida.',
+      /* El simbolo ya estaba en el dibujo y el texto no lo decia: gira sin
+         apoyarse y no deja marca. Eso es seguir andando por inercia — hacer
+         todo, dar la vuelta entera, y no estar apoyada en nada. */
       esconde: 'No está apoyada. Se levantó un dedo del piso y sigue girando ' +
-               'ahí arriba, con las luces del borde dando toda la vuelta para ' +
-               'el mismo lado. Cuando aflojo la vista apoya de nuevo, y no ' +
-               'queda marca en la tierra.',
+               'ahí arriba, con las luces dando toda la vuelta para el mismo ' +
+               'lado, como si nada. Yo hace rato que ando igual: sigo dando ' +
+               'vueltas sin apoyarme en nada y nadie se dio cuenta. Cuando ' +
+               'aflojo la vista apoya de nuevo, y en la tierra no queda marca.',
       revela: 'arbol'
     },
     laguna: {
@@ -7658,9 +7662,13 @@ var Guion = (function () {
                'atrás, y atrás vuelve a ser este lado.',
       vuelta: 'La puerta otra vez. La luz de atrás sigue prendida, y del otro ' +
               'lado sigue sin haber un otro lado.',
-      esconde: 'La abro y del otro lado está el mismo campo. La cierro, la ' +
-               'vuelvo a abrir, y ahora hay una habitación. Cierro los ojos y ' +
-               'pruebo esperar otra cosa, a ver hasta dónde llega esto.',
+      /* Era un experimento curioso —"a ver hasta donde llega esto"— y no
+         decia nada de ella. Abrir una y otra vez sabiendo perfectamente que
+         del otro lado no esta lo que buscas es otra cosa, y es suya. */
+      esconde: 'La abro y del otro lado está el mismo campo. La cierro y la ' +
+               'vuelvo a abrir, y ahora hay una habitación vacía. La cierro ' +
+               'otra vez. Sé perfectamente que del otro lado no va a estar lo ' +
+               'que busco, y la vuelvo a abrir igual. Y otra vez. Y otra.',
       revela: 'casa'
     },
     ruina: {
@@ -7688,10 +7696,12 @@ var Guion = (function () {
       vuelta: 'Los pájaros otra vez, cruzando para el mismo lado. Puede que ' +
               'sean los mismos dando la vuelta, y puede que la vuelta sea ' +
               'cortita.',
-      esconde: 'Ninguno bate las alas al mismo tiempo que otro, salvo cuando los ' +
-               'miro. Cuando los miro, se sincronizan. Cuando aflojo la vista, ' +
-               'se desordenan otra vez. Pruebo tres veces para estar segura y ' +
-               'las tres veces me hacen caso.',
+      /* Era un truco de magia bien contado y nada mas. El remate le da lo que
+         le faltaba: en un lugar donde ella no maneja nada, esto le obedece. */
+      esconde: 'Ninguno bate las alas al mismo tiempo que otro, salvo cuando ' +
+               'los miro. Cuando los miro se ordenan; cuando aflojo la vista ' +
+               'se desarman otra vez. Pruebo tres veces para estar segura y ' +
+               'las tres me hacen caso. Es lo único que últimamente me hace caso.',
       revela: 'casa'
     },
     barca: {
@@ -7806,7 +7816,7 @@ var Guion = (function () {
   var ETIQUETA = {
     montania: 'El recorrido al que nadie le imaginó un final',
     platillo: 'La luz que se apagó como quien asiente',
-    calesita: 'La calesita que no tocaba el piso',
+    calesita: 'La calesita que giraba sin apoyarse en nada',
     laguna: 'El agua que no me copiaba',
     faro: 'El haz que frenaba cuando me encontraba',
     casa: 'La luz sin lámparas',
@@ -7814,7 +7824,7 @@ var Guion = (function () {
     circulo: 'Lo que ya se estaba pasando mientras yo creía que no',
     reloj: 'Los números corridos de su hora',
     luna: 'La cara que armaban los cráteres',
-    puerta: 'La habitación que apareció porque la esperé',
+    puerta: 'La puerta que volví a abrir sabiendo que no',
     ruina: 'Los pedazos abajo de los pedazos',
     bandada: 'Los pájaros que se ordenaban cuando los miraba',
     barca: 'La soga atada a nada',
