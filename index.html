@@ -120,8 +120,34 @@
   /* La luna mas grande que la carta, y no al reves. La carta es adorno; la
      luna es el dato — la fase y el signo de esta noche, lo unico de la portada
      que ella puede ir a comprobar por la ventana. */
-  #selloLuna{width:clamp(88px,11vw,150px);height:auto;margin:0 0 2px;
-    opacity:0;animation:asomar 2.4s .3s ease forwards}
+  /* El lienzo de la luna, con lugar para su resplandor.
+
+     Media 300x175 con la luna 108 abajo, o sea 67 pixeles hasta el borde, y
+     el halo llega a 121: se cortaba de golpe y esa linea recta era el
+     recuadro que se veia alrededor del titulo — 168 pixeles del borde
+     inferior tenian pintura. Enmascararlo no alcanza: para apagarlo dentro de
+     esos 67 pixeles habria que empezar a comerse la luna.
+
+     Asi que el lienzo crece a 300x290, que le da 124 pixeles por el lado mas
+     corto, y se saca del flujo: la caja de afuera conserva la proporcion
+     vieja y el canvas se centra encima sobresaliendo por arriba y por abajo.
+     Ocupa lo mismo que antes, y el resplandor ya no tiene contra que
+     cortarse. */
+  #lunaCaja{position:relative;width:clamp(88px,11vw,150px);
+    aspect-ratio:300/175;margin:0 0 2px;pointer-events:none}
+  /* Y encima una mascara, porque agrandar el lienzo solo no alcanzaba: el
+     halo de la luna tiene 274 pixeles de radio —el disco mide 61 y el
+     resplandor se abre cuatro veces y media— asi que llena cualquier lienzo
+     razonable y se corta contra los cuatro bordes. Lo que hace falta no es
+     mas lugar sino que se apague antes de llegar: el lienzo grande es lo que
+     le da lugar a la mascara para hacerlo sin comerse el disco. */
+  #selloLuna{position:absolute;left:50%;top:50%;
+    transform:translate(-50%,-50%);width:100%;height:auto;
+    opacity:0;animation:asomar 2.4s .3s ease forwards;
+    -webkit-mask-image:radial-gradient(ellipse 46% 41% at 50% 57%,
+      #000 52%, rgba(0,0,0,.55) 76%, transparent 100%);
+    mask-image:radial-gradient(ellipse 46% 41% at 50% 57%,
+      #000 52%, rgba(0,0,0,.55) 76%, transparent 100%)}
   /* Y una carta dada vuelta, que es con lo que se juega. */
   #cartaPortada{position:absolute;right:clamp(14px,6vw,110px);
     bottom:clamp(14px,7vh,88px);width:clamp(52px,6vw,86px);height:auto;
@@ -684,7 +710,7 @@
   <!-- 300x175 y no cuadrado: lo dibujado ocupa de 59 a 156, asi que la mitad
        de abajo era lienzo vacio y al escalarlo hacia que la luna y el glifo
        del signo se vieran diminutos. -->
-  <canvas id="selloLuna" width="300" height="175" aria-hidden="true"></canvas>
+  <div id="lunaCaja"><canvas id="selloLuna" width="300" height="290" aria-hidden="true"></canvas></div>
   <canvas id="cartaPortada" width="300" height="470" aria-hidden="true"></canvas>
   <h1 class="titulo">El segundo de más</h1>
   <p class="bajada">Llegué a un lugar donde las cosas no terminan

@@ -177,8 +177,18 @@ var Pintores = (function () {
   function montania(cx, E, t, perfil, corte) {
     var pts = perfil;
     var q = Math.max(0, Math.min(1, corte || 0));
-    // Cuanto de la via se va: el ultimo quinto, de a poco.
-    var desde = pts.length - 1 - Math.round(q * (pts.length - 1) * .20);
+    /* Cuanto de la via se va: hasta la ultima cresta, de a poco.
+
+       Era el ultimo quinto, y ahi estaba el error de fondo que ninguna de las
+       tres vueltas anteriores toco. El perfil TERMINA ABAJO, casi en el piso:
+       borrarle el ultimo pedazo deja una via que se acaba a un metro del
+       suelo, y una via que se acaba abajo no se lee como cortada — se lee como
+       terminada. El texto dice que se cortan EN EL AIRE.
+
+       Deshaciendo hasta la cima de la joroba, la via queda subiendo y
+       parandose en alto, a mas de una E del piso, con nada despues y nada
+       debajo. Eso si es no haberles imaginado un final. */
+    var desde = pts.length - 1 - Math.round(q * (pts.length - 1) * .31);
     function vive(i) { return i < desde; }
     function apagado(i) {
       // Los ultimos que quedan se van desvaneciendo, no se cortan de golpe.
@@ -196,13 +206,18 @@ var Pintores = (function () {
       cx.beginPath();
       cx.moveTo(p[0] * E, p[1] * E); cx.lineTo(p[0] * E, E);
       cx.stroke();
-      if (c + 3 < pts.length) {
-        var q = pts[c + 3];
+      /* Ojo con el nombre: esta variable se llamaba `q`, igual que el factor
+         de corte, y lo pisaba en la primera vuelta del bucle. A partir de ahi
+         `q > 0` comparaba un array contra cero y daba false, asi que las
+         columnas y las cruces NUNCA se cortaban: la via desaparecia y la
+         estructura quedaba entera, sosteniendo un tramo que ya no existia. */
+      if (c + 3 < pts.length && vive(c + 3)) {
+        var sig = pts[c + 3];
         cx.strokeStyle = 'rgba(78,64,88,.5)';
         cx.lineWidth = E * .009;
         cx.beginPath();
-        cx.moveTo(p[0] * E, p[1] * E); cx.lineTo(q[0] * E, E);
-        cx.moveTo(q[0] * E, q[1] * E); cx.lineTo(p[0] * E, E);
+        cx.moveTo(p[0] * E, p[1] * E); cx.lineTo(sig[0] * E, E);
+        cx.moveTo(sig[0] * E, sig[1] * E); cx.lineTo(p[0] * E, E);
         cx.stroke();
       }
     }
@@ -242,9 +257,12 @@ var Pintores = (function () {
 
     /* El vagon recorre la via. Estaba parado en la estacion y una montana rusa
        quieta no es una montana rusa: es un andamio. */
+    /* Y no pasa de donde la via existe: con el tramo deshecho, el vagon
+       seguia su recorrido y salia andando por el aire. */
+    var hasta = q > 0 ? Math.max(2, desde - 1) : pts.length - 1;
     var avance = (t * .085) % 1;
-    var iVia = Math.min(pts.length - 2, Math.floor(avance * (pts.length - 1)));
-    var fVia = avance * (pts.length - 1) - iVia;
+    var iVia = Math.min(hasta - 1, Math.floor(avance * hasta));
+    var fVia = Math.min(1, avance * hasta - iVia);
     var pa = pts[iVia], pb = pts[iVia + 1];
     var vx = (pa[0] + (pb[0] - pa[0]) * fVia) * E;
     var vy = (pa[1] + (pb[1] - pa[1]) * fVia) * E + E * .035;
@@ -1076,20 +1094,37 @@ var Pintores = (function () {
 
   /* ============ la barca ============ */
   function barca(cx, E, t) {
-    var mece = Math.sin(t * .7) * .045;
+    /* Se mece fuerte, y de manera despareja.
+
+       Era un solo seno de .045 radianes: dos grados y medio, siempre iguales,
+       siempre a tiempo. Eso es un pendulo, no una tormenta — y el texto dice
+       que se mece fuerte, "como si abajo hubiera una tormenta que solo ella
+       siente". No lleva agua a proposito: el agua que falta ES lo raro del
+       lugar. Lo que tiene que sentirse es la tormenta, no verse el mar.
+
+       Tres senos de frecuencias que no son multiplos entre si suman siete
+       grados y no repiten el mismo golpe: el ojo deja de poder anticipar el
+       movimiento, que es lo unico que separa una sacudida de un vaiven. */
+    var mece = Math.sin(t * .7) * .055 + Math.sin(t * 1.63 + 1.1) * .045 +
+               Math.sin(t * 2.9 + 2.3) * .022;
+    var hincha = 1 + Math.sin(t * 1.37) * .085 + Math.sin(t * 3.1 + .8) * .035;
     cx.save();
     cx.rotate(mece);
-    cx.translate(0, Math.sin(t * .9) * E * .02);
+    cx.translate(Math.sin(t * 1.21) * E * .018,
+                 Math.sin(t * .9) * E * .030 + Math.sin(t * 2.2 + .7) * E * .015);
 
     // Vela.
     var vel = cx.createLinearGradient(0, -E * .84, E * .5, -E * .2);
     vel.addColorStop(0, 'rgba(238,230,214,.95)');
     vel.addColorStop(1, 'rgba(198,186,172,.85)');
     cx.fillStyle = vel;
+    /* Y la vela trabaja: se hincha y afloja con el viento que no se ve. Una
+       vela rigida arriba de un casco que se sacude se lee como un recorte de
+       carton pegado al mastil. */
     cx.beginPath();
     cx.moveTo(0, -E * .86);
-    cx.quadraticCurveTo(E * .46, -E * .60, E * .52, -E * .30);
-    cx.quadraticCurveTo(E * .30, -E * .20, 0, -E * .16);
+    cx.quadraticCurveTo(E * .46 * hincha, -E * .60, E * .52 * hincha, -E * .30);
+    cx.quadraticCurveTo(E * .30 * hincha, -E * .20, 0, -E * .16);
     cx.closePath(); cx.fill();
     cx.strokeStyle = 'rgba(120,110,100,.35)';
     cx.lineWidth = E * .006;
@@ -1097,8 +1132,8 @@ var Pintores = (function () {
       var f = v / 4;
       cx.beginPath();
       cx.moveTo(0, -E * .86 + f * E * .70);
-      cx.quadraticCurveTo(E * .28 * (1 - f * .4), -E * .5 + f * E * .3,
-                          E * .52 * (1 - f * .55), -E * .30 + f * E * .16);
+      cx.quadraticCurveTo(E * .28 * hincha * (1 - f * .4), -E * .5 + f * E * .3,
+                          E * .52 * hincha * (1 - f * .55), -E * .30 + f * E * .16);
       cx.stroke();
     }
     // Mastil.

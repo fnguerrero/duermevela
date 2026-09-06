@@ -80,7 +80,11 @@
       var cx = cl.getContext('2d');
       /* La luna va un poco mas arriba del centro: abajo lleva el glifo del
          signo, y centrandola justo el glifo quedaba fuera del recuadro. */
-      var ESC = 2.1, medioX = 150 / ESC, medioY = 108 / ESC;
+      /* El lienzo es 300x290 y la caja de afuera guarda la proporcion vieja
+         de 300x175, asi que el canvas se centra sobresaliendo: para que la
+         luna caiga donde caia siempre hay que bajarla los mismos 20,5 pixeles
+         que separaban su centro del centro de aquella caja. */
+      var ESC = 2.1, medioX = 150 / ESC, medioY = 166 / ESC;
       cx.save();
       cx.scale(ESC, ESC);
       Cielo.luna(cx, medioX / .135, medioY / .148, 3,

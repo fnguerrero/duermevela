@@ -120,8 +120,34 @@
   /* La luna mas grande que la carta, y no al reves. La carta es adorno; la
      luna es el dato — la fase y el signo de esta noche, lo unico de la portada
      que ella puede ir a comprobar por la ventana. */
-  #selloLuna{width:clamp(88px,11vw,150px);height:auto;margin:0 0 2px;
-    opacity:0;animation:asomar 2.4s .3s ease forwards}
+  /* El lienzo de la luna, con lugar para su resplandor.
+
+     Media 300x175 con la luna 108 abajo, o sea 67 pixeles hasta el borde, y
+     el halo llega a 121: se cortaba de golpe y esa linea recta era el
+     recuadro que se veia alrededor del titulo — 168 pixeles del borde
+     inferior tenian pintura. Enmascararlo no alcanza: para apagarlo dentro de
+     esos 67 pixeles habria que empezar a comerse la luna.
+
+     Asi que el lienzo crece a 300x290, que le da 124 pixeles por el lado mas
+     corto, y se saca del flujo: la caja de afuera conserva la proporcion
+     vieja y el canvas se centra encima sobresaliendo por arriba y por abajo.
+     Ocupa lo mismo que antes, y el resplandor ya no tiene contra que
+     cortarse. */
+  #lunaCaja{position:relative;width:clamp(88px,11vw,150px);
+    aspect-ratio:300/175;margin:0 0 2px;pointer-events:none}
+  /* Y encima una mascara, porque agrandar el lienzo solo no alcanzaba: el
+     halo de la luna tiene 274 pixeles de radio —el disco mide 61 y el
+     resplandor se abre cuatro veces y media— asi que llena cualquier lienzo
+     razonable y se corta contra los cuatro bordes. Lo que hace falta no es
+     mas lugar sino que se apague antes de llegar: el lienzo grande es lo que
+     le da lugar a la mascara para hacerlo sin comerse el disco. */
+  #selloLuna{position:absolute;left:50%;top:50%;
+    transform:translate(-50%,-50%);width:100%;height:auto;
+    opacity:0;animation:asomar 2.4s .3s ease forwards;
+    -webkit-mask-image:radial-gradient(ellipse 46% 41% at 50% 57%,
+      #000 52%, rgba(0,0,0,.55) 76%, transparent 100%);
+    mask-image:radial-gradient(ellipse 46% 41% at 50% 57%,
+      #000 52%, rgba(0,0,0,.55) 76%, transparent 100%)}
   /* Y una carta dada vuelta, que es con lo que se juega. */
   #cartaPortada{position:absolute;right:clamp(14px,6vw,110px);
     bottom:clamp(14px,7vh,88px);width:clamp(52px,6vw,86px);height:auto;
@@ -684,7 +710,7 @@
   <!-- 300x175 y no cuadrado: lo dibujado ocupa de 59 a 156, asi que la mitad
        de abajo era lienzo vacio y al escalarlo hacia que la luna y el glifo
        del signo se vieran diminutos. -->
-  <canvas id="selloLuna" width="300" height="175" aria-hidden="true"></canvas>
+  <div id="lunaCaja"><canvas id="selloLuna" width="300" height="290" aria-hidden="true"></canvas></div>
   <canvas id="cartaPortada" width="300" height="470" aria-hidden="true"></canvas>
   <h1 class="titulo">El segundo de más</h1>
   <p class="bajada">Llegué a un lugar donde las cosas no terminan
@@ -3247,8 +3273,18 @@ var Pintores = (function () {
   function montania(cx, E, t, perfil, corte) {
     var pts = perfil;
     var q = Math.max(0, Math.min(1, corte || 0));
-    // Cuanto de la via se va: el ultimo quinto, de a poco.
-    var desde = pts.length - 1 - Math.round(q * (pts.length - 1) * .20);
+    /* Cuanto de la via se va: hasta la ultima cresta, de a poco.
+
+       Era el ultimo quinto, y ahi estaba el error de fondo que ninguna de las
+       tres vueltas anteriores toco. El perfil TERMINA ABAJO, casi en el piso:
+       borrarle el ultimo pedazo deja una via que se acaba a un metro del
+       suelo, y una via que se acaba abajo no se lee como cortada — se lee como
+       terminada. El texto dice que se cortan EN EL AIRE.
+
+       Deshaciendo hasta la cima de la joroba, la via queda subiendo y
+       parandose en alto, a mas de una E del piso, con nada despues y nada
+       debajo. Eso si es no haberles imaginado un final. */
+    var desde = pts.length - 1 - Math.round(q * (pts.length - 1) * .31);
     function vive(i) { return i < desde; }
     function apagado(i) {
       // Los ultimos que quedan se van desvaneciendo, no se cortan de golpe.
@@ -3266,13 +3302,18 @@ var Pintores = (function () {
       cx.beginPath();
       cx.moveTo(p[0] * E, p[1] * E); cx.lineTo(p[0] * E, E);
       cx.stroke();
-      if (c + 3 < pts.length) {
-        var q = pts[c + 3];
+      /* Ojo con el nombre: esta variable se llamaba `q`, igual que el factor
+         de corte, y lo pisaba en la primera vuelta del bucle. A partir de ahi
+         `q > 0` comparaba un array contra cero y daba false, asi que las
+         columnas y las cruces NUNCA se cortaban: la via desaparecia y la
+         estructura quedaba entera, sosteniendo un tramo que ya no existia. */
+      if (c + 3 < pts.length && vive(c + 3)) {
+        var sig = pts[c + 3];
         cx.strokeStyle = 'rgba(78,64,88,.5)';
         cx.lineWidth = E * .009;
         cx.beginPath();
-        cx.moveTo(p[0] * E, p[1] * E); cx.lineTo(q[0] * E, E);
-        cx.moveTo(q[0] * E, q[1] * E); cx.lineTo(p[0] * E, E);
+        cx.moveTo(p[0] * E, p[1] * E); cx.lineTo(sig[0] * E, E);
+        cx.moveTo(sig[0] * E, sig[1] * E); cx.lineTo(p[0] * E, E);
         cx.stroke();
       }
     }
@@ -3312,9 +3353,12 @@ var Pintores = (function () {
 
     /* El vagon recorre la via. Estaba parado en la estacion y una montana rusa
        quieta no es una montana rusa: es un andamio. */
+    /* Y no pasa de donde la via existe: con el tramo deshecho, el vagon
+       seguia su recorrido y salia andando por el aire. */
+    var hasta = q > 0 ? Math.max(2, desde - 1) : pts.length - 1;
     var avance = (t * .085) % 1;
-    var iVia = Math.min(pts.length - 2, Math.floor(avance * (pts.length - 1)));
-    var fVia = avance * (pts.length - 1) - iVia;
+    var iVia = Math.min(hasta - 1, Math.floor(avance * hasta));
+    var fVia = Math.min(1, avance * hasta - iVia);
     var pa = pts[iVia], pb = pts[iVia + 1];
     var vx = (pa[0] + (pb[0] - pa[0]) * fVia) * E;
     var vy = (pa[1] + (pb[1] - pa[1]) * fVia) * E + E * .035;
@@ -4146,20 +4190,37 @@ var Pintores = (function () {
 
   /* ============ la barca ============ */
   function barca(cx, E, t) {
-    var mece = Math.sin(t * .7) * .045;
+    /* Se mece fuerte, y de manera despareja.
+
+       Era un solo seno de .045 radianes: dos grados y medio, siempre iguales,
+       siempre a tiempo. Eso es un pendulo, no una tormenta — y el texto dice
+       que se mece fuerte, "como si abajo hubiera una tormenta que solo ella
+       siente". No lleva agua a proposito: el agua que falta ES lo raro del
+       lugar. Lo que tiene que sentirse es la tormenta, no verse el mar.
+
+       Tres senos de frecuencias que no son multiplos entre si suman siete
+       grados y no repiten el mismo golpe: el ojo deja de poder anticipar el
+       movimiento, que es lo unico que separa una sacudida de un vaiven. */
+    var mece = Math.sin(t * .7) * .055 + Math.sin(t * 1.63 + 1.1) * .045 +
+               Math.sin(t * 2.9 + 2.3) * .022;
+    var hincha = 1 + Math.sin(t * 1.37) * .085 + Math.sin(t * 3.1 + .8) * .035;
     cx.save();
     cx.rotate(mece);
-    cx.translate(0, Math.sin(t * .9) * E * .02);
+    cx.translate(Math.sin(t * 1.21) * E * .018,
+                 Math.sin(t * .9) * E * .030 + Math.sin(t * 2.2 + .7) * E * .015);
 
     // Vela.
     var vel = cx.createLinearGradient(0, -E * .84, E * .5, -E * .2);
     vel.addColorStop(0, 'rgba(238,230,214,.95)');
     vel.addColorStop(1, 'rgba(198,186,172,.85)');
     cx.fillStyle = vel;
+    /* Y la vela trabaja: se hincha y afloja con el viento que no se ve. Una
+       vela rigida arriba de un casco que se sacude se lee como un recorte de
+       carton pegado al mastil. */
     cx.beginPath();
     cx.moveTo(0, -E * .86);
-    cx.quadraticCurveTo(E * .46, -E * .60, E * .52, -E * .30);
-    cx.quadraticCurveTo(E * .30, -E * .20, 0, -E * .16);
+    cx.quadraticCurveTo(E * .46 * hincha, -E * .60, E * .52 * hincha, -E * .30);
+    cx.quadraticCurveTo(E * .30 * hincha, -E * .20, 0, -E * .16);
     cx.closePath(); cx.fill();
     cx.strokeStyle = 'rgba(120,110,100,.35)';
     cx.lineWidth = E * .006;
@@ -4167,8 +4228,8 @@ var Pintores = (function () {
       var f = v / 4;
       cx.beginPath();
       cx.moveTo(0, -E * .86 + f * E * .70);
-      cx.quadraticCurveTo(E * .28 * (1 - f * .4), -E * .5 + f * E * .3,
-                          E * .52 * (1 - f * .55), -E * .30 + f * E * .16);
+      cx.quadraticCurveTo(E * .28 * hincha * (1 - f * .4), -E * .5 + f * E * .3,
+                          E * .52 * hincha * (1 - f * .55), -E * .30 + f * E * .16);
       cx.stroke();
     }
     // Mastil.
@@ -4538,63 +4599,113 @@ var Anomalias = (function () {
       var a = entra(v);
       if (belX === undefined) return;
 
-      /* El agua devuelve todo menos a ella. Dibujar una ausencia es dificil:
-         antes esto era un ovalo negro con un halo, y un ovalo no se parece a
-         nadie — se leia como una mancha o un agujero, no como el lugar donde
-         tendria que estar una persona.
+      /* El agua devuelve todo menos a ella.
 
-         Dos cosas lo arreglan. La forma: el hueco tiene silueta humana y esta
-         DADO VUELTA, que es como cae un reflejo. Y el contraste: al lado se
-         dibujan los reflejos que el agua si devuelve —los juncos de la
-         orilla— porque una ausencia solo se lee si al lado hay presencias.
-         Sin nada reflejado alrededor, un hueco es solo agua oscura. */
-      /* Medido sobre el dibujo: la superficie del agua, del lado por el que
-         ella se asoma, cae cerca de +0,48E. El +0,10 de antes estaba por
-         encima del agua, asi que el reflejo que falta flotaba en el aire — y
-         un reflejo fuera del agua no es un reflejo. */
-      var hx = fx - E * .48, hy = fy + E * .72;
-      var alto = E * .58;
+         Dibujar la ausencia no funciona, y se probo dos veces: primero un
+         ovalo negro —"no le veo sentido que este ahi"— y despues una silueta
+         humana achatada, que se leyo como un peon de ajedrez. El error es el
+         mismo de las vias: si se dibuja algo, hay algo. Una mancha en el agua
+         es una cosa flotando, nunca el lugar donde falta un reflejo.
+
+         Asi que no se dibuja el hueco: se dibuja el VECINDARIO. Una fila de
+         juncos a lo largo de la orilla con su reflejo bien visible cayendo
+         hacia el frente, y justo enfrente de ella la fila se interrumpe. El
+         hueco lo define lo que tiene al lado, que es como se percibe
+         cualquier falta — nadie ve un diente que no esta, ve los de al lado.
+
+         Y va enfrente de ella de verdad: ella esta parada casi al borde del
+         agua, y antes esto caia en el medio del charco, sin relacion con
+         donde estaba. Un reflejo que no sale de nadie no es de nadie. */
+      /* La geometria del agua, que es un trapecio en escorzo y no un
+         rectangulo: arriba (al fondo) mide .32E de medio ancho y adelante
+         1,7E. Poner la fila de juncos en linea recta los dejaba casi todos
+         fuera del agua — medido, 3 pixeles tocando de 75. */
+      function semi(y) { return .32 + (y - .28) / .72 * 1.38; }
+      var filaY = .78, semiFila = semi(filaY);            // 1,28E de medio ancho
+      var borde = E * (semiFila - .06);
+
+      /* El claro va del lado de ella, pero adentro del agua y no pegado al
+         borde. Pegado al borde no se leia: ahi el agua ya se termina, y un
+         hueco en el extremo de algo es simplemente donde ese algo se acaba.
+         Adentro queda rodeado de reflejos por los dos lados, y una falta solo
+         se percibe por lo que tiene alrededor. */
+      var lado = (belX - fx) < 0 ? -1 : 1;
+      var claro = E * .34;
+      var bx = fx + lado * borde * .52;
 
       cx.save();
       cx.globalAlpha = a;
 
-      // Lo que el agua si devuelve: juncos, temblando apenas.
-      cx.strokeStyle = 'rgba(150,190,255,' + (.34 * a).toFixed(3) + ')';
-      cx.lineWidth = Math.max(1, E * .009);
-      /* Los reflejos que si estan, cayendo hacia abajo desde la superficie,
-         que es para donde cae un reflejo cuando el agua se ve en perspectiva. */
-      for (var j = -3; j <= 3; j++) {
-        if (j >= -1 && j <= 1) continue;          // el lugar de ella queda libre
-        var jx = hx + j * E * .15;
-        var largo = E * (.14 + (j % 2 ? .05 : 0));
+      /* Los juncos de la orilla y lo que el agua hace con ellos. El tallo sale
+         de la superficie y el reflejo cae hacia el frente —para abajo, que es
+         donde cae cuando el agua se ve en escorzo— mas corto, mas tenue y
+         temblando, que es todo lo que distingue a un reflejo de la cosa. */
+      var paso = E * .245;
+      for (var jx = fx - borde; jx <= fx + borde + 1; jx += paso) {
+        if (Math.abs(jx - bx) < claro) continue;          // el lugar de ella, vacio
+        var n = Math.round((jx - fx + borde) / paso);
+        var supY = fy + E * filaY;
+        var alto = E * (.15 + ((n * 5) % 7) * .026);
+        var mece = Math.sin(t * .8 + n) * E * .018;
+
+        cx.strokeStyle = 'rgba(126,158,124,' + (.72 * a).toFixed(3) + ')';
+        cx.lineWidth = Math.max(1, E * .014);
         cx.beginPath();
-        cx.moveTo(jx, hy);
-        cx.quadraticCurveTo(jx + Math.sin(t * .9 + j) * E * .02,
-                            hy + largo * .5, jx, hy + largo);
+        cx.moveTo(jx, supY);
+        cx.quadraticCurveTo(jx + mece, supY - alto * .55, jx + mece * 2, supY - alto);
+        cx.stroke();
+
+        cx.strokeStyle = 'rgba(158,200,255,' + (.52 * a).toFixed(3) + ')';
+        cx.lineWidth = Math.max(1, E * .011);
+        cx.beginPath();
+        cx.moveTo(jx, supY);
+        cx.quadraticCurveTo(jx - mece, supY + alto * .40, jx - mece * 2, supY + alto * .70);
         cx.stroke();
       }
-      // Y la luz de la superficie, que tambien se devuelve.
-      halo(cx, hx, hy, E * .40, '150,190,255', .18 * a);
 
-      /* El hueco con su forma, invertido. Va mas oscuro que el agua, no negro:
-         negro pleno se ve como un agujero en la pantalla y esto es agua que no
-         copia, no un pozo. */
-      cx.save();
-      cx.translate(hx, hy);
-      /* Derecha y achatada, no dada vuelta.
+      /* El testigo: un junco solo, mas alto y mas claro que los otros, pegado
+         al hueco por el lado de adentro.
 
-         El agua se ve casi desde arriba, en escorzo, asi que lo que cae sobre
-         ella se lee como una sombra tendida y no como un espejo vertical. Dada
-         vuelta, la falda ancha quedaba arriba y la cabeza abajo: la forma se
-         leia como una gota o un signo de exclamacion, nunca como una persona.
-         Derecha y aplastada al 62% se reconoce de una. */
-      cx.scale(1, .62);
-      silueta(cx, 0, 0, alto, .92 * a, true);
-      cx.restore();
+         Sin el, la fila entera se lee como una cerca con un espacio, y un
+         espacio en una cerca no es la falta de nadie. Con el, hay dos cosas
+         paradas una al lado de la otra en la misma orilla: de una el agua
+         devuelve todo, y del pedazo de al lado no devuelve nada. La
+         comparacion es inmediata y no hace falta el parrafo para verla. */
+      var supBel = fy + E * filaY;
+      var tx = bx - lado * claro * .92;
+      var tAlto = E * .295, tMece = Math.sin(t * .8) * E * .02;
+      cx.strokeStyle = 'rgba(150,186,146,' + (.92 * a).toFixed(3) + ')';
+      cx.lineWidth = Math.max(1, E * .017);
+      cx.beginPath();
+      cx.moveTo(tx, supBel);
+      cx.quadraticCurveTo(tx + tMece, supBel - tAlto * .55,
+                          tx + tMece * 2, supBel - tAlto);
+      cx.stroke();
+      cx.strokeStyle = 'rgba(176,214,255,' + (.72 * a).toFixed(3) + ')';
+      cx.lineWidth = Math.max(1, E * .014);
+      cx.beginPath();
+      cx.moveTo(tx, supBel);
+      cx.quadraticCurveTo(tx - tMece, supBel + tAlto * .40,
+                          tx - tMece * 2, supBel + tAlto * .72);
+      cx.stroke();
+
+      /* Y en el claro, el agua sigue siendo agua: se le deja el brillo de la
+         superficie y unas ondas, para que no se lea como un pozo ni como un
+         recorte. Lo que falta ahi no es el agua: es lo que el agua tendria que
+         estar devolviendo. */
+      halo(cx, bx, supBel + E * .06, claro * .80, '150,190,255', .10 * a);
+      cx.strokeStyle = 'rgba(150,190,255,' + (.26 * a).toFixed(3) + ')';
+      cx.lineWidth = Math.max(1, E * .008);
+      for (var o = 0; o < 3; o++) {
+        var oy = supBel + E * (.07 + o * .075);
+        cx.beginPath();
+        cx.moveTo(bx - claro * .66, oy);
+        cx.quadraticCurveTo(bx, oy + E * .014, bx + claro * .66, oy);
+        cx.stroke();
+      }
 
       cx.restore();
     },
-
     /* El haz frena sobre ella. Deja de barrer y se queda.
 
        Frenarlo lo hace el PINTOR —`mira` en pintores.js— porque el faro tiene
@@ -4695,9 +4806,13 @@ var Anomalias = (function () {
 
       cx.save();
       cx.globalAlpha = a;
-      halo(cx, px, py, E * .34, cuerpo.join(','), .46 * a);
-      // Cuerpo: dos curvas y una cola. Chico y nitido, para que se lea.
-      var r = E * .094;
+      halo(cx, px, py, E * .27, cuerpo.join(','), .46 * a);
+      /* Cuerpo: dos curvas y una cola. Chico y nitido, para que se lea — y
+         mas chico desde que Nico lo vio en el juego: un pajaro que se posa un
+         segundo en la punta de una rama es un detalle, y al tamaño anterior
+         competia con el arbol. Lo que lo hace visible no es el tamaño sino
+         que el color no se queda quieto. */
+      var r = E * .070;
       cx.fillStyle = 'rgba(' + cuerpo.join(',') + ',.95)';
       cx.beginPath();
       cx.ellipse(px, py, r * 1.25, r * .85, -.2, 0, 6.2832);
@@ -7097,10 +7212,10 @@ var Guion = (function () {
   var LUGARES = {
     montania: {
       nombre: 'La montaña rusa',
-      llegada: 'La montaña rusa de la feria a la que me llevaban de chica. Está ' +
-               'entera, y eso no puede ser: la desarmaron cuando yo tenía nueve, ' +
-               'me acuerdo del terreno pelado después. Y sin embargo acá está, ' +
-               'con las luces prendidas y el vagón esperando arriba de todo.',
+      llegada: 'La montaña rusa de la feria a la que me llevaban. Está entera, y ' +
+               'eso no puede ser: la desarmaron cuando yo era chica, me acuerdo ' +
+               'del terreno pelado después. Y sin embargo acá está, con las ' +
+               'luces prendidas y el vagón esperando arriba de todo.',
       vuelta: 'Otra vez la montaña rusa. Está igual que hace un rato, y hace un ' +
               'rato ya estaba mal.',
       esconde: 'Las vías no terminan en ningún lado. Suben, bajan, y en la punta ' +
@@ -7711,7 +7826,11 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
       var cx = cl.getContext('2d');
       /* La luna va un poco mas arriba del centro: abajo lleva el glifo del
          signo, y centrandola justo el glifo quedaba fuera del recuadro. */
-      var ESC = 2.1, medioX = 150 / ESC, medioY = 108 / ESC;
+      /* El lienzo es 300x290 y la caja de afuera guarda la proporcion vieja
+         de 300x175, asi que el canvas se centra sobresaliendo: para que la
+         luna caiga donde caia siempre hay que bajarla los mismos 20,5 pixeles
+         que separaban su centro del centro de aquella caja. */
+      var ESC = 2.1, medioX = 150 / ESC, medioY = 166 / ESC;
       cx.save();
       cx.scale(ESC, ESC);
       Cielo.luna(cx, medioX / .135, medioY / .148, 3,

@@ -151,10 +151,10 @@ var Guion = (function () {
   var LUGARES = {
     montania: {
       nombre: 'La montaña rusa',
-      llegada: 'La montaña rusa de la feria a la que me llevaban de chica. Está ' +
-               'entera, y eso no puede ser: la desarmaron cuando yo tenía nueve, ' +
-               'me acuerdo del terreno pelado después. Y sin embargo acá está, ' +
-               'con las luces prendidas y el vagón esperando arriba de todo.',
+      llegada: 'La montaña rusa de la feria a la que me llevaban. Está entera, y ' +
+               'eso no puede ser: la desarmaron cuando yo era chica, me acuerdo ' +
+               'del terreno pelado después. Y sin embargo acá está, con las ' +
+               'luces prendidas y el vagón esperando arriba de todo.',
       vuelta: 'Otra vez la montaña rusa. Está igual que hace un rato, y hace un ' +
               'rato ya estaba mal.',
       esconde: 'Las vías no terminan en ningún lado. Suben, bajan, y en la punta ' +

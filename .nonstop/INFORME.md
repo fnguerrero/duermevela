@@ -1,6 +1,6 @@
 # Informe — tanda 8: lo que quedó abierto
 
-Diecinueve iteraciones, #221 a #239, sobre un presupuesto de 40.
+Veintisiete iteraciones, #221 a #247, sobre un presupuesto de 40.
 
 ## Qué se hizo
 

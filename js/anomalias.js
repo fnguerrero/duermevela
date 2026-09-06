@@ -210,63 +210,113 @@ var Anomalias = (function () {
       var a = entra(v);
       if (belX === undefined) return;
 
-      /* El agua devuelve todo menos a ella. Dibujar una ausencia es dificil:
-         antes esto era un ovalo negro con un halo, y un ovalo no se parece a
-         nadie — se leia como una mancha o un agujero, no como el lugar donde
-         tendria que estar una persona.
+      /* El agua devuelve todo menos a ella.
 
-         Dos cosas lo arreglan. La forma: el hueco tiene silueta humana y esta
-         DADO VUELTA, que es como cae un reflejo. Y el contraste: al lado se
-         dibujan los reflejos que el agua si devuelve —los juncos de la
-         orilla— porque una ausencia solo se lee si al lado hay presencias.
-         Sin nada reflejado alrededor, un hueco es solo agua oscura. */
-      /* Medido sobre el dibujo: la superficie del agua, del lado por el que
-         ella se asoma, cae cerca de +0,48E. El +0,10 de antes estaba por
-         encima del agua, asi que el reflejo que falta flotaba en el aire — y
-         un reflejo fuera del agua no es un reflejo. */
-      var hx = fx - E * .48, hy = fy + E * .72;
-      var alto = E * .58;
+         Dibujar la ausencia no funciona, y se probo dos veces: primero un
+         ovalo negro —"no le veo sentido que este ahi"— y despues una silueta
+         humana achatada, que se leyo como un peon de ajedrez. El error es el
+         mismo de las vias: si se dibuja algo, hay algo. Una mancha en el agua
+         es una cosa flotando, nunca el lugar donde falta un reflejo.
+
+         Asi que no se dibuja el hueco: se dibuja el VECINDARIO. Una fila de
+         juncos a lo largo de la orilla con su reflejo bien visible cayendo
+         hacia el frente, y justo enfrente de ella la fila se interrumpe. El
+         hueco lo define lo que tiene al lado, que es como se percibe
+         cualquier falta — nadie ve un diente que no esta, ve los de al lado.
+
+         Y va enfrente de ella de verdad: ella esta parada casi al borde del
+         agua, y antes esto caia en el medio del charco, sin relacion con
+         donde estaba. Un reflejo que no sale de nadie no es de nadie. */
+      /* La geometria del agua, que es un trapecio en escorzo y no un
+         rectangulo: arriba (al fondo) mide .32E de medio ancho y adelante
+         1,7E. Poner la fila de juncos en linea recta los dejaba casi todos
+         fuera del agua — medido, 3 pixeles tocando de 75. */
+      function semi(y) { return .32 + (y - .28) / .72 * 1.38; }
+      var filaY = .78, semiFila = semi(filaY);            // 1,28E de medio ancho
+      var borde = E * (semiFila - .06);
+
+      /* El claro va del lado de ella, pero adentro del agua y no pegado al
+         borde. Pegado al borde no se leia: ahi el agua ya se termina, y un
+         hueco en el extremo de algo es simplemente donde ese algo se acaba.
+         Adentro queda rodeado de reflejos por los dos lados, y una falta solo
+         se percibe por lo que tiene alrededor. */
+      var lado = (belX - fx) < 0 ? -1 : 1;
+      var claro = E * .34;
+      var bx = fx + lado * borde * .52;
 
       cx.save();
       cx.globalAlpha = a;
 
-      // Lo que el agua si devuelve: juncos, temblando apenas.
-      cx.strokeStyle = 'rgba(150,190,255,' + (.34 * a).toFixed(3) + ')';
-      cx.lineWidth = Math.max(1, E * .009);
-      /* Los reflejos que si estan, cayendo hacia abajo desde la superficie,
-         que es para donde cae un reflejo cuando el agua se ve en perspectiva. */
-      for (var j = -3; j <= 3; j++) {
-        if (j >= -1 && j <= 1) continue;          // el lugar de ella queda libre
-        var jx = hx + j * E * .15;
-        var largo = E * (.14 + (j % 2 ? .05 : 0));
+      /* Los juncos de la orilla y lo que el agua hace con ellos. El tallo sale
+         de la superficie y el reflejo cae hacia el frente —para abajo, que es
+         donde cae cuando el agua se ve en escorzo— mas corto, mas tenue y
+         temblando, que es todo lo que distingue a un reflejo de la cosa. */
+      var paso = E * .245;
+      for (var jx = fx - borde; jx <= fx + borde + 1; jx += paso) {
+        if (Math.abs(jx - bx) < claro) continue;          // el lugar de ella, vacio
+        var n = Math.round((jx - fx + borde) / paso);
+        var supY = fy + E * filaY;
+        var alto = E * (.15 + ((n * 5) % 7) * .026);
+        var mece = Math.sin(t * .8 + n) * E * .018;
+
+        cx.strokeStyle = 'rgba(126,158,124,' + (.72 * a).toFixed(3) + ')';
+        cx.lineWidth = Math.max(1, E * .014);
         cx.beginPath();
-        cx.moveTo(jx, hy);
-        cx.quadraticCurveTo(jx + Math.sin(t * .9 + j) * E * .02,
-                            hy + largo * .5, jx, hy + largo);
+        cx.moveTo(jx, supY);
+        cx.quadraticCurveTo(jx + mece, supY - alto * .55, jx + mece * 2, supY - alto);
+        cx.stroke();
+
+        cx.strokeStyle = 'rgba(158,200,255,' + (.52 * a).toFixed(3) + ')';
+        cx.lineWidth = Math.max(1, E * .011);
+        cx.beginPath();
+        cx.moveTo(jx, supY);
+        cx.quadraticCurveTo(jx - mece, supY + alto * .40, jx - mece * 2, supY + alto * .70);
         cx.stroke();
       }
-      // Y la luz de la superficie, que tambien se devuelve.
-      halo(cx, hx, hy, E * .40, '150,190,255', .18 * a);
 
-      /* El hueco con su forma, invertido. Va mas oscuro que el agua, no negro:
-         negro pleno se ve como un agujero en la pantalla y esto es agua que no
-         copia, no un pozo. */
-      cx.save();
-      cx.translate(hx, hy);
-      /* Derecha y achatada, no dada vuelta.
+      /* El testigo: un junco solo, mas alto y mas claro que los otros, pegado
+         al hueco por el lado de adentro.
 
-         El agua se ve casi desde arriba, en escorzo, asi que lo que cae sobre
-         ella se lee como una sombra tendida y no como un espejo vertical. Dada
-         vuelta, la falda ancha quedaba arriba y la cabeza abajo: la forma se
-         leia como una gota o un signo de exclamacion, nunca como una persona.
-         Derecha y aplastada al 62% se reconoce de una. */
-      cx.scale(1, .62);
-      silueta(cx, 0, 0, alto, .92 * a, true);
-      cx.restore();
+         Sin el, la fila entera se lee como una cerca con un espacio, y un
+         espacio en una cerca no es la falta de nadie. Con el, hay dos cosas
+         paradas una al lado de la otra en la misma orilla: de una el agua
+         devuelve todo, y del pedazo de al lado no devuelve nada. La
+         comparacion es inmediata y no hace falta el parrafo para verla. */
+      var supBel = fy + E * filaY;
+      var tx = bx - lado * claro * .92;
+      var tAlto = E * .295, tMece = Math.sin(t * .8) * E * .02;
+      cx.strokeStyle = 'rgba(150,186,146,' + (.92 * a).toFixed(3) + ')';
+      cx.lineWidth = Math.max(1, E * .017);
+      cx.beginPath();
+      cx.moveTo(tx, supBel);
+      cx.quadraticCurveTo(tx + tMece, supBel - tAlto * .55,
+                          tx + tMece * 2, supBel - tAlto);
+      cx.stroke();
+      cx.strokeStyle = 'rgba(176,214,255,' + (.72 * a).toFixed(3) + ')';
+      cx.lineWidth = Math.max(1, E * .014);
+      cx.beginPath();
+      cx.moveTo(tx, supBel);
+      cx.quadraticCurveTo(tx - tMece, supBel + tAlto * .40,
+                          tx - tMece * 2, supBel + tAlto * .72);
+      cx.stroke();
+
+      /* Y en el claro, el agua sigue siendo agua: se le deja el brillo de la
+         superficie y unas ondas, para que no se lea como un pozo ni como un
+         recorte. Lo que falta ahi no es el agua: es lo que el agua tendria que
+         estar devolviendo. */
+      halo(cx, bx, supBel + E * .06, claro * .80, '150,190,255', .10 * a);
+      cx.strokeStyle = 'rgba(150,190,255,' + (.26 * a).toFixed(3) + ')';
+      cx.lineWidth = Math.max(1, E * .008);
+      for (var o = 0; o < 3; o++) {
+        var oy = supBel + E * (.07 + o * .075);
+        cx.beginPath();
+        cx.moveTo(bx - claro * .66, oy);
+        cx.quadraticCurveTo(bx, oy + E * .014, bx + claro * .66, oy);
+        cx.stroke();
+      }
 
       cx.restore();
     },
-
     /* El haz frena sobre ella. Deja de barrer y se queda.
 
        Frenarlo lo hace el PINTOR —`mira` en pintores.js— porque el faro tiene
@@ -367,9 +417,13 @@ var Anomalias = (function () {
 
       cx.save();
       cx.globalAlpha = a;
-      halo(cx, px, py, E * .34, cuerpo.join(','), .46 * a);
-      // Cuerpo: dos curvas y una cola. Chico y nitido, para que se lea.
-      var r = E * .094;
+      halo(cx, px, py, E * .27, cuerpo.join(','), .46 * a);
+      /* Cuerpo: dos curvas y una cola. Chico y nitido, para que se lea — y
+         mas chico desde que Nico lo vio en el juego: un pajaro que se posa un
+         segundo en la punta de una rama es un detalle, y al tamaño anterior
+         competia con el arbol. Lo que lo hace visible no es el tamaño sino
+         que el color no se queda quieto. */
+      var r = E * .070;
       cx.fillStyle = 'rgba(' + cuerpo.join(',') + ',.95)';
       cx.beginPath();
       cx.ellipse(px, py, r * 1.25, r * .85, -.2, 0, 6.2832);

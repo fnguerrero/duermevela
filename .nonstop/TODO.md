@@ -44,6 +44,16 @@ llegada ancla el lugar a algo de ella. Ahí el juego se vuelve genérico.
 - [x] G2 · Difuso de verdad, sin las bandas de las capas · verif: 0 quiebres de pendiente en el corte transversal, contra 210
 - [x] G3 · Adentro de la linterna no está todo encendido: lámpara y penumbra, no un bloque blanco · verif: el faro sin revelar sigue leyéndose prendido
 
+## H · Jugandolo (reportes de Nico en vivo)
+
+- [x] H1 · "cuando yo tenía nueve" → "cuando yo era chica" · verif: sin repetir "chica" dos veces en la misma frase
+- [x] H2 · El recuadro oscuro alrededor del título, que tapaba la luz de la luna · verif: el halo ya no se corta contra ningún borde
+- [x] H3 · El pájaro del árbol, más chico · verif: de .094E a .070E, y la anomalía sigue midiendo 6.621 px
+- [x] H4 · "este escenario todavía lo sigo sin entender": las vías · verif: la punta pasa de 0,47E a 0,85E sobre el piso
+- [x] H5 · El bug que dejaba los soportes enteros: un `var q` pisaba el factor de corte · verif: las columnas se cortan con la vía
+- [x] H6 · "qué es esa silueta oscura?": la laguna, rehecha sin dibujar la ausencia · verif: de 3% a 100% pegada al agua
+- [x] H7 · La barca se sacude de verdad · verif: de 2,5 grados con un seno a 7 con tres frecuencias
+
 ## D · Cierre
 
 - [x] D1 · `auditarTodo()` en verde · verif: todos los sub-resultados ok
