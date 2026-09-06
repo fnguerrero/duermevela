@@ -64,7 +64,7 @@ llegada ancla el lugar a algo de ella. Ahí el juego se vuelve genérico.
 
 ## J · Abierto
 
-- [!] J1 · `verificarTramos` falla ~1 de cada 3 corridas de dos partidas: el recorrido sale con un elemento de más y un lugar repetido ("ruina ruina"), así que el último no es la cama. NO es del reparto (medido) ni doble click (`jugar()` ya se protege). Falta ver quién puede registrar dos veces el mismo paso en `J.recorrido`. Es previo al círculo; el lugar nuevo solo cambió las probabilidades.
+- [x] J1 · El paso podía avanzar dos veces: el guardián y el cierre normal lo hacían por caminos separados, cada uno con su propia guarda · verif: 8 recorridos seguidos de largo 9, donde antes 1 de cada 6 salía de 10
 
 ## D · Cierre
 

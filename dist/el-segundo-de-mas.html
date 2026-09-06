@@ -8576,6 +8576,7 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
   }
 
   function empezar() {
+    J.avanzarPaso = null;
     document.getElementById('portada').classList.add('ido');
     luego(1500, function () {
       J.recorrido.push(J.lugar);
@@ -8900,22 +8901,40 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
        Puede llamarlo el reloj —cuando no se encontro nada— o el indicio, si
        se encontro: por eso la guarda, para que no corra dos veces. */
     var yaSiguio = false;
+
+    /* La UNICA puerta por la que el paso avanza, con guarda propia.
+
+       Antes habia dos caminos: este y el del guardian de mas abajo, cada uno
+       con su lógica repetida y su propia guarda — o sea ninguna guarda, porque
+       una no sabia de la otra. El guardian mira `!J.destino`, y `J.destino` se
+       limpia cuando termina la mutacion, no cuando el paso se cierra: entre
+       una cosa y la otra queda la ventana del texto de la carta y el respiro
+       de 1100 ms. Si el guardian saltaba ahi —y salta, porque su contador va
+       en tiempo real mientras esa ventana va por la cola de relojes, que en
+       una prueba acelerada corre sesenta veces mas rapido— el paso avanzaba
+       DOS veces: el recorrido salia con un lugar repetido, todo lo de atras
+       corrido uno, y el final no era la cama. */
+    var yaAvanzo = false;
+    J.avanzarPaso = function () {
+      if (yaAvanzo) return;
+      yaAvanzo = true;
+      /* Normalmente el bucle de dibujo ya lo movio, apenas termino la
+         mutacion. Pero el bucle puede no correr — una pestana en segundo
+         plano no recibe frames — y el estado del juego no puede depender de
+         que se este dibujando. Asignar de nuevo es inocuo y garantiza que el
+         paso avance igual. */
+      J.lugar = destino;
+      if (J.recorrido[J.recorrido.length - 1] !== destino) J.recorrido.push(destino);
+      if (J.paso >= Guion.PASOS) terminar();
+      else llegar(false);
+    };
+
     J.seguirPaso = function () {
       if (yaSiguio) return;
       yaSiguio = true;
       decir(c.accion, function () {
         // decir() ya espero lo que se tarda en leerlo; esto es el respiro.
-        luego(1100, function () {
-          /* Normalmente el bucle de dibujo ya lo movio, apenas termino la
-             mutacion. Pero el bucle puede no correr — una pestana en segundo
-             plano no recibe frames — y el estado del juego no puede depender
-             de que se este dibujando. Asignar de nuevo es inocuo y garantiza
-             que el paso avance igual. */
-          J.lugar = destino;
-          J.recorrido.push(destino);
-          if (J.paso >= Guion.PASOS) terminar();
-          else llegar(false);
-        });
+        luego(1100, J.avanzarPaso);
       });
     };
 
@@ -8971,6 +8990,11 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     abandonado += dt;
     if (abandonado < 2) return;
     abandonado = 0;
+    /* Por la misma puerta que el cierre normal, no por un camino paralelo: la
+       guarda de alla es la que evita que el paso avance dos veces, y hasta
+       ahora este pasaba por al lado. Si todavia no se jugo ninguna carta no
+       hay puerta, y ahi si corresponde el cierre a mano. */
+    if (J.avanzarPaso) { J.avanzarPaso(); return; }
     if (J.recorrido[J.recorrido.length - 1] !== J.lugar) J.recorrido.push(J.lugar);
     if (J.paso >= Guion.PASOS) terminar();
     else llegar(false);
