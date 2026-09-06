@@ -607,8 +607,13 @@ var Guion = (function () {
     return {
       titulo: 'Entendí',
       partes: [
-        'Abrí los ojos a las cuatro y monedas, con esa claridad rara de cuando ' +
-        'algo te queda en la mano.',
+        /* Sin la metafora. Decia "con esa claridad rara de cuando algo te
+           queda en la mano", que es despertarse trayendo algo puesto — pero
+           no dice QUE, y es la primera frase del final, donde hay que entender
+           de una y no descifrar. Ademas adelantaba en clave lo que el parrafo
+           siguiente cuenta derecho. */
+        'Abrí los ojos a las cuatro y monedas, despierta de una, como si no ' +
+        'hubiera dormido nada.',
         'Lo importante era cómo me di cuenta: cada cosa de ese lugar estaba ' +
         'esperando que yo la mirara para terminar de existir.' +
         citaDeVistos(indicios, 3),
