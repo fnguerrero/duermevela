@@ -30,10 +30,12 @@ var Cielo = (function () {
   function elegir(c, sinNave) {
     var r = Math.random();
     var tipo;
-    /* La nave sale seguido y a proposito. No es un guino escondido: es lo que
-       ella ve siempre, asi que tiene que estar ahi arriba varias veces por
-       partida, sin que el juego la senale nunca. */
-    if (r < .22) tipo = sinNave ? 'fugaz' : 'nave';
+    /* La nave sale de vez en cuando y no seguido. Estaba en el 22% de los
+       eventos y aparecia varias veces por partida: a esa frecuencia deja de
+       ser algo que uno cree haber visto y pasa a ser parte del decorado, que
+       es justo lo contrario de lo que tiene que ser. Al 9% sale una vez cada
+       tantas partidas y quien la vea va a dudar de si la vio. */
+    if (r < .09) tipo = sinNave ? 'fugaz' : 'nave';
     else if (r < .46) tipo = 'fugaz';
     else if (r < .62) tipo = 'satelite';
     else if (r < .76) tipo = 'viajera';
@@ -149,11 +151,21 @@ var Cielo = (function () {
              : .42 + (u - .58) * (.58 / .42);
       var nx = W * (e.x0 + e.dir * av * 1.26);
       var ny = H * (e.y0 + e.inclina * av);
-      var R = Math.max(4.2, Math.min(W, H) * .017);
+      /* Chica de verdad. Media .017 del lado corto —unos 14 pixeles en un
+         celular— y a esa escala se le veian la cupula y las tres luces, o sea
+         un platillo dibujado. A .0095 es una marca en el cielo. */
+      var R = Math.max(2.4, Math.min(W, H) * .0095);
       var quieta = (u >= .42 && u < .58) ? 1 : 0;
 
       cx.save();
-      cx.globalAlpha = an * (.38 + quieta * .24);
+      /* Y difusa: el desenfoque es lo que la vuelve algo que uno no termina de
+         enfocar, que es como se ve una luz lejos de noche y como se cuenta lo
+         que se cree haber visto. Sin esto era una lenteja nitida, y una cosa
+         nitida en el cielo es una cosa que esta ahi. */
+      if (typeof cx.filter === 'string') {
+        cx.filter = 'blur(' + Math.max(.6, R * .30).toFixed(1) + 'px)';
+      }
+      cx.globalAlpha = an * (.24 + quieta * .16);
       // El casco: una lenteja, no un circulo.
       cx.fillStyle = 'rgba(206,222,255,.85)';
       cx.beginPath();

@@ -454,17 +454,41 @@ var Anomalias = (function () {
     /* Las ventanas están prendidas y adentro no hay nada que las prenda. */
     casa: function (cx, fx, fy, E, t, v) {
       var a = entra(v);
+      /* Sobre las ventanas de verdad, y del tamaño de las ventanas de verdad.
+
+         Estaba dibujando dos cuadraditos en x = mas y menos .17E, y las
+         ventanas del pintor estan en -.46E y +.30E: nunca coincidieron con
+         ninguna. Lo que se veia eran dos ventanitas de mas, una en el medio de
+         la pared y otra montada arriba de la ventana derecha. Es el mismo
+         error de familia que las vias, la soga de la barca y el reflejo de la
+         laguna — una anomalia ubicada a ojo con fracciones fijas de E, suelta
+         de la figura que dice estar tocando. `verificarUbicacion` no lo agarra
+         porque la casa es grande y los cuadraditos caian encima igual: pegado
+         no es lo mismo que en su lugar.
+
+         Ojo: estas medidas estan escritas en los dos archivos. Si el pintor
+         mueve las ventanas, esto se mueve con el. */
+      var VENTANAS = [[-.46, -.16], [.30, -.16]];
+      var ANCHO = .17, ALTO = .19;                 // medias, como en el pintor
       cx.save();
       cx.globalAlpha = a;
-      [[-.17, -.10], [.17, -.10]].forEach(function (p) {
+      VENTANAS.forEach(function (p) {
         var vx = fx + E * p[0], vy = fy + E * p[1];
-        // La luz sale del vidrio, no de adentro: el interior queda a oscuras.
-        halo(cx, vx, vy, E * .30, '255,226,170', .30);
-        cx.fillStyle = 'rgba(12,10,18,' + (.55 * a).toFixed(3) + ')';
-        cx.fillRect(vx - E * .055, vy - E * .055, E * .11, E * .11);
-        cx.strokeStyle = 'rgba(255,232,180,' + (.75 * a).toFixed(3) + ')';
-        cx.lineWidth = Math.max(1, E * .012);
-        cx.strokeRect(vx - E * .055, vy - E * .055, E * .11, E * .11);
+        /* La luz sale del vidrio y el interior queda a oscuras: se apaga el
+           vidrio entero desde adentro y se deja el marco encendido, que es lo
+           que el texto dice — "estan prendidas pero adentro no hay lamparas". */
+        halo(cx, vx, vy, E * .40, '255,226,170', .26 * a);
+        cx.fillStyle = 'rgba(12,10,18,' + (.62 * a).toFixed(3) + ')';
+        cx.fillRect(vx - E * ANCHO, vy - E * ALTO, E * ANCHO * 2, E * ALTO * 2);
+        cx.strokeStyle = 'rgba(255,232,180,' + (.80 * a).toFixed(3) + ')';
+        cx.lineWidth = Math.max(1, E * .014);
+        cx.strokeRect(vx - E * ANCHO, vy - E * ALTO, E * ANCHO * 2, E * ALTO * 2);
+        // Y los travesaños, para que se siga leyendo como ventana apagada.
+        cx.lineWidth = Math.max(1, E * .010);
+        cx.beginPath();
+        cx.moveTo(vx, vy - E * ALTO); cx.lineTo(vx, vy + E * ALTO);
+        cx.moveTo(vx - E * ANCHO, vy); cx.lineTo(vx + E * ANCHO, vy);
+        cx.stroke();
       });
       cx.restore();
     },

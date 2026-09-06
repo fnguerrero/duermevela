@@ -111,6 +111,12 @@ llegada ancla el lugar a algo de ella. Ahí el juego se vuelve genérico.
 - [x] O5 · Lo que quedó pierde la culpa y conserva el desconcierto · verif: auditarTodo() en verde
 - [x] O6 · Más olas, relámpagos, truenos y meceo · verif: olas rellenas con cresta, y el dibujo sigue limpio
 
+## P · Lo que salió mirándolo de nuevo
+
+- [x] P1 · Las ventanas de la anomalía de la casa estaban en ±.17E y las reales en -.46E y +.30E · verif: 100% pegada, y ahora se ve el marco encendido con el vidrio apagado
+- [x] P2 · Las naves: del 22% al 9% de los eventos, la mitad de tamaño y desenfocadas · verif: de .017 a .0095 del lado corto
+- [ ] P3 · PENDIENTE: 13 de las 14 frases de carta tienen el sujeto oculto — hablan del lugar que se está yendo y no lo nombran. Nico preguntó por tres distintas
+
 ## D · Cierre
 
 - [x] D1 · `auditarTodo()` en verde · verif: 10 de 10, con `tramos` incluido

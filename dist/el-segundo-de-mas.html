@@ -2276,10 +2276,12 @@ var Cielo = (function () {
   function elegir(c, sinNave) {
     var r = Math.random();
     var tipo;
-    /* La nave sale seguido y a proposito. No es un guino escondido: es lo que
-       ella ve siempre, asi que tiene que estar ahi arriba varias veces por
-       partida, sin que el juego la senale nunca. */
-    if (r < .22) tipo = sinNave ? 'fugaz' : 'nave';
+    /* La nave sale de vez en cuando y no seguido. Estaba en el 22% de los
+       eventos y aparecia varias veces por partida: a esa frecuencia deja de
+       ser algo que uno cree haber visto y pasa a ser parte del decorado, que
+       es justo lo contrario de lo que tiene que ser. Al 9% sale una vez cada
+       tantas partidas y quien la vea va a dudar de si la vio. */
+    if (r < .09) tipo = sinNave ? 'fugaz' : 'nave';
     else if (r < .46) tipo = 'fugaz';
     else if (r < .62) tipo = 'satelite';
     else if (r < .76) tipo = 'viajera';
@@ -2395,11 +2397,21 @@ var Cielo = (function () {
              : .42 + (u - .58) * (.58 / .42);
       var nx = W * (e.x0 + e.dir * av * 1.26);
       var ny = H * (e.y0 + e.inclina * av);
-      var R = Math.max(4.2, Math.min(W, H) * .017);
+      /* Chica de verdad. Media .017 del lado corto —unos 14 pixeles en un
+         celular— y a esa escala se le veian la cupula y las tres luces, o sea
+         un platillo dibujado. A .0095 es una marca en el cielo. */
+      var R = Math.max(2.4, Math.min(W, H) * .0095);
       var quieta = (u >= .42 && u < .58) ? 1 : 0;
 
       cx.save();
-      cx.globalAlpha = an * (.38 + quieta * .24);
+      /* Y difusa: el desenfoque es lo que la vuelve algo que uno no termina de
+         enfocar, que es como se ve una luz lejos de noche y como se cuenta lo
+         que se cree haber visto. Sin esto era una lenteja nitida, y una cosa
+         nitida en el cielo es una cosa que esta ahi. */
+      if (typeof cx.filter === 'string') {
+        cx.filter = 'blur(' + Math.max(.6, R * .30).toFixed(1) + 'px)';
+      }
+      cx.globalAlpha = an * (.24 + quieta * .16);
       // El casco: una lenteja, no un circulo.
       cx.fillStyle = 'rgba(206,222,255,.85)';
       cx.beginPath();
@@ -5432,17 +5444,41 @@ var Anomalias = (function () {
     /* Las ventanas están prendidas y adentro no hay nada que las prenda. */
     casa: function (cx, fx, fy, E, t, v) {
       var a = entra(v);
+      /* Sobre las ventanas de verdad, y del tamaño de las ventanas de verdad.
+
+         Estaba dibujando dos cuadraditos en x = mas y menos .17E, y las
+         ventanas del pintor estan en -.46E y +.30E: nunca coincidieron con
+         ninguna. Lo que se veia eran dos ventanitas de mas, una en el medio de
+         la pared y otra montada arriba de la ventana derecha. Es el mismo
+         error de familia que las vias, la soga de la barca y el reflejo de la
+         laguna — una anomalia ubicada a ojo con fracciones fijas de E, suelta
+         de la figura que dice estar tocando. `verificarUbicacion` no lo agarra
+         porque la casa es grande y los cuadraditos caian encima igual: pegado
+         no es lo mismo que en su lugar.
+
+         Ojo: estas medidas estan escritas en los dos archivos. Si el pintor
+         mueve las ventanas, esto se mueve con el. */
+      var VENTANAS = [[-.46, -.16], [.30, -.16]];
+      var ANCHO = .17, ALTO = .19;                 // medias, como en el pintor
       cx.save();
       cx.globalAlpha = a;
-      [[-.17, -.10], [.17, -.10]].forEach(function (p) {
+      VENTANAS.forEach(function (p) {
         var vx = fx + E * p[0], vy = fy + E * p[1];
-        // La luz sale del vidrio, no de adentro: el interior queda a oscuras.
-        halo(cx, vx, vy, E * .30, '255,226,170', .30);
-        cx.fillStyle = 'rgba(12,10,18,' + (.55 * a).toFixed(3) + ')';
-        cx.fillRect(vx - E * .055, vy - E * .055, E * .11, E * .11);
-        cx.strokeStyle = 'rgba(255,232,180,' + (.75 * a).toFixed(3) + ')';
-        cx.lineWidth = Math.max(1, E * .012);
-        cx.strokeRect(vx - E * .055, vy - E * .055, E * .11, E * .11);
+        /* La luz sale del vidrio y el interior queda a oscuras: se apaga el
+           vidrio entero desde adentro y se deja el marco encendido, que es lo
+           que el texto dice — "estan prendidas pero adentro no hay lamparas". */
+        halo(cx, vx, vy, E * .40, '255,226,170', .26 * a);
+        cx.fillStyle = 'rgba(12,10,18,' + (.62 * a).toFixed(3) + ')';
+        cx.fillRect(vx - E * ANCHO, vy - E * ALTO, E * ANCHO * 2, E * ALTO * 2);
+        cx.strokeStyle = 'rgba(255,232,180,' + (.80 * a).toFixed(3) + ')';
+        cx.lineWidth = Math.max(1, E * .014);
+        cx.strokeRect(vx - E * ANCHO, vy - E * ALTO, E * ANCHO * 2, E * ALTO * 2);
+        // Y los travesaños, para que se siga leyendo como ventana apagada.
+        cx.lineWidth = Math.max(1, E * .010);
+        cx.beginPath();
+        cx.moveTo(vx, vy - E * ALTO); cx.lineTo(vx, vy + E * ALTO);
+        cx.moveTo(vx - E * ANCHO, vy); cx.lineTo(vx + E * ANCHO, vy);
+        cx.stroke();
       });
       cx.restore();
     },
