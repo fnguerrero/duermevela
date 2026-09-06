@@ -345,7 +345,7 @@
   /* Dónde apoya cada figura (1 = su borde de abajo). null = flota. */
   var BASES = {
     montania: 1, ruina: 1, arbol: 1, casa: .96, puerta: .90, cama: .62,
-    calesita: .68, faro: 1, laguna: 1, reloj: 1,
+    calesita: .68, faro: 1, laguna: 1, reloj: 1, circulo: 1,
     platillo: null, luna: null, bandada: null, barca: null
   };
 
@@ -353,7 +353,7 @@
      mira, más lejos se para. */
   var LEJANIA = {
     cama: .30, casa: .26, puerta: .30, calesita: .24,
-    laguna: .16, faro: .22, reloj: .26, montania: .18
+    laguna: .16, faro: .22, reloj: .26, montania: .18, circulo: .20
   };
 
   /* La altura a la que va la figura. Durante una transformación interpola entre
@@ -430,9 +430,18 @@
         return Guion.destino(k, J.lugar) === obligado;
       });
       if (!laQueVa.length) {
-        laQueVa = Guion.CARTAS.filter(function (c) {
-          return c.figura === obligado;
-        }).map(function (c) { return c.clave; });
+        /* Por el DESTINO desde este lugar, no por la figura de la carta.
+
+           Las cartas que revelan no llevan a su propia figura: llevan a donde
+           diga el lugar donde uno esta parado, asi que buscar por `figura`
+           puede rescatar una carta que desde aca no va al obligado. Hoy no
+           pasa —medido: con las cartas que hay, desde los quince lugares, las
+           dos busquedas dan lo mismo en todos los casos— pero depende de que
+           ninguna carta reveladora comparta figura con un lugar obligado, y
+           eso no lo garantiza nada. Filtrar por el destino real cuesta igual
+           y no depende de esa coincidencia. */
+        laQueVa = Guion.CARTAS.map(function (c) { return c.clave; })
+          .filter(function (k) { return Guion.destino(k, J.lugar) === obligado; });
         // Vuelve al mazo: se saco de ahi y jugar() la va a querer sacar.
         laQueVa.forEach(function (k) {
           if (J.mazo.indexOf(k) === -1) J.mazo.push(k);
@@ -1108,8 +1117,17 @@
 
   /* ---------- el instante ---------- */
 
+  /* Lo que se dijo por el cartel, en orden. Es la unica forma de verificar los
+     avisos: aparecen y se van solos, y en una partida acelerada el texto
+     entra y sale mas rapido de lo que se puede leer el DOM desde afuera —
+     mirandolo con un observador no se vio ninguno de los dos que salen al
+     seguir de largo, y no era que no salieran. */
+  var avisosDichos = [];
+  window.avisosDichos = function () { return avisosDichos.slice(); };
   function mostrarAviso(texto, clase) {
     if (!elAviso) return;
+    avisosDichos.push(texto);
+    if (avisosDichos.length > 60) avisosDichos.shift();
     elAviso.textContent = texto;
     elAviso.className = clase + ' ver';
   }
@@ -1283,8 +1301,18 @@
          ahi habia algo y, un segundo y medio despues, una guia encima de la
          escena que explicaba como se hace. La primera vez el aviso dice las dos
          cosas juntas; la segunda, solo que habia algo; despues se calla. */
+      /* Salvo que el lugar tenga algo propio que decir cuando no se lo mira.
+
+         Solo lo tiene el circulo, y ahi el juego no deja constancia de que se
+         perdio nada: le da la razon. Es lo mismo que ese lugar esconde —que se
+         puede salir— dicho del otro lado, y hace que las dos decisiones
+         tengan sentido en vez de una sola. Sale siempre, no las dos primeras
+         veces: no es una instruccion que se aprende, es una respuesta. */
+      var propio = (Guion.LUGARES[J.lugar] || {}).esquiva;
       J.siguioDeLargo = (J.siguioDeLargo || 0) + 1;
-      if (J.siguioDeLargo === 1) {
+      if (propio) {
+        mostrarAviso(propio, '');
+      } else if (J.siguioDeLargo === 1) {
         mostrarAviso('acá había algo · se ve manteniendo apretado', '');
       } else if (J.siguioDeLargo === 2) {
         mostrarAviso('acá había algo', '');
@@ -1595,6 +1623,13 @@
                      veian dos luces. El pintor no sabe donde esta Bel, asi que
                      se le pasa en unidades de E desde donde nace el haz. */
                   mira: J.lugar === 'faro' ? J.revelando : 0,
+                  /* Y el circulo entra por un ARCO y no derecho: al medio de
+                     la revelacion esta en lo peor, y al final ya bajo. Es el
+                     unico lugar que se descubre y vuelve, y es a proposito —
+                     lo que esconde es que se pasa, asi que tiene que pasarse
+                     en pantalla y no solo decirse en el parrafo. */
+                  hondo: J.lugar === 'circulo'
+                    ? Math.sin(Math.max(0, Math.min(1, J.revelando)) * Math.PI) : 0,
                   haciaBel: { dx: (W * J.belX - fx) / E,
                               dy: ((piso - E * .5) - (fy - E * .57)) / E } };
     var u = J.u;
@@ -2321,9 +2356,19 @@
      figura que este revelada o se mide de menos. */
   function revelado(fx, fy, E, belX, piso) {
     return { alPiso: E, tension: 0, perfil: Figuras.perfilMontania(),
-             sincro: 1, corte: 1, apaga: 1, mira: 1,
+             sincro: 1, corte: 1, apaga: 1, mira: 1, hondo: 1,
              haciaBel: { dx: (belX - fx) / E,
                          dy: ((piso - E * .5) - (fy - E * .57)) / E } };
+  }
+
+  /* Todos los lugares, sacados del guion y no escritos a mano.
+
+     Estaban listados a mano en las seis verificaciones que los recorren, y al
+     agregar el circulo ninguna lo miro: las seis dieron verde sobre catorce
+     lugares mientras el quinceavo no se probaba. Una verificacion que hay que
+     acordarse de actualizar no verifica, tranquiliza. */
+  function todosLosLugares() {
+    return Object.keys(Guion.LUGARES);
   }
 
   window.verificarAnomalias = function () {
@@ -2356,8 +2401,7 @@
     }
 
     var flojas = [], tabla = [];
-    ['montania', 'platillo', 'calesita', 'laguna', 'faro', 'casa', 'arbol',
-     'reloj', 'luna', 'puerta', 'ruina', 'bandada', 'barca', 'cama'].forEach(function (k) {
+    todosLosLugares().forEach(function (k) {
       c2.setTransform(1, 0, 0, 1, 0, 0);
       c2.fillStyle = '#0b0917';
       c2.fillRect(0, 0, W, H);
@@ -2458,8 +2502,7 @@
 
     var radio = Math.round(E * .10 / ESC);       // lo que puede asomar por fuera
     var tabla = [], sueltas = [];
-    ['montania', 'platillo', 'calesita', 'laguna', 'faro', 'casa', 'arbol',
-     'reloj', 'luna', 'puerta', 'ruina', 'bandada', 'barca', 'cama'].forEach(function (k) {
+    todosLosLugares().forEach(function (k) {
       fondo();
       Pintores.pintar(c2, k, fx, fy, E, 3, { alPiso: E, tension: 0,
                                              perfil: Figuras.perfilMontania() });
@@ -2506,9 +2549,7 @@
 
   window.verificarTextos = function () {
     var fallas = [];
-    var CLAVES = ['montania', 'platillo', 'calesita', 'laguna', 'faro', 'casa',
-                  'arbol', 'reloj', 'luna', 'puerta', 'ruina', 'bandada',
-                  'barca', 'cama'];
+    var CLAVES = todosLosLugares();
 
     function revisar(donde, txt, minimo) {
       if (!txt || !txt.trim()) { fallas.push(donde + ': vacio'); return; }
@@ -2664,8 +2705,7 @@
     bRapido.textContent = RAPIDO ? 'rápido ×' + RITMO_RAPIDO + ' — apagar' : 'poner en rápido ×' + RITMO_RAPIDO;
 
     titulo('ir a un lugar');
-    ['montania', 'platillo', 'calesita', 'laguna', 'faro', 'casa', 'arbol',
-     'reloj', 'luna', 'puerta', 'ruina', 'bandada', 'barca', 'cama'].forEach(function (k) {
+    todosLosLugares().forEach(function (k) {
       var l = Guion.lugar(k);
       boton(l ? l.nombre : k, function () { window.irA(k); });
     });
@@ -2802,9 +2842,7 @@
      puesto a mano, y barre todos los pasos contra todos los lugares. */
   window.verificarReparto = function (vueltas) {
     vueltas = vueltas || 120;
-    var LUGARES = ['montania', 'calesita', 'arbol', 'laguna', 'luna', 'barca',
-                   'ruina', 'faro', 'platillo', 'casa', 'reloj', 'puerta',
-                   'bandada', 'cama'];
+    var LUGARES = todosLosLugares();
     var guardado = {
       mazo: J.mazo, paso: J.paso, lugar: J.lugar,
       visitados: J.visitados, recorrido: J.recorrido
@@ -2912,9 +2950,7 @@
      No cambia el tamano de la ventana: hay que ponerla en el tamano a probar
      y correrlo ahi. */
   window.verificarCelular = function () {
-    var LUGARES = ['montania', 'calesita', 'arbol', 'laguna', 'luna', 'barca',
-                   'ruina', 'faro', 'platillo', 'casa', 'reloj', 'puerta',
-                   'bandada', 'cama'];
+    var LUGARES = todosLosLugares();
     var choques = [], fuera = [], huecos = [], tabla = [];
 
     function caja(sel) {
@@ -3029,8 +3065,7 @@
     }).then(function () { return window.frecuenciaLugares(300); }).then(function (r) { out.frecuencias = r.ok;
     }).then(function () {
       return window.centinelaDibujo(function () {
-        ['montania','platillo','calesita','laguna','faro','casa','arbol','reloj',
-         'luna','puerta','ruina','bandada','barca','cama'].forEach(function (k) {
+        todosLosLugares().forEach(function (k) {
           window.instante(k, null, { t: 2, indicios: 4 });
         });
       });

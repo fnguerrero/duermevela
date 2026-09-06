@@ -21,6 +21,20 @@ var Anomalias = (function () {
      no tienen que hacerse esperar. */
   function entra(v) { return Math.min(1, v * 1.6); }
 
+  /* El mismo ruido con semilla que usa pintores.js. Va repetido y no
+     importado porque cada modulo es un IIFE cerrado y no se ven entre si;
+     copiar seis lineas es mas barato que abrir uno de los dos. Lo que importa
+     es que sea SIEMPRE el mismo desorden: con Math.random, lo que se dibuja
+     cambia en cada cuadro y lo que era un aire lleno de cosas pasa a ser
+     ruido de television. */
+  function sembrado(n) {
+    var x = n * 9301 + 49297;
+    return function () {
+      x = (x * 9301 + 49297) % 233280;
+      return x / 233280;
+    };
+  }
+
   /* Un halo suave, para marcar sin dibujar un borde. */
   function halo(cx, x, y, r, color, alfa) {
     var g = cx.createRadialGradient(x, y, 0, x, y, Math.max(1, r));
@@ -372,6 +386,69 @@ var Anomalias = (function () {
          Y corrida del centro del vidrio: centrada exacto se leia como un icono
          puesto ahi a proposito. Descentrada es alguien que esta parado. */
       silueta(cx, ox - E * .038, fy - E * .455, E * .158, a * a * a, false, .34);
+    },
+
+    /* Lo que se llena el aire, y el corazon.
+
+       Lo que cambian los colores y el latido del suelo lo hace el PINTOR, con
+       `hondo`: no es algo que aparezca encima, es como se ve todo, y eso solo
+       lo puede hacer quien lo dibuja. Aca queda lo que si aparece — cosas en
+       el aire que nunca se terminan de ver, y el pulso en las orejas.
+
+       Y `v` no entra derecho: entra por un arco. En la mitad de la revelacion
+       esta en lo peor y al final ya bajo, asi que el que se queda hasta el
+       final es el unico que llega a verlo aflojar. El que suelta antes se
+       queda con lo peor puesto — que es exactamente lo que pasa. */
+    circulo: function (cx, fx, fy, E, t, v, extra, W, H, belX, piso) {
+      var a = entra(v);
+      var arco = Math.sin(Math.max(0, Math.min(1, v)) * Math.PI);
+      if (arco < .01) return;
+      var cy = fy + E * .70;
+
+      cx.save();
+
+      /* Las cosas que no se terminan de ver: aparecen fuera del centro de la
+         mirada, duran poco y se van antes de que uno alcance a girar la
+         cabeza. Por eso son cortas y por eso ninguna se queda quieta. */
+      var rnd = sembrado(97);
+      for (var i = 0; i < 22; i++) {
+        var base = rnd(), fase = rnd(), giro = rnd();
+        var vida = ((t * (.5 + base * .5) + fase) % 1);
+        var vive = Math.sin(vida * Math.PI);
+        if (vive < .05) continue;
+        var ang = fase * 6.2832 + t * (.2 + giro * .3);
+        var rad = E * (.55 + base * .85);
+        var px = fx + Math.cos(ang) * rad;
+        var py = cy - E * .30 - Math.sin(ang) * rad * .42 - vida * E * .30;
+        var tam = E * (.020 + base * .028) * vive;
+        var tono = Math.round((giro * 360 + t * 40) % 360);
+        cx.globalAlpha = a * arco * vive * .40;
+        /* Apagados y desparejos entre si. Saturados quedaban confeti: lo que
+           inquieta de las cosas que uno no llega a ver no es que sean vivas,
+           es que no combinan con nada de lo que hay alrededor. */
+        cx.strokeStyle = 'hsl(' + tono + ',42%,58%)';
+        cx.lineWidth = Math.max(1, E * .008);
+        cx.beginPath();
+        cx.arc(px, py, tam, ang, ang + 2.4 + giro * 2);
+        cx.stroke();
+      }
+
+      /* El pulso. Se acelera con el arco y se calma con el: es el unico dato
+         del cuerpo que entra en el dibujo, y va en el aire alrededor de ella
+         porque es donde se escucha un corazon que golpea en las orejas. */
+      cx.globalAlpha = 1;
+      var bpm = 1.15 + arco * 1.75;
+      var golpe = Math.pow(Math.max(0, Math.sin(t * bpm * 3.14159)), 8);
+      if (belX !== undefined) {
+        halo(cx, belX, piso - E * .34,
+             E * (.30 + golpe * .16 + arco * .10),
+             '240,140,150', .10 * a * arco * (.45 + golpe * .55));
+      }
+      // Y el aire del circulo entero late con el.
+      halo(cx, fx, cy - E * .12, E * (1.05 + golpe * .10),
+           '150,130,196', .055 * a * arco * (.5 + golpe * .5));
+
+      cx.restore();
     },
 
     /* Las ventanas están prendidas y adentro no hay nada que las prenda. */

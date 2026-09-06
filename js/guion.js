@@ -61,6 +61,12 @@ var Guion = (function () {
       lectura: 'Todo queda a la vista.',
       accion: 'Se encendió, como si alguien me estuviera esperando.' },
 
+    { clave: 'diablo', num: 'XV', nombre: 'El Diablo', glifo: '⛧',
+      figura: 'circulo', tono: 'sombra', color: '208,150,236',
+      astro: '♑', astroNombre: 'Capricornio',
+      lectura: 'Las cadenas están flojas y nadie las mira.',
+      accion: 'Creció un círculo de hongos en el pasto, tan redondo que parece dibujado.' },
+
     { clave: 'muerte', num: 'XIII', nombre: 'La Muerte', glifo: '⚱',
       figura: 'arbol', tono: 'sombra', color: '160,220,170',
       astro: '♏', astroNombre: 'Escorpio',
@@ -234,6 +240,40 @@ var Guion = (function () {
                'casas. Está así porque yo me acuerdo así.',
       revela: 'puerta'
     },
+    /* Un anillo de hongos en el pasto. Los corros de brujas existen de
+       verdad y tienen mil años de tradicion encima, asi que el lugar se
+       sostiene solo para cualquiera que lo vea; el que tenga otro recuerdo
+       con un circulo asi va a tener el suyo, y el juego no lo nombra.
+
+       Es el unico lugar cuya revelacion tiene ARCO: entra hermosa, se pone
+       demasiado, y despues baja — y baja adentro de la misma revelacion, asi
+       que no hay que creerle al texto que se pasa, se ve pasar. El que suelta
+       a la mitad se queda en lo peor; el que se queda el segundo de mas es el
+       unico que llega a ver que aflojaba. Es el titulo del juego dicho con la
+       mecanica en vez de con palabras. */
+    circulo: {
+      nombre: 'El círculo',
+      llegada: 'Un anillo de hongos en el pasto, tan redondo que alguien lo ' +
+               'tuvo que medir. Me siento en el medio, que es lo que se hace ' +
+               'cuando encontrás un círculo así. Desde acá adentro el pasto ' +
+               'tiene más verdes de los que yo sabía que había.',
+      vuelta: 'El círculo otra vez. Sigue perfecto, y el pasto de adentro ' +
+              'sigue siendo de otro verde que el de afuera.',
+      esconde: 'Los colores se ponen mejores y mejores hasta que se ponen ' +
+               'demasiado. El aire se llena de cosas que no llego a ver del ' +
+               'todo, el corazón me golpea en las orejas, y por un rato ' +
+               'larguísimo estoy segura de que esto no se termina más. Y ' +
+               'después baja. Eso es lo único que nadie me había dicho: que ' +
+               'baja. Que ya estaba bajando mientras yo creía que no.',
+      /* Y el unico lugar donde NO mirar tiene su propia respuesta.
+
+         En los otros trece, seguir de largo deja constancia de que ahi habia
+         algo. Aca no: aca el juego le da la razon. Es coherente con lo que el
+         lugar esconde —que se puede salir, y que salir no es perder— y hace
+         que las dos decisiones tengan sentido en vez de una sola. */
+      esquiva: 'menos mal · tenía un mal presentimiento con esto',
+      revela: 'luna'
+    },
     arbol: {
       nombre: 'El árbol',
       llegada: 'Un árbol grande, solo, con las puntas de las ramas encendidas. ' +
@@ -366,7 +406,7 @@ var Guion = (function () {
   var TRAMOS = [
     // Lo que fue. Los recuerdos: se elige con el mazo entero del tramo.
     { nombre: 'fue', hasta: 3, libre: true,
-      lugares: ['arbol', 'calesita', 'laguna', 'luna'] },
+      lugares: ['arbol', 'calesita', 'laguna', 'luna', 'circulo'] },
     /* Lo que paso. En orden y sin alternativa.
 
        Primero el derrumbe y despues la barca, y no al reves. Estaba al reves y
@@ -436,6 +476,7 @@ var Guion = (function () {
     faro: 'El haz que frenaba cuando me encontraba',
     casa: 'La luz sin lámparas',
     arbol: 'El pájaro de un color que no existe',
+    circulo: 'Lo que ya se estaba pasando mientras yo creía que no',
     reloj: 'Los números corridos de su hora',
     luna: 'La cara que armaban los cráteres',
     puerta: 'La habitación que apareció porque la esperé',

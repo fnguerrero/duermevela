@@ -417,12 +417,41 @@ var Figuras = (function () {
     };
   }
 
+  /* El anillo de hongos, en trazos, para las transformaciones. Las medidas son
+     las mismas que usa el pintor —radio .92 por .34, centro en .70— porque si
+     no la figura llegaria a un lugar y el dibujo aparecerian en sitios
+     distintos. */
+  function circuloHongos() {
+    var s = [];
+    var rx = .92, ry = .34, cy = .70, N = 15;
+    // El anillo del pasto pisado.
+    for (var i = 0; i < 40; i++) {
+      var a0 = i / 40 * 6.2832, a1 = (i + .6) / 40 * 6.2832;
+      s.push([Math.sin(a0) * rx, cy - Math.cos(a0) * ry,
+              Math.sin(a1) * rx, cy - Math.cos(a1) * ry, 2, .22]);
+    }
+    // Y cada hongo: el tallo y el sombrero.
+    for (var k = 0; k < N; k++) {
+      var ang = k / N * 6.2832 + .18;
+      var sx = Math.sin(ang) * rx, sy = cy - Math.cos(ang) * ry;
+      var cerca = (1 - Math.cos(ang)) / 2;
+      var esc = .62 + cerca * .55;
+      var alto = .19 * esc, ancho = .12 * esc;
+      s.push([sx, sy, sx, sy - alto * .92, 3, .6 + cerca * .2]);
+      s.push([sx - ancho, sy - alto * .92, sx, sy - alto * 1.3, 3, .7 + cerca * .2]);
+      s.push([sx, sy - alto * 1.3, sx + ancho, sy - alto * .92, 3, .7 + cerca * .2]);
+      s.push([sx - ancho, sy - alto * .92, sx + ancho, sy - alto * .92, 2, .5]);
+    }
+    return s;
+  }
+
   var CATALOGO = {
     montania: montaniaRusa,
     platillo: platillo,
     ruina: ruina,
     luna: lunaGrande,
     arbol: arbol,
+    circulo: circuloHongos,
     cama: cama,
     puerta: puerta,
     casa: casa,

@@ -3935,21 +3935,15 @@ var Pintores = (function () {
      solo lo puede hacer quien lo dibuja. */
   function circulo(cx, E, t, hondo) {
     var h = Math.max(0, Math.min(1, hondo || 0));
-    /* El anillo se cierra un poco. Es lo que angustia de verdad: no el color
-       sino que el lugar se achique alrededor mientras uno esta adentro. Un
-       primer intento subio la saturacion hasta el magenta y quedaba una
-       fiesta, no un mal momento — el color puro se lee como alegre por mas
-       que uno lo llame caos. */
-    var rx = E * (.92 - h * .13), ry = E * (.34 - h * .05), cy = E * .70;
+    var rx = E * .92, ry = E * .34, cy = E * .70;
     var N = 15;
 
     /* El pasto de adentro es de otro verde que el de afuera, que es lo que el
        texto dice y lo que pasa de verdad en un corro: el micelio se come el
        suelo y lo que crece encima cambia de color. */
     var suelo = cx.createRadialGradient(0, cy, E * .1, 0, cy, rx * 1.05);
-    suelo.addColorStop(0, 'rgba(' + Math.round(46 + h * 22) + ',' +
-                             Math.round(74 - h * 18) + ',' +
-                             Math.round(56 + h * 40) + ',' + (.42 + h * .22).toFixed(3) + ')');
+    suelo.addColorStop(0, 'rgba(' + Math.round(46 + h * 60) + ',' +
+                             Math.round(74 + h * 40) + ',56,' + (.42 + h * .30).toFixed(3) + ')');
     suelo.addColorStop(.72, 'rgba(38,60,48,' + (.30 + h * .22).toFixed(3) + ')');
     suelo.addColorStop(1, 'rgba(30,48,42,0)');
     cx.save();
@@ -3966,10 +3960,9 @@ var Pintores = (function () {
       cx.translate(0, cy); cx.scale(1, ry / rx);
       for (var o = 0; o < 3; o++) {
         var fase = ((t * (.42 + h * .95) + o / 3) % 1);
-        cx.strokeStyle = 'rgba(' + Math.round(150 - h * 40) + ',' +
-                         Math.round(210 - h * 60) + ',' +
-                         Math.round(190 + h * 30) + ',' +
-                         (h * .15 * (1 - fase)).toFixed(3) + ')';
+        cx.strokeStyle = 'rgba(' + Math.round(150 + h * 90) + ',210,' +
+                         Math.round(190 + h * 50) + ',' +
+                         (h * .22 * (1 - fase)).toFixed(3) + ')';
         cx.lineWidth = E * .012;
         cx.beginPath(); cx.arc(0, 0, rx * (.12 + fase * .95), 0, 6.2832); cx.stroke();
       }
@@ -4018,13 +4011,8 @@ var Pintores = (function () {
          de un hongo de campo a un violeta que ningun hongo tiene. No pasa a
          ser fosforescente de golpe — se corre, que es distinto y es lo que se
          recuerda de un color asi. */
-      /* El color no se va al neon: se ENSUCIA. Del ocre tranquilo de un
-         hongo de campo a un violeta apagado y frio, del lado del indigo del
-         juego. Lo que se recuerda de un color asi no es que brillara, es que
-         estaba mal — y un color que esta mal es uno que perdio la luz, no uno
-         que la gano. */
-      var rr = Math.round(196 - h * 62), gg = Math.round(150 - h * 44),
-          bb = Math.round(118 + h * 86);
+      var rr = Math.round(196 + h * 46), gg = Math.round(150 - h * 92),
+          bb = Math.round(118 + h * 130);
       var som = cx.createLinearGradient(0, -alto * 1.32, 0, -alto * .86);
       som.addColorStop(0, 'rgba(' + rr + ',' + Math.min(255, gg + 40) + ',' + bb + ',.96)');
       som.addColorStop(1, 'rgba(' + Math.round(rr * .72) + ',' +
@@ -4042,8 +4030,8 @@ var Pintores = (function () {
         cx.fill();
       }
       // Y lo que cada uno tira sobre el pasto.
-      halo(cx, 0, -alto * .5, ancho * (2.1 + h * .7),
-           rr + ',' + Math.min(255, gg + 60) + ',' + bb, .10 + h * .07);
+      halo(cx, 0, -alto * .5, ancho * (2.1 + h * 1.6),
+           rr + ',' + Math.min(255, gg + 60) + ',' + bb, .10 + h * .22);
       cx.restore();
     });
   }
@@ -4566,20 +4554,6 @@ var Anomalias = (function () {
      no tienen que hacerse esperar. */
   function entra(v) { return Math.min(1, v * 1.6); }
 
-  /* El mismo ruido con semilla que usa pintores.js. Va repetido y no
-     importado porque cada modulo es un IIFE cerrado y no se ven entre si;
-     copiar seis lineas es mas barato que abrir uno de los dos. Lo que importa
-     es que sea SIEMPRE el mismo desorden: con Math.random, lo que se dibuja
-     cambia en cada cuadro y lo que era un aire lleno de cosas pasa a ser
-     ruido de television. */
-  function sembrado(n) {
-    var x = n * 9301 + 49297;
-    return function () {
-      x = (x * 9301 + 49297) % 233280;
-      return x / 233280;
-    };
-  }
-
   /* Un halo suave, para marcar sin dibujar un borde. */
   function halo(cx, x, y, r, color, alfa) {
     var g = cx.createRadialGradient(x, y, 0, x, y, Math.max(1, r));
@@ -4967,11 +4941,8 @@ var Anomalias = (function () {
         var py = cy - E * .30 - Math.sin(ang) * rad * .42 - vida * E * .30;
         var tam = E * (.020 + base * .028) * vive;
         var tono = Math.round((giro * 360 + t * 40) % 360);
-        cx.globalAlpha = a * arco * vive * .40;
-        /* Apagados y desparejos entre si. Saturados quedaban confeti: lo que
-           inquieta de las cosas que uno no llega a ver no es que sean vivas,
-           es que no combinan con nada de lo que hay alrededor. */
-        cx.strokeStyle = 'hsl(' + tono + ',42%,58%)';
+        cx.globalAlpha = a * arco * vive * .55;
+        cx.strokeStyle = 'hsl(' + tono + ',85%,72%)';
         cx.lineWidth = Math.max(1, E * .008);
         cx.beginPath();
         cx.arc(px, py, tam, ang, ang + 2.4 + giro * 2);
@@ -4991,7 +4962,7 @@ var Anomalias = (function () {
       }
       // Y el aire del circulo entero late con el.
       halo(cx, fx, cy - E * .12, E * (1.05 + golpe * .10),
-           '150,130,196', .055 * a * arco * (.5 + golpe * .5));
+           '206,150,236', .085 * a * arco * (.5 + golpe * .5));
 
       cx.restore();
     },
@@ -8468,18 +8439,9 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
         return Guion.destino(k, J.lugar) === obligado;
       });
       if (!laQueVa.length) {
-        /* Por el DESTINO desde este lugar, no por la figura de la carta.
-
-           Las cartas que revelan no llevan a su propia figura: llevan a donde
-           diga el lugar donde uno esta parado, asi que buscar por `figura`
-           puede rescatar una carta que desde aca no va al obligado. Hoy no
-           pasa —medido: con las cartas que hay, desde los quince lugares, las
-           dos busquedas dan lo mismo en todos los casos— pero depende de que
-           ninguna carta reveladora comparta figura con un lugar obligado, y
-           eso no lo garantiza nada. Filtrar por el destino real cuesta igual
-           y no depende de esa coincidencia. */
-        laQueVa = Guion.CARTAS.map(function (c) { return c.clave; })
-          .filter(function (k) { return Guion.destino(k, J.lugar) === obligado; });
+        laQueVa = Guion.CARTAS.filter(function (c) {
+          return c.figura === obligado;
+        }).map(function (c) { return c.clave; });
         // Vuelve al mazo: se saco de ahi y jugar() la va a querer sacar.
         laQueVa.forEach(function (k) {
           if (J.mazo.indexOf(k) === -1) J.mazo.push(k);
@@ -9155,17 +9117,8 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
 
   /* ---------- el instante ---------- */
 
-  /* Lo que se dijo por el cartel, en orden. Es la unica forma de verificar los
-     avisos: aparecen y se van solos, y en una partida acelerada el texto
-     entra y sale mas rapido de lo que se puede leer el DOM desde afuera —
-     mirandolo con un observador no se vio ninguno de los dos que salen al
-     seguir de largo, y no era que no salieran. */
-  var avisosDichos = [];
-  window.avisosDichos = function () { return avisosDichos.slice(); };
   function mostrarAviso(texto, clase) {
     if (!elAviso) return;
-    avisosDichos.push(texto);
-    if (avisosDichos.length > 60) avisosDichos.shift();
     elAviso.textContent = texto;
     elAviso.className = clase + ' ver';
   }
@@ -10399,16 +10352,6 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
                          dy: ((piso - E * .5) - (fy - E * .57)) / E } };
   }
 
-  /* Todos los lugares, sacados del guion y no escritos a mano.
-
-     Estaban listados a mano en las seis verificaciones que los recorren, y al
-     agregar el circulo ninguna lo miro: las seis dieron verde sobre catorce
-     lugares mientras el quinceavo no se probaba. Una verificacion que hay que
-     acordarse de actualizar no verifica, tranquiliza. */
-  function todosLosLugares() {
-    return Object.keys(Guion.LUGARES);
-  }
-
   window.verificarAnomalias = function () {
     var cv2 = document.createElement('canvas');
     var W = 1100, H = 700;
@@ -10439,7 +10382,8 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     }
 
     var flojas = [], tabla = [];
-    todosLosLugares().forEach(function (k) {
+    ['montania', 'platillo', 'calesita', 'laguna', 'faro', 'casa', 'arbol',
+     'reloj', 'luna', 'puerta', 'ruina', 'bandada', 'barca', 'cama'].forEach(function (k) {
       c2.setTransform(1, 0, 0, 1, 0, 0);
       c2.fillStyle = '#0b0917';
       c2.fillRect(0, 0, W, H);
@@ -10540,7 +10484,8 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
 
     var radio = Math.round(E * .10 / ESC);       // lo que puede asomar por fuera
     var tabla = [], sueltas = [];
-    todosLosLugares().forEach(function (k) {
+    ['montania', 'platillo', 'calesita', 'laguna', 'faro', 'casa', 'arbol',
+     'reloj', 'luna', 'puerta', 'ruina', 'bandada', 'barca', 'cama'].forEach(function (k) {
       fondo();
       Pintores.pintar(c2, k, fx, fy, E, 3, { alPiso: E, tension: 0,
                                              perfil: Figuras.perfilMontania() });
@@ -10587,7 +10532,9 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
 
   window.verificarTextos = function () {
     var fallas = [];
-    var CLAVES = todosLosLugares();
+    var CLAVES = ['montania', 'platillo', 'calesita', 'laguna', 'faro', 'casa',
+                  'arbol', 'reloj', 'luna', 'puerta', 'ruina', 'bandada',
+                  'barca', 'cama'];
 
     function revisar(donde, txt, minimo) {
       if (!txt || !txt.trim()) { fallas.push(donde + ': vacio'); return; }
@@ -10743,7 +10690,8 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     bRapido.textContent = RAPIDO ? 'rápido ×' + RITMO_RAPIDO + ' — apagar' : 'poner en rápido ×' + RITMO_RAPIDO;
 
     titulo('ir a un lugar');
-    todosLosLugares().forEach(function (k) {
+    ['montania', 'platillo', 'calesita', 'laguna', 'faro', 'casa', 'arbol',
+     'reloj', 'luna', 'puerta', 'ruina', 'bandada', 'barca', 'cama'].forEach(function (k) {
       var l = Guion.lugar(k);
       boton(l ? l.nombre : k, function () { window.irA(k); });
     });
@@ -10880,7 +10828,9 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
      puesto a mano, y barre todos los pasos contra todos los lugares. */
   window.verificarReparto = function (vueltas) {
     vueltas = vueltas || 120;
-    var LUGARES = todosLosLugares();
+    var LUGARES = ['montania', 'calesita', 'arbol', 'laguna', 'luna', 'barca',
+                   'ruina', 'faro', 'platillo', 'casa', 'reloj', 'puerta',
+                   'bandada', 'cama'];
     var guardado = {
       mazo: J.mazo, paso: J.paso, lugar: J.lugar,
       visitados: J.visitados, recorrido: J.recorrido
@@ -10988,7 +10938,9 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
      No cambia el tamano de la ventana: hay que ponerla en el tamano a probar
      y correrlo ahi. */
   window.verificarCelular = function () {
-    var LUGARES = todosLosLugares();
+    var LUGARES = ['montania', 'calesita', 'arbol', 'laguna', 'luna', 'barca',
+                   'ruina', 'faro', 'platillo', 'casa', 'reloj', 'puerta',
+                   'bandada', 'cama'];
     var choques = [], fuera = [], huecos = [], tabla = [];
 
     function caja(sel) {
@@ -11103,7 +11055,8 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     }).then(function () { return window.frecuenciaLugares(300); }).then(function (r) { out.frecuencias = r.ok;
     }).then(function () {
       return window.centinelaDibujo(function () {
-        todosLosLugares().forEach(function (k) {
+        ['montania','platillo','calesita','laguna','faro','casa','arbol','reloj',
+         'luna','puerta','ruina','bandada','barca','cama'].forEach(function (k) {
           window.instante(k, null, { t: 2, indicios: 4 });
         });
       });

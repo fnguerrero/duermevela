@@ -54,7 +54,19 @@ llegada ancla el lugar a algo de ella. Ahí el juego se vuelve genérico.
 - [x] H6 · "qué es esa silueta oscura?": la laguna, rehecha sin dibujar la ausencia · verif: de 3% a 100% pegada al agua
 - [x] H7 · La barca se sacude de verdad · verif: de 2,5 grados con un seno a 7 con tres frecuencias
 
+## I · El círculo (lugar nuevo, pedido de Nico)
+
+- [x] I1 · Un lugar que entra hermoso, se pone denso y se pasa · verif: el arco sube y baja dentro de la misma revelación
+- [x] I2 · Lo que esconde: que se pasa, y que se estaba pasando incluso mientras creía que no · verif: verificarTextos() en verde
+- [x] I3 · El único lugar donde NO mirar tiene su propia respuesta · verif: partida real, salió "menos mal" donde los otros dicen "acá había algo"
+- [x] I4 · Entra entero: carta (El Diablo, XV), figura, base, lejanía, tramo y etiqueta · verif: 15 lugares, 15 cartas, 15 figuras
+- [x] I5 · Las seis verificaciones que recorren lugares tenían la lista escrita a mano y no lo miraban · verif: derivadas de Guion.LUGARES, 15 medidos
+
+## J · Abierto
+
+- [!] J1 · `verificarTramos` falla ~1 de cada 3 corridas de dos partidas: el recorrido sale con un elemento de más y un lugar repetido ("ruina ruina"), así que el último no es la cama. NO es del reparto (medido) ni doble click (`jugar()` ya se protege). Falta ver quién puede registrar dos veces el mismo paso en `J.recorrido`. Es previo al círculo; el lugar nuevo solo cambió las probabilidades.
+
 ## D · Cierre
 
-- [x] D1 · `auditarTodo()` en verde · verif: todos los sub-resultados ok
+- [ ] D1 · `auditarTodo()` en verde · verif: todos los sub-resultados ok
 - [x] D2 · Reempaquetar `dist/` · verif: el `.html` suelto abre y juega

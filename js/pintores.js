@@ -798,6 +798,131 @@ var Pintores = (function () {
     cx.beginPath(); cx.arc(0, -E * .98, E * .035, 0, 6.2832); cx.fill();
   }
 
+  /* ============ el circulo ============ */
+  /* Un anillo de hongos en el pasto, visto en escorzo. El anillo es una elipse
+     achatada porque el suelo se ve desde arriba; los de adelante van mas
+     grandes y mas claros que los del fondo, que es lo unico que hace que un
+     ovalo de cosas se lea como un circulo apoyado y no como un collar colgado.
+
+     `hondo` va de 0 a 1 y es lo que este lugar esconde: los colores se van de
+     rango, el aire se llena y el suelo late. No lo dibuja la anomalia porque
+     lo que cambia no es algo que aparezca encima — es como se ve TODO, y eso
+     solo lo puede hacer quien lo dibuja. */
+  function circulo(cx, E, t, hondo) {
+    var h = Math.max(0, Math.min(1, hondo || 0));
+    /* El anillo se cierra un poco. Es lo que angustia de verdad: no el color
+       sino que el lugar se achique alrededor mientras uno esta adentro. Un
+       primer intento subio la saturacion hasta el magenta y quedaba una
+       fiesta, no un mal momento — el color puro se lee como alegre por mas
+       que uno lo llame caos. */
+    var rx = E * (.92 - h * .13), ry = E * (.34 - h * .05), cy = E * .70;
+    var N = 15;
+
+    /* El pasto de adentro es de otro verde que el de afuera, que es lo que el
+       texto dice y lo que pasa de verdad en un corro: el micelio se come el
+       suelo y lo que crece encima cambia de color. */
+    var suelo = cx.createRadialGradient(0, cy, E * .1, 0, cy, rx * 1.05);
+    suelo.addColorStop(0, 'rgba(' + Math.round(46 + h * 22) + ',' +
+                             Math.round(74 - h * 18) + ',' +
+                             Math.round(56 + h * 40) + ',' + (.42 + h * .22).toFixed(3) + ')');
+    suelo.addColorStop(.72, 'rgba(38,60,48,' + (.30 + h * .22).toFixed(3) + ')');
+    suelo.addColorStop(1, 'rgba(30,48,42,0)');
+    cx.save();
+    cx.translate(0, cy); cx.scale(1, ry / rx);
+    cx.fillStyle = suelo;
+    cx.beginPath(); cx.arc(0, 0, rx * 1.05, 0, 6.2832); cx.fill();
+    cx.restore();
+
+    /* Y el latido del suelo: los anillos salen del centro hacia afuera, cada
+       vez mas rapido. Con `hondo` en cero no hay ninguno. */
+    if (h > .01) {
+      cx.save();
+      cx.globalCompositeOperation = 'lighter';
+      cx.translate(0, cy); cx.scale(1, ry / rx);
+      for (var o = 0; o < 3; o++) {
+        var fase = ((t * (.42 + h * .95) + o / 3) % 1);
+        cx.strokeStyle = 'rgba(' + Math.round(150 - h * 40) + ',' +
+                         Math.round(210 - h * 60) + ',' +
+                         Math.round(190 + h * 30) + ',' +
+                         (h * .15 * (1 - fase)).toFixed(3) + ')';
+        cx.lineWidth = E * .012;
+        cx.beginPath(); cx.arc(0, 0, rx * (.12 + fase * .95), 0, 6.2832); cx.stroke();
+      }
+      cx.restore();
+    }
+
+    // Los hongos, del fondo hacia adelante para que se tapen bien.
+    var orden = [];
+    for (var i = 0; i < N; i++) orden.push(i);
+    orden.sort(function (a, b) {
+      return Math.cos(a / N * 6.2832) - Math.cos(b / N * 6.2832);
+    });
+    var rnd = sembrado(61);
+    var semilla = [];
+    for (var g = 0; g < N; g++) semilla.push([rnd(), rnd(), rnd()]);
+
+    orden.forEach(function (i) {
+      var ang = i / N * 6.2832 + .18;
+      var sx = Math.sin(ang) * rx;
+      var sy = cy - Math.cos(ang) * ry;
+      var cerca = (1 - Math.cos(ang)) / 2;          // 0 al fondo, 1 adelante
+      var esc = .62 + cerca * .55;
+      var sem = semilla[i];
+      /* Respiran: se estiran y se encogen, todos a destiempo. Con `hondo` el
+         desfase se achica y empiezan a hacerlo juntos, que es lo que vuelve
+         raro un movimiento que era apenas lindo. */
+      var propio = sem[0] * 6.28 * (1 - h * .92);
+      var late = 1 + Math.sin(t * (1.1 + h * 1.9) + propio) * (.05 + h * .10);
+      var alto = E * (.17 + sem[1] * .09) * esc * late;
+      var ancho = E * (.105 + sem[2] * .045) * esc * late;
+
+      cx.save();
+      cx.translate(sx, sy);
+
+      // Tallo.
+      cx.strokeStyle = 'rgba(' + Math.round(232 - h * 30) + ',' +
+                       Math.round(226 - h * 20) + ',208,' + (.82 + cerca * .12).toFixed(2) + ')';
+      cx.lineWidth = ancho * .30;
+      cx.lineCap = 'round';
+      cx.beginPath();
+      cx.moveTo(0, 0);
+      cx.quadraticCurveTo(ancho * .10, -alto * .55, 0, -alto * .92);
+      cx.stroke();
+
+      /* El sombrero. El color se va de rango con `hondo`: del ocre tranquilo
+         de un hongo de campo a un violeta que ningun hongo tiene. No pasa a
+         ser fosforescente de golpe — se corre, que es distinto y es lo que se
+         recuerda de un color asi. */
+      /* El color no se va al neon: se ENSUCIA. Del ocre tranquilo de un
+         hongo de campo a un violeta apagado y frio, del lado del indigo del
+         juego. Lo que se recuerda de un color asi no es que brillara, es que
+         estaba mal — y un color que esta mal es uno que perdio la luz, no uno
+         que la gano. */
+      var rr = Math.round(196 - h * 62), gg = Math.round(150 - h * 44),
+          bb = Math.round(118 + h * 86);
+      var som = cx.createLinearGradient(0, -alto * 1.32, 0, -alto * .86);
+      som.addColorStop(0, 'rgba(' + rr + ',' + Math.min(255, gg + 40) + ',' + bb + ',.96)');
+      som.addColorStop(1, 'rgba(' + Math.round(rr * .72) + ',' +
+                        Math.round(gg * .72) + ',' + Math.round(bb * .78) + ',.94)');
+      cx.fillStyle = som;
+      cx.beginPath();
+      cx.ellipse(0, -alto * .92, ancho, alto * .42, 0, Math.PI, 0);
+      cx.closePath(); cx.fill();
+      // Los puntos del sombrero.
+      cx.fillStyle = 'rgba(246,242,228,' + (.72 + h * .20).toFixed(2) + ')';
+      for (var d = 0; d < 3; d++) {
+        var px2 = (d - 1) * ancho * .42, py2 = -alto * (1.04 + (d % 2) * .09);
+        cx.beginPath();
+        cx.ellipse(px2, py2, ancho * .11, ancho * .075, 0, 0, 6.2832);
+        cx.fill();
+      }
+      // Y lo que cada uno tira sobre el pasto.
+      halo(cx, 0, -alto * .5, ancho * (2.1 + h * .7),
+           rr + ',' + Math.min(255, gg + 60) + ',' + bb, .10 + h * .07);
+      cx.restore();
+    });
+  }
+
   /* ============ el faro ============ */
   /* `mira` va de 0 a 1 y es lo que este lugar esconde: el haz deja de barrer
      el campo y se queda quieto encima de ella.
@@ -1266,7 +1391,8 @@ var Pintores = (function () {
   var PINTORES = {
     platillo: platillo, luna: luna, ruina: ruina, arbol: arbol,
     cama: cama, puerta: puerta, casa: casa, bandada: bandada,
-    calesita: calesita, faro: faro, laguna: laguna, barca: barca, reloj: reloj
+    calesita: calesita, faro: faro, laguna: laguna, barca: barca, reloj: reloj,
+    circulo: circulo
   };
 
   /* La montaña rusa necesita su perfil, que lo tiene figuras.js. */
@@ -1279,6 +1405,7 @@ var Pintores = (function () {
     if (clave === 'montania') montania(cx, E, t, extra.perfil, extra.corte);
     else if (clave === 'platillo') platillo(cx, E, t, extra.alPiso, extra.apaga);
     else if (clave === 'bandada') bandada(cx, E, t, extra.sincro);
+    else if (clave === 'circulo') circulo(cx, E, t, extra.hondo);
     else if (clave === 'faro') faro(cx, E, t, extra.mira, extra.haciaBel);
     else if (PINTORES[clave]) PINTORES[clave](cx, E, t);
     cx.restore();
