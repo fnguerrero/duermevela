@@ -372,8 +372,13 @@ var Guion = (function () {
     },
     ruina: {
       nombre: 'Lo que quedó',
-      llegada: 'Escombros. Se cayó algo grande y yo no escuché nada, y no puede ' +
-               'ser que no haya escuchado. El polvo todavía está en el aire, ' +
+      /* Sin el reproche. Decia "y no puede ser que no haya escuchado", que ya
+         no es asombro sino culpa — el "como no me di cuenta". Es un
+         pensamiento real y por eso estaba, pero es el que menos ayuda y el que
+         igual se piensa solo: el juego no tiene por que reforzarlo. Lo que
+         queda es el desconcierto, que es lo mismo sin la acusacion. */
+      llegada: 'Escombros. Se cayó algo grande y no hizo ruido, y eso es lo ' +
+               'primero que no cierra. El polvo todavía está en el aire, ' +
                'quieto, sin decidirse a bajar. Camino alrededor buscando de qué ' +
                'era esto y no encuentro una sola pieza que me lo diga.',
       vuelta: 'Otra vez los escombros. El polvo sigue sin bajar. Hace un rato ' +

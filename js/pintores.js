@@ -1499,8 +1499,13 @@ var Pintores = (function () {
 
     /* El relampago: cada tanto, y no siempre en el mismo lado. La cuenta con
        seno elevado deja el destello corto y el resto del tiempo en cero. */
-    var rayo = Math.pow(Math.max(0, Math.sin(t * .47)), 26) +
-               Math.pow(Math.max(0, Math.sin(t * .31 + 2.1)), 34);
+    /* Cuatro relampagos con periodos que no son multiplos entre si: asi caen
+       seguido pero nunca a intervalos parejos, que es lo que separa una
+       tormenta de una luz que parpadea. */
+    var rayo = Math.pow(Math.max(0, Math.sin(t * .47)), 22) +
+               Math.pow(Math.max(0, Math.sin(t * .31 + 2.1)), 28) +
+               Math.pow(Math.max(0, Math.sin(t * .73 + 4.4)), 34) +
+               Math.pow(Math.max(0, Math.sin(t * 1.09 + 1.2)), 44);
     if (rayo > .01) {
       var lx = Math.sin(t * .19) * E * 1.4;
       /* El resplandor tiene que apagarse ANTES del borde del rectangulo que
@@ -1517,22 +1522,45 @@ var Pintores = (function () {
       cx.fillRect(-E * 9, y0 - E * 5, E * 18, E * 8);
     }
 
-    // Las olas: seis filas, cada una mas rapida y mas grande hacia adelante.
-    for (var f = 0; f < 6; f++) {
-      var yf = y0 + E * (.03 + f * f * .045);
-      var vel = .7 + f * .38;
-      var alto = E * (.014 + f * .011);
-      var largo = E * (.26 + f * .11);
-      cx.strokeStyle = 'rgba(' + Math.round(116 + f * 22) + ',' +
-                       Math.round(146 + f * 26) + ',216,' +
-                       (.20 + f * .06 + rayo * .40).toFixed(3) + ')';
-      cx.lineWidth = Math.max(1, E * (.009 + f * .004));
+    /* Las olas: siete filas con CUERPO y no lineas sueltas.
+
+       Dibujadas como trazos quedaban curvas de nivel de un mapa: el ojo ve
+       lineas y no agua. Cada fila es ahora una franja rellena que baja desde
+       su cresta hasta la fila siguiente, con la cresta marcada encima. El
+       relleno es lo que hace volumen; el trazo solo, contorno. */
+    for (var f = 0; f < 7; f++) {
+      var yf = y0 + E * (.02 + f * f * .038);
+      var vel = .85 + f * .42;
+      var alto = E * (.026 + f * .017);
+      var largo = E * (.24 + f * .10);
+      var claro = .055 + f * .016 + rayo * .10;
+
+      // El cuerpo de la ola.
+      cx.fillStyle = 'rgba(' + Math.round(96 + f * 16) + ',' +
+                     Math.round(126 + f * 20) + ',200,' + claro.toFixed(3) + ')';
       cx.beginPath();
-      for (var x = -E * 2.2; x < E * 2.2; x += largo) {
+      cx.moveTo(-E * 2.6, yf + E * .5);
+      for (var x = -E * 2.6; x < E * 2.6; x += largo) {
         var fase = t * vel + x / largo;
-        cx.moveTo(x, yf + Math.sin(fase) * alto);
-        cx.quadraticCurveTo(x + largo * .5, yf + Math.cos(fase) * alto * 2.2,
+        cx.lineTo(x, yf + Math.sin(fase) * alto);
+        cx.quadraticCurveTo(x + largo * .5, yf + Math.cos(fase) * alto * 2.4,
                             x + largo, yf + Math.sin(fase + 1) * alto);
+      }
+      cx.lineTo(E * 2.6, yf + E * .5);
+      cx.closePath();
+      cx.fill();
+
+      // Y la cresta, que es lo que se ve blanco cuando el agua esta picada.
+      cx.strokeStyle = 'rgba(' + Math.round(150 + f * 14) + ',' +
+                       Math.round(180 + f * 16) + ',238,' +
+                       (.26 + f * .05 + rayo * .45).toFixed(3) + ')';
+      cx.lineWidth = Math.max(1, E * (.010 + f * .004));
+      cx.beginPath();
+      for (var x2 = -E * 2.6; x2 < E * 2.6; x2 += largo) {
+        var fa2 = t * vel + x2 / largo;
+        cx.moveTo(x2, yf + Math.sin(fa2) * alto);
+        cx.quadraticCurveTo(x2 + largo * .5, yf + Math.cos(fa2) * alto * 2.4,
+                            x2 + largo, yf + Math.sin(fa2 + 1) * alto);
       }
       cx.stroke();
     }
@@ -1569,13 +1597,19 @@ var Pintores = (function () {
        Tres senos de frecuencias que no son multiplos entre si suman siete
        grados y no repiten el mismo golpe: el ojo deja de poder anticipar el
        movimiento, que es lo unico que separa una sacudida de un vaiven. */
-    var mece = Math.sin(t * .7) * .055 + Math.sin(t * 1.63 + 1.1) * .045 +
-               Math.sin(t * 2.9 + 2.3) * .022;
+    /* Mas fuerte desde que hay agua abajo: antes se sacudia sobre la nada y
+       pasarse de amplitud se veia raro; con olas debajo, lo raro seria que se
+       moviera poco. Doce grados en vez de siete. */
+    var mece = Math.sin(t * .7) * .085 + Math.sin(t * 1.63 + 1.1) * .075 +
+               Math.sin(t * 2.9 + 2.3) * .045;
     var hincha = 1 + Math.sin(t * 1.37) * .085 + Math.sin(t * 3.1 + .8) * .035;
     cx.save();
     cx.rotate(mece);
-    cx.translate(Math.sin(t * 1.21) * E * .018,
-                 Math.sin(t * .9) * E * .030 + Math.sin(t * 2.2 + .7) * E * .015);
+    /* Y sube y baja con el agua: la vertical va a la misma frecuencia que la
+       primera fila de olas, asi que la barca cabalga lo que tiene abajo en vez
+       de moverse por su cuenta. */
+    cx.translate(Math.sin(t * 1.21) * E * .030,
+                 Math.sin(t * .85) * E * .055 + Math.sin(t * 2.2 + .7) * E * .022);
 
     // Vela.
     var vel = cx.createLinearGradient(0, -E * .84, E * .5, -E * .2);

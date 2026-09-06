@@ -2563,7 +2563,7 @@
     if (J.lugar !== 'barca') { proximoTrueno = 2.5; return; }
     proximoTrueno -= dt;
     if (proximoTrueno > 0) return;
-    proximoTrueno = 3.4 + Math.random() * 5.2;
+    proximoTrueno = 1.8 + Math.random() * 3.4;
     if (typeof Audio2 !== 'undefined' && Audio2.trueno) {
       Audio2.trueno(.35 + Math.random() * .5);
     }
