@@ -196,13 +196,24 @@ var Pintores = (function () {
       var d = borde - i;
       return d < 2 ? Math.max(0, .35 + d * .32) : 1;
     }
-    // Estructura: columnas y cruces de madera.
+    /* Estructura: columnas y cruces de madera.
+
+       Se leia como un plano tecnico y no como una montaña rusa: todas las
+       lineas del mismo grosor y del mismo color, una cruz entre cada par de
+       columnas, y la via perdida entre medio. Tres cosas lo separan. Las
+       columnas van cada CUATRO puntos y no cada tres, asi que el andamio
+       respira. Cada una es mas gruesa abajo que arriba, que es como se
+       sostiene algo pesado y lo que le da volumen a una linea. Y las cruces
+       van una si y una no, mas tenues: estan para que se entienda que hay una
+       estructura, no para que se cuenten. */
     cx.lineCap = 'round';
-    for (var c = 0; c < pts.length; c += 3) {
+    for (var c = 0; c < pts.length; c += 4) {
       if (q > 0 && !vive(c)) continue;
       var p = pts[c];
-      cx.strokeStyle = 'rgba(96,78,104,.75)';
-      cx.lineWidth = E * .016;
+      // Mas gruesa cuanto mas alto sostiene: una columna corta no necesita tanto.
+      var largoCol = 1 - p[1];
+      cx.strokeStyle = 'rgba(104,84,112,.78)';
+      cx.lineWidth = E * (.013 + largoCol * .009);
       cx.beginPath();
       cx.moveTo(p[0] * E, p[1] * E); cx.lineTo(p[0] * E, E);
       cx.stroke();
@@ -211,10 +222,10 @@ var Pintores = (function () {
          `q > 0` comparaba un array contra cero y daba false, asi que las
          columnas y las cruces NUNCA se cortaban: la via desaparecia y la
          estructura quedaba entera, sosteniendo un tramo que ya no existia. */
-      if (c + 3 < pts.length && vive(c + 3)) {
-        var sig = pts[c + 3];
-        cx.strokeStyle = 'rgba(78,64,88,.5)';
-        cx.lineWidth = E * .009;
+      if (c + 4 < pts.length && vive(c + 4) && (c / 4) % 2 === 0) {
+        var sig = pts[c + 4];
+        cx.strokeStyle = 'rgba(78,64,88,.34)';
+        cx.lineWidth = E * .007;
         cx.beginPath();
         cx.moveTo(p[0] * E, p[1] * E); cx.lineTo(sig[0] * E, E);
         cx.moveTo(sig[0] * E, sig[1] * E); cx.lineTo(p[0] * E, E);
@@ -225,15 +236,18 @@ var Pintores = (function () {
     for (var k = 1; k < pts.length; k++) {
       if (q > 0 && !vive(k)) continue;
       cx.globalAlpha = q > 0 ? apagado(k) : 1;
+      /* Y la via manda sobre la estructura: mas gruesa y mas clara. Es lo
+         unico de la figura que el texto nombra, y estaba dibujada con el mismo
+         peso que un travesaño cualquiera. */
       var a = pts[k - 1], b = pts[k];
-      cx.strokeStyle = 'rgba(58,48,70,.9)';
-      cx.lineWidth = E * .034;
+      cx.strokeStyle = 'rgba(52,42,64,.92)';
+      cx.lineWidth = E * .042;
       cx.beginPath();
-      cx.moveTo(a[0] * E, a[1] * E + E * .012);
-      cx.lineTo(b[0] * E, b[1] * E + E * .012);
+      cx.moveTo(a[0] * E, a[1] * E + E * .014);
+      cx.lineTo(b[0] * E, b[1] * E + E * .014);
       cx.stroke();
-      cx.strokeStyle = 'rgba(212,190,240,.85)';
-      cx.lineWidth = E * .011;
+      cx.strokeStyle = 'rgba(224,206,248,.94)';
+      cx.lineWidth = E * .016;
       cx.beginPath();
       cx.moveTo(a[0] * E, a[1] * E); cx.lineTo(b[0] * E, b[1] * E);
       cx.stroke();

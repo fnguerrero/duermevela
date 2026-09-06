@@ -1,0 +1,129 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8">
+<title>Las vías · qué significan</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap">
+<style>
+  html,body{margin:0;background:#07060e;color:#ece6d8;
+    font-family:'Cormorant Garamond',Georgia,serif}
+  h1{font-size:19px;font-weight:400;letter-spacing:.16em;text-transform:uppercase;
+    color:rgba(220,178,108,.9);margin:20px 0 2px;text-align:center}
+  .sub{text-align:center;color:rgba(236,230,216,.5);font-size:15px;margin:0 0 4px}
+  .nota{text-align:center;color:rgba(236,230,216,.62);font-size:15.5px;
+    max-width:74ch;margin:0 auto 20px;line-height:1.5;font-style:italic}
+  .fila{display:flex;flex-wrap:wrap;gap:20px;justify-content:center;padding:0 16px 30px}
+  .caso{width:min(620px,45vw)}
+  .escena{position:relative;border:1px solid rgba(220,178,108,.18);border-radius:3px;
+    overflow:hidden}
+  canvas{width:100%;display:block}
+  .panel{position:absolute;left:50%;transform:translateX(-50%);top:5%;
+    width:88%;text-align:center;font-size:clamp(13px,1.45vw,19px);line-height:1.45;
+    color:#f6f1e6;padding:14px 26px 16px;
+    background:radial-gradient(ellipse 62% 74% at 50% 50%,
+      rgba(8,6,14,.93) 0%, rgba(8,6,14,.88) 45%,
+      rgba(8,6,14,.55) 74%, rgba(8,6,14,0) 100%);
+    text-shadow:0 1px 3px rgba(0,0,0,1), 0 2px 16px rgba(0,0,0,.95)}
+  .rotu{font-size:14px;letter-spacing:.12em;text-transform:uppercase;
+    color:rgba(236,196,132,.92);margin:10px 0 2px;text-align:center}
+  .dice{font-size:14.5px;color:rgba(236,230,216,.55);line-height:1.45;margin:0;
+    text-align:center}
+</style>
+</head><body>
+
+<h1>Las vías · qué significan</h1>
+<p class="sub">El mismo dibujo, cinco maneras de decir qué ve.</p>
+<p class="nota">Nico: "nunca entendí esta escena". El problema no es el corte — es que este es el
+único lugar cuyo texto habla de cómo está construido el mundo en vez de decir algo sobre ella.
+Los otros catorce atan a algo suyo. Y es el primero que ve todo el mundo.</p>
+
+<div class="fila" id="fila"></div>
+
+<script src="../js/dibujo.js"></script>
+<script src="../js/figuras.js"></script>
+<script src="../js/pintores.js"></script>
+<script src="../js/anomalias.js"></script>
+<script>
+(function () {
+  'use strict';
+  var W = 1100, H = 780;
+  var piso = H * .86;
+  var E = Math.max(W * .08, Math.min(W * .24, (piso - H * .30) / 2));
+  var fx = W * .52, fy = piso - E;
+  var pts = Figuras.perfilMontania();
+
+  var CASOS = [
+    { rotu: 'A · la de ahora',
+      dice: 'Habla de cómo está hecho el mundo. No dice nada de ella.',
+      texto: 'Las vías no terminan en ningún lado. Suben, bajan, y en la punta se ' +
+             'cortan en el aire, como si nadie se hubiera tomado el trabajo de ' +
+             'imaginarles un final. Nadie que las mirara desde abajo lo notaría. Yo ' +
+             'las estoy mirando desde abajo.' },
+    { rotu: 'B · lo que no miró no está',
+      dice: 'Se cortan justo donde su recuerdo se termina. El vagón se le iba de la vista ahí.',
+      texto: 'Las vías se cortan arriba, en el aire, justo en el punto donde el vagón ' +
+             'se me iba de la vista. De chica me quedaba abajo con la cabeza para ' +
+             'atrás y lo perdía siempre ahí, en esa curva. Lo que no miré nunca no ' +
+             'está. No lo armaron.' },
+    { rotu: 'C · hecho de lo que miró',
+      dice: 'El lugar está construido con su memoria, y su memoria miró desde abajo.',
+      texto: 'Las vías se cortan en el aire y no me sorprende tanto como debería. Me ' +
+             'acuerdo del pasto pisado, de la fila, del olor a azúcar quemada. De ' +
+             'arriba no me acuerdo de nada. Abajo está todo y arriba se termina, y ' +
+             'eso me dice con qué está hecho esto.' },
+    { rotu: 'D · nunca se subió',
+      dice: 'El final del viaje es lo único que no puede inventar, porque nunca lo tuvo.',
+      texto: 'Las vías suben y en la punta se cortan. Nunca me subí: me quedaba abajo ' +
+             'mirando, diciendo que la próxima vez sí. Nunca hubo próxima vez, la ' +
+             'desarmaron, y cómo termina eso es lo único de este lugar que no puedo ' +
+             'inventar.' },
+    { rotu: 'E · la corta',
+      dice: 'Lo mismo que C en dos frases. Es el primer texto del juego.',
+      texto: 'Suben, bajan, y arriba se cortan en el aire. Están hechas de lo que yo ' +
+             'miré, y yo siempre las miré desde abajo.' }
+  ];
+
+  var fila = document.getElementById('fila');
+  var casos = CASOS.map(function (c) {
+    var caja = document.createElement('div'); caja.className = 'caso';
+    var esc = document.createElement('div'); esc.className = 'escena';
+    var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    esc.appendChild(cv);
+    var pan = document.createElement('p'); pan.className = 'panel';
+    pan.textContent = c.texto;
+    esc.appendChild(pan);
+    caja.appendChild(esc);
+    var r = document.createElement('p'); r.className = 'rotu'; r.textContent = c.rotu;
+    var d = document.createElement('p'); d.className = 'dice'; d.textContent = c.dice;
+    caja.appendChild(r); caja.appendChild(d);
+    fila.appendChild(caja);
+    return { cfg: c, cx: cv.getContext('2d') };
+  });
+
+  function escena(c, t) {
+    var cx = c.cx;
+    cx.setTransform(1, 0, 0, 1, 0, 0);
+    var g = cx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#0a0817'); g.addColorStop(1, '#0d0b1c');
+    cx.fillStyle = g; cx.fillRect(0, 0, W, H);
+    Pintores.pintar(cx, 'montania', fx, fy, E, t,
+                    { alPiso: E, tension: 0, perfil: pts, corte: 1 });
+    Anomalias.pintar(cx, 'montania', fx, fy, E, t, 1, {}, W, H, W * .14, piso);
+  }
+
+  var t0 = performance.now();
+  function cuadro(ahora) {
+    var t = (ahora - t0) / 1000;
+    casos.forEach(function (c) { escena(c, t); });
+    requestAnimationFrame(cuadro);
+  }
+  requestAnimationFrame(cuadro);
+
+  window.laminas = function () {
+    casos.forEach(function (c) { escena(c, 3); });
+    return Promise.all(casos.map(function (c, i) {
+      return fetch('/_captura/vias-texto-' + 'abcde'[i] + '.png',
+        { method: 'POST', body: c.cx.canvas.toDataURL('image/png') });
+    })).then(function () { return 'laminas guardadas'; });
+  };
+})();
+</script>
+</body></html>

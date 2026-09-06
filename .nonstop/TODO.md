@@ -66,6 +66,12 @@ llegada ancla el lugar a algo de ella. Ahí el juego se vuelve genérico.
 
 - [x] J1 · El paso podía avanzar dos veces: el guardián y el cierre normal lo hacían por caminos separados, cada uno con su propia guarda · verif: 8 recorridos seguidos de largo 9, donde antes 1 de cada 6 salía de 10
 
+## K · Las vías, cuarta vuelta: el símbolo
+
+- [x] K1 · El texto hablaba del decorado y no de ella. Ahora simboliza los altibajos a los que nadie les imaginó un final · verif: verificarTextos() en verde
+- [x] K2 · El dibujo se leía como un plano técnico: columnas con peso, menos cruces y la vía dominando · verif: se lee como montaña rusa en 375x812
+- [x] K3 · La etiqueta del cierre, acorde al símbolo nuevo · verif: "El recorrido al que nadie le imaginó un final"
+
 ## D · Cierre
 
 - [x] D1 · `auditarTodo()` en verde · verif: 10 de 10, con `tramos` incluido

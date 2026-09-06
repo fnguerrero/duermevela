@@ -163,10 +163,23 @@ var Guion = (function () {
                'luces prendidas y el vagón esperando arriba de todo.',
       vuelta: 'Otra vez la montaña rusa. Está igual que hace un rato, y hace un ' +
               'rato ya estaba mal.',
-      esconde: 'Las vías no terminan en ningún lado. Suben, bajan, y en la punta ' +
-               'se cortan en el aire, como si nadie se hubiera tomado el trabajo ' +
-               'de imaginarles un final. Nadie que las mirara desde abajo lo ' +
-               'notaría. Yo las estoy mirando desde abajo.',
+      /* Lo que el lugar simboliza, que es lo que le faltaba.
+
+         Antes esto era una observacion sobre el decorado —"nadie se tomo el
+         trabajo de imaginarles un final"— o sea una idea sobre como esta hecho
+         el sueño, no sobre ella. Los otros catorce lugares dicen algo suyo;
+         este hablaba de la escenografia, y por eso no cerraba: se puede pulir
+         eternamente el dibujo de algo que no significa nada.
+
+         El simbolo estaba escrito ahi desde el principio y sin usar: SUBEN y
+         BAJAN. Una montaña rusa es lo que cualquiera contesta cuando le
+         preguntan como la esta pasando. Y lo que le falta a esta es lo peor:
+         que nadie le imagino un final. Por eso es el lugar de arranque — es
+         donde ella esta parada. */
+      esconde: 'Lo miro desde abajo y me doy cuenta de que me lo sé de memoria: ' +
+               'subís, bajás, subís un poco menos que la vez anterior. Lo único ' +
+               'que nunca supe es dónde termina. Ahora veo por qué: las vías se ' +
+               'cortan en el aire. A esto nadie le imaginó un final.',
       revela: 'calesita'
     },
     platillo: {
@@ -469,7 +482,7 @@ var Guion = (function () {
   /* Cada indicio, dicho en cuatro o cinco palabras. Sirven para que el cierre
      pueda nombrar lo que se vio sin repetir el parrafo entero. */
   var ETIQUETA = {
-    montania: 'Las vías cortadas en el aire',
+    montania: 'El recorrido al que nadie le imaginó un final',
     platillo: 'La luz que se apagó como quien asiente',
     calesita: 'La calesita que no tocaba el piso',
     laguna: 'El agua que no me copiaba',
