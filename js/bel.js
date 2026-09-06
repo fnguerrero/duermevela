@@ -45,7 +45,17 @@ var Bel = (function () {
       /* Una sonrisa apenas (0 a 1). No la pone el andar ni el asombro: la pone
          el juego, en el unico lugar donde ella reconoce algo. Baja sola, mas
          lento que todo lo demas, porque una sonrisa no se apaga de golpe. */
-      sonrisa: 0
+      sonrisa: 0,
+      /* Lo que esta haciendo, si esta haciendo algo.
+
+         El guion viene lleno de gestos suyos desde siempre —"me asomo",
+         "levanto la cabeza", "lo abrazo", "la abro"— y ella nunca hizo
+         ninguno: se quedaba parada mirando. Cuando el texto dice que alguien
+         hace algo y en pantalla no lo hace, el que lee entiende que el texto
+         habla de otra cosa. `gesto` es cual, y `gestoU` cuanto lo tiene
+         hecho, de 0 a 1, para que entre y salga y no aparezca de golpe. */
+      gesto: null,
+      gestoU: 0
     };
   }
 
@@ -56,6 +66,11 @@ var Bel = (function () {
        gesto tiene que leerse, no pasar de largo. */
     if (b.adentro > 0) b.adentro = Math.max(0, b.adentro - dt * 1.15);
     if (b.sonrisa > 0) b.sonrisa = Math.max(0, b.sonrisa - dt * .16);
+    /* El gesto entra en algo mas de medio segundo y sale mas lento: apurarse
+       en soltarlo se lee como que se arrepintio. */
+    var meta = b.gesto ? 1 : 0;
+    if (b.gestoU < meta) b.gestoU = Math.min(1, b.gestoU + dt * 1.7);
+    else if (b.gestoU > meta) b.gestoU = Math.max(0, b.gestoU - dt * 1.1);
     // Lo que la empuja o la asombra vuelve a cero solo, con distinta inercia:
     // el golpe pasa rapido, la impresion tarda.
     if (b.empuje) b.empuje *= Math.pow(.06, dt);
@@ -110,15 +125,42 @@ var Bel = (function () {
     var golpe = b.empuje || 0;
     var atras = (b.asombro || 0);
 
+    /* Los cuatro gestos. Todos salen de mover lo que ya estaba articulado:
+       la inclinacion del tronco, la fase de cada brazo y el giro del cuello.
+
+       Las fases de brazo son grandes porque `brazo()` las multiplica por .40
+       para convertirlas en radianes — con 2.8 la mano queda adelante y a la
+       altura del pecho, que es donde va una mano que abraza. */
+    var g = b.gestoU || 0;
+    var incGesto = 0, brazoAd = 0, brazoAt = 0, alzaGesto = 0;
+    if (b.gesto === 'asoma') {
+      // Se dobla hacia adelante y baja la cabeza: se esta asomando al agua.
+      incGesto = g * .34;
+      alzaGesto = -g * .55;
+      brazoAd = g * 1.1;
+      brazoAt = g * .5;
+    } else if (b.gesto === 'abraza') {
+      // Los dos brazos al frente y juntos, y el cuerpo apenas encogido.
+      brazoAd = g * 2.8;
+      brazoAt = g * 2.6;
+      incGesto = g * .10;
+    } else if (b.gesto === 'abre') {
+      // Un solo brazo estirado al frente. El otro se queda donde estaba.
+      brazoAd = g * 2.4;
+    } else if (b.gesto === 'alza') {
+      // Mirar para arriba, que es lo unico que el texto le pide al platillo.
+      alzaGesto = g;
+    }
+
     cx.save();
     cx.translate(x - dir * golpe * A * .10, y - rebote + respira);
     cx.scale(dir, 1);
-    cx.rotate(inclina - golpe * .10 - atras * .045);
+    cx.rotate(inclina - golpe * .10 - atras * .045 + incGesto);
 
     // ---- pierna de atrás ----
     pierna(cx, A, cadera + cadereo, pasoB, '#1c1626', '#120d18');
     // ---- brazo de atrás ----
-    brazo(cx, A, hombro, -pasoB, ABRIGO_OSCURO, PIEL_SOMBRA);
+    brazo(cx, A, hombro, -pasoB + brazoAt, ABRIGO_OSCURO, PIEL_SOMBRA);
     // ---- pierna de adelante ----
     pierna(cx, A, cadera + cadereo, pasoA, PANTALON, BOTA);
 
@@ -159,7 +201,7 @@ var Bel = (function () {
     cx.fillRect(A * .012, cintura + A * .007, A * .015, A * .013);
 
     // ---- brazo de adelante ----
-    brazo(cx, A, hombro, -pasoA, ABRIGO_LUZ, PIEL);
+    brazo(cx, A, hombro, -pasoA + brazoAd, ABRIGO_LUZ, PIEL);
 
     // ---- bufanda ----
     cx.fillStyle = BUFANDA;
@@ -186,7 +228,7 @@ var Bel = (function () {
        lo que esta pasando en vez de quedarse de perfil mirando la nada. */
     cx.save();
     cx.translate(0, cuello);
-    cx.rotate(-(b.alza || 0) * .46);
+    cx.rotate(-Math.max(-1, Math.min(1.4, (b.alza || 0) + alzaGesto)) * .46);
     cx.translate(0, -cuello);
 
     // Melena larga por detrás, con su propio retraso al caminar.

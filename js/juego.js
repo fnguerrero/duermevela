@@ -1435,6 +1435,7 @@
     Cielo.actualizar(cielo, dt, J.paso < 2);
     vigilarPaso(dt);
     latirCirculo(dt);
+    gestoDeBel();
 
     /* Camina hasta su marca en la direccion que sea: al cambiar la figura la
        marca se corre, y Bel se acomoda unos pasos en vez de saltar. */
@@ -1836,11 +1837,43 @@
        pasan de esa fraccion del alto (la sombra del piso mide .12). */
     var altoBelAqui = H * (vertical ? .20 : .255);
     var medioBel = altoBelAqui * .15;
+    /* Y se va acercando. Cada cosa que llega a ver la deja un poco mas cerca
+       de lo que esta mirando: al final del recorrido esta bastante mas
+       adelante que al principio.
+
+       Es la unica consecuencia acumulada que el juego muestra mientras se
+       juega —la luna cuenta, pero cuenta, no acerca— y significa lo que el
+       juego dice: quedarse mirando la acerca. El tope de arriba la sigue
+       cuidando, asi que por mas indicios que junte nunca se le sube encima a
+       la figura. */
+    var cerca = Math.min(1, J.indicios.length /
+                            Math.max(1, Guion.PASOS - 1)) * .13;
+    /* Y si el gesto es de tocar algo, se va hasta ahi. Abrazar un arbol que
+       esta a tres metros no se lee como abrazar, y asomarse a un agua que
+       queda lejos tampoco: los dos gestos necesitan que este al lado. El tope
+       de abajo la sigue frenando en el borde de la figura, asi que llega
+       pegada y no encima. */
+    if (bel.gesto === 'abraza' || bel.gesto === 'asoma') {
+      cerca += (bel.gestoU || 0) * .55;
+    }
+    /* El tope de la derecha la deja pegada al borde de la figura, para que no
+       se le suba encima. Abrazar es la excepcion: el tronco esta en el medio
+       de la figura y no en su borde, asi que ahi se la deja llegar hasta el
+       tronco — que es angosto, y taparlo con medio cuerpo es exactamente lo
+       que hace alguien abrazando un arbol. */
+    var tope = bordeFigura - W * .045;
+    if (bel.gesto === 'abraza') {
+      tope = tope + (fx - E * .22 - tope) * (bel.gestoU || 0);
+    }
     var metaCalculada = Math.max(
       Math.max(W * .055, medioBel + W * .015), // entera dentro del cuadro
-      Math.min(bordeFigura * (.62 - lejania * .55), bordeFigura - W * .045)
+      Math.min(bordeFigura * (.62 - lejania * .55 + cerca), tope)
     ) / W;
     if (Math.abs(J.belMeta - metaCalculada) > .004) J.belMeta = metaCalculada;
+    /* En modo captura camina cero, porque caminar depende de dt: la lamina
+       salia con ella todavia donde estaba antes del gesto. Se la pone en el
+       lugar al que iba, que es lo que se quiere ver. */
+    if (sinBucle) J.belX = J.belMeta;
     var belPantalla = W * J.belX;
     // Siempre de cara a lo que esta mirando, camine hacia donde camine.
     bel.mirando = (fx >= belPantalla) ? 1 : -1;
@@ -2480,6 +2513,32 @@
       cx.drawImage(C.cv, d, 0);
       cx.restore();
     }
+  }
+
+  /* Que Bel haga lo que el texto dice que hace.
+
+     El guion viene lleno de gestos suyos —"me asomo", "levanto la cabeza",
+     "lo abrazo", "la abro"— y ella se quedaba parada mirando en los quince
+     lugares. Aca no se inventa nada: cada gesto sale de la frase que ese lugar
+     ya tenia escrita, y por eso son estos cuatro y no otros. Los demas lugares
+     no piden ningun gesto claro, asi que no lo hacen.
+
+     Salen recien pasada la mitad de la revelacion, que es cuando el texto de
+     lo que esconde ya esta a la vista: antes seria hacer algo por lo que
+     todavia no vio. */
+  var GESTOS = {
+    laguna: 'asoma',      // "Me asomo y el agua no me copia"
+    platillo: 'alza',     // "hasta que yo levante la cabeza. Levanto la cabeza"
+    circulo: 'abraza',    // "Lo abrazo. Me quedo pegada al tronco"
+    puerta: 'abre'        // "La abro y del otro lado esta el mismo campo"
+  };
+  function gestoDeBel() {
+    var quiere = (J.revelando > .48) ? (GESTOS[J.lugar] || null) : null;
+    bel.gesto = quiere;
+    /* En modo captura dt es 0 y el gesto no terminaria de entrar nunca: la
+       lamina sale con ella parada y parece que el gesto no existe. Es la misma
+       trampa que ya tenia el alza de la cabeza. */
+    if (sinBucle) bel.gestoU = quiere ? 1 : 0;
   }
 
   /* El corazon del circulo, que es lo unico del cuerpo que se escucha.

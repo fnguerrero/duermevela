@@ -1565,7 +1565,17 @@ var Bel = (function () {
       /* Una sonrisa apenas (0 a 1). No la pone el andar ni el asombro: la pone
          el juego, en el unico lugar donde ella reconoce algo. Baja sola, mas
          lento que todo lo demas, porque una sonrisa no se apaga de golpe. */
-      sonrisa: 0
+      sonrisa: 0,
+      /* Lo que esta haciendo, si esta haciendo algo.
+
+         El guion viene lleno de gestos suyos desde siempre —"me asomo",
+         "levanto la cabeza", "lo abrazo", "la abro"— y ella nunca hizo
+         ninguno: se quedaba parada mirando. Cuando el texto dice que alguien
+         hace algo y en pantalla no lo hace, el que lee entiende que el texto
+         habla de otra cosa. `gesto` es cual, y `gestoU` cuanto lo tiene
+         hecho, de 0 a 1, para que entre y salga y no aparezca de golpe. */
+      gesto: null,
+      gestoU: 0
     };
   }
 
@@ -1576,6 +1586,11 @@ var Bel = (function () {
        gesto tiene que leerse, no pasar de largo. */
     if (b.adentro > 0) b.adentro = Math.max(0, b.adentro - dt * 1.15);
     if (b.sonrisa > 0) b.sonrisa = Math.max(0, b.sonrisa - dt * .16);
+    /* El gesto entra en algo mas de medio segundo y sale mas lento: apurarse
+       en soltarlo se lee como que se arrepintio. */
+    var meta = b.gesto ? 1 : 0;
+    if (b.gestoU < meta) b.gestoU = Math.min(1, b.gestoU + dt * 1.7);
+    else if (b.gestoU > meta) b.gestoU = Math.max(0, b.gestoU - dt * 1.1);
     // Lo que la empuja o la asombra vuelve a cero solo, con distinta inercia:
     // el golpe pasa rapido, la impresion tarda.
     if (b.empuje) b.empuje *= Math.pow(.06, dt);
@@ -1630,15 +1645,42 @@ var Bel = (function () {
     var golpe = b.empuje || 0;
     var atras = (b.asombro || 0);
 
+    /* Los cuatro gestos. Todos salen de mover lo que ya estaba articulado:
+       la inclinacion del tronco, la fase de cada brazo y el giro del cuello.
+
+       Las fases de brazo son grandes porque `brazo()` las multiplica por .40
+       para convertirlas en radianes — con 2.8 la mano queda adelante y a la
+       altura del pecho, que es donde va una mano que abraza. */
+    var g = b.gestoU || 0;
+    var incGesto = 0, brazoAd = 0, brazoAt = 0, alzaGesto = 0;
+    if (b.gesto === 'asoma') {
+      // Se dobla hacia adelante y baja la cabeza: se esta asomando al agua.
+      incGesto = g * .34;
+      alzaGesto = -g * .55;
+      brazoAd = g * 1.1;
+      brazoAt = g * .5;
+    } else if (b.gesto === 'abraza') {
+      // Los dos brazos al frente y juntos, y el cuerpo apenas encogido.
+      brazoAd = g * 2.8;
+      brazoAt = g * 2.6;
+      incGesto = g * .10;
+    } else if (b.gesto === 'abre') {
+      // Un solo brazo estirado al frente. El otro se queda donde estaba.
+      brazoAd = g * 2.4;
+    } else if (b.gesto === 'alza') {
+      // Mirar para arriba, que es lo unico que el texto le pide al platillo.
+      alzaGesto = g;
+    }
+
     cx.save();
     cx.translate(x - dir * golpe * A * .10, y - rebote + respira);
     cx.scale(dir, 1);
-    cx.rotate(inclina - golpe * .10 - atras * .045);
+    cx.rotate(inclina - golpe * .10 - atras * .045 + incGesto);
 
     // ---- pierna de atrás ----
     pierna(cx, A, cadera + cadereo, pasoB, '#1c1626', '#120d18');
     // ---- brazo de atrás ----
-    brazo(cx, A, hombro, -pasoB, ABRIGO_OSCURO, PIEL_SOMBRA);
+    brazo(cx, A, hombro, -pasoB + brazoAt, ABRIGO_OSCURO, PIEL_SOMBRA);
     // ---- pierna de adelante ----
     pierna(cx, A, cadera + cadereo, pasoA, PANTALON, BOTA);
 
@@ -1679,7 +1721,7 @@ var Bel = (function () {
     cx.fillRect(A * .012, cintura + A * .007, A * .015, A * .013);
 
     // ---- brazo de adelante ----
-    brazo(cx, A, hombro, -pasoA, ABRIGO_LUZ, PIEL);
+    brazo(cx, A, hombro, -pasoA + brazoAd, ABRIGO_LUZ, PIEL);
 
     // ---- bufanda ----
     cx.fillStyle = BUFANDA;
@@ -1706,7 +1748,7 @@ var Bel = (function () {
        lo que esta pasando en vez de quedarse de perfil mirando la nada. */
     cx.save();
     cx.translate(0, cuello);
-    cx.rotate(-(b.alza || 0) * .46);
+    cx.rotate(-Math.max(-1, Math.min(1.4, (b.alza || 0) + alzaGesto)) * .46);
     cx.translate(0, -cuello);
 
     // Melena larga por detrás, con su propio retraso al caminar.
@@ -9809,6 +9851,7 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     Cielo.actualizar(cielo, dt, J.paso < 2);
     vigilarPaso(dt);
     latirCirculo(dt);
+    gestoDeBel();
 
     /* Camina hasta su marca en la direccion que sea: al cambiar la figura la
        marca se corre, y Bel se acomoda unos pasos en vez de saltar. */
@@ -10210,11 +10253,43 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
        pasan de esa fraccion del alto (la sombra del piso mide .12). */
     var altoBelAqui = H * (vertical ? .20 : .255);
     var medioBel = altoBelAqui * .15;
+    /* Y se va acercando. Cada cosa que llega a ver la deja un poco mas cerca
+       de lo que esta mirando: al final del recorrido esta bastante mas
+       adelante que al principio.
+
+       Es la unica consecuencia acumulada que el juego muestra mientras se
+       juega —la luna cuenta, pero cuenta, no acerca— y significa lo que el
+       juego dice: quedarse mirando la acerca. El tope de arriba la sigue
+       cuidando, asi que por mas indicios que junte nunca se le sube encima a
+       la figura. */
+    var cerca = Math.min(1, J.indicios.length /
+                            Math.max(1, Guion.PASOS - 1)) * .13;
+    /* Y si el gesto es de tocar algo, se va hasta ahi. Abrazar un arbol que
+       esta a tres metros no se lee como abrazar, y asomarse a un agua que
+       queda lejos tampoco: los dos gestos necesitan que este al lado. El tope
+       de abajo la sigue frenando en el borde de la figura, asi que llega
+       pegada y no encima. */
+    if (bel.gesto === 'abraza' || bel.gesto === 'asoma') {
+      cerca += (bel.gestoU || 0) * .55;
+    }
+    /* El tope de la derecha la deja pegada al borde de la figura, para que no
+       se le suba encima. Abrazar es la excepcion: el tronco esta en el medio
+       de la figura y no en su borde, asi que ahi se la deja llegar hasta el
+       tronco — que es angosto, y taparlo con medio cuerpo es exactamente lo
+       que hace alguien abrazando un arbol. */
+    var tope = bordeFigura - W * .045;
+    if (bel.gesto === 'abraza') {
+      tope = tope + (fx - E * .22 - tope) * (bel.gestoU || 0);
+    }
     var metaCalculada = Math.max(
       Math.max(W * .055, medioBel + W * .015), // entera dentro del cuadro
-      Math.min(bordeFigura * (.62 - lejania * .55), bordeFigura - W * .045)
+      Math.min(bordeFigura * (.62 - lejania * .55 + cerca), tope)
     ) / W;
     if (Math.abs(J.belMeta - metaCalculada) > .004) J.belMeta = metaCalculada;
+    /* En modo captura camina cero, porque caminar depende de dt: la lamina
+       salia con ella todavia donde estaba antes del gesto. Se la pone en el
+       lugar al que iba, que es lo que se quiere ver. */
+    if (sinBucle) J.belX = J.belMeta;
     var belPantalla = W * J.belX;
     // Siempre de cara a lo que esta mirando, camine hacia donde camine.
     bel.mirando = (fx >= belPantalla) ? 1 : -1;
@@ -10854,6 +10929,32 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
       cx.drawImage(C.cv, d, 0);
       cx.restore();
     }
+  }
+
+  /* Que Bel haga lo que el texto dice que hace.
+
+     El guion viene lleno de gestos suyos —"me asomo", "levanto la cabeza",
+     "lo abrazo", "la abro"— y ella se quedaba parada mirando en los quince
+     lugares. Aca no se inventa nada: cada gesto sale de la frase que ese lugar
+     ya tenia escrita, y por eso son estos cuatro y no otros. Los demas lugares
+     no piden ningun gesto claro, asi que no lo hacen.
+
+     Salen recien pasada la mitad de la revelacion, que es cuando el texto de
+     lo que esconde ya esta a la vista: antes seria hacer algo por lo que
+     todavia no vio. */
+  var GESTOS = {
+    laguna: 'asoma',      // "Me asomo y el agua no me copia"
+    platillo: 'alza',     // "hasta que yo levante la cabeza. Levanto la cabeza"
+    circulo: 'abraza',    // "Lo abrazo. Me quedo pegada al tronco"
+    puerta: 'abre'        // "La abro y del otro lado esta el mismo campo"
+  };
+  function gestoDeBel() {
+    var quiere = (J.revelando > .48) ? (GESTOS[J.lugar] || null) : null;
+    bel.gesto = quiere;
+    /* En modo captura dt es 0 y el gesto no terminaria de entrar nunca: la
+       lamina sale con ella parada y parece que el gesto no existe. Es la misma
+       trampa que ya tenia el alza de la cabeza. */
+    if (sinBucle) bel.gestoU = quiere ? 1 : 0;
   }
 
   /* El corazon del circulo, que es lo unico del cuerpo que se escucha.
