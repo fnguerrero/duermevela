@@ -68,5 +68,5 @@ llegada ancla el lugar a algo de ella. Ahí el juego se vuelve genérico.
 
 ## D · Cierre
 
-- [ ] D1 · `auditarTodo()` en verde · verif: todos los sub-resultados ok
+- [x] D1 · `auditarTodo()` en verde · verif: 10 de 10, con `tramos` incluido
 - [x] D2 · Reempaquetar `dist/` · verif: el `.html` suelto abre y juega
