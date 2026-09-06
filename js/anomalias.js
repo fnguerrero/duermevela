@@ -565,21 +565,45 @@ var Anomalias = (function () {
     },
 
     /* Los cráteres se acomodan como una cara que está por decir algo. */
-    luna: function (cx, fx, fy, E, t, v) {
+    luna: function (cx, fx, fy, E, t, v, extra, W, H, belX) {
       /* Los crateres se acomodan y sugieren una cara — pero NO una sonrisa.
          Con la boca curva quedaba un emoji, y el texto dice "una cara que esta
          por decir algo y todavia busca por donde empezar": eso es una boca
          entreabierta y despareja, no contenta. */
       var a = entra(v);
+
+      /* Y la cara se gira hacia ella. El texto termina en "se queda
+         mirandome", y hasta ahora la cara miraba al frente: decia una cosa y
+         mostraba otra.
+
+         Girar una cara en un dibujo plano son dos movimientos juntos, y con
+         uno solo no se lee: los rasgos se corren hacia el lado al que mira, y
+         ademas se juntan entre si, porque de perfil la cara ocupa menos ancho.
+         Solo corridos parece que se le desacomodo la cara; solo juntos, que se
+         achico. Los dos a la vez es un giro.
+
+         Tarda en llegar —el giro va con `a` al cuadrado— porque el parrafo
+         dice que busca por donde empezar. Primero aparece la cara y despues
+         encuentra a quien mirar. */
+      var lado = (belX === undefined) ? 0
+        : Math.max(-1, Math.min(1, (belX - fx) / (E * 1.5)));
+      var gira = lado * a * a;
+
       cx.save();
       cx.globalAlpha = a * .8;
       cx.fillStyle = 'rgba(116,120,146,.5)';
-      // Dos ojos, a distinta altura: la asimetria es lo que la vuelve una cara
-      // y no un dibujo.
-      [[-.30, -.22, .105], [.28, -.16, .085]].forEach(function (o) {
+      cx.translate(fx + E * .085 * gira, fy);
+      cx.scale(1 - Math.abs(gira) * .16, 1);
+      cx.translate(-fx, -fy);
+      /* Dos ojos, a distinta altura: la asimetria es lo que la vuelve una cara
+         y no un dibujo. El del lado hacia el que mira se agranda un poco y el
+         otro se achica, que es lo que pasa cuando una cara se gira. */
+      [[-.30, -.22, .105], [.28, -.16, .085]].forEach(function (o, i) {
+        var suyo = (i === 0 ? -1 : 1);
+        var cerca = 1 + gira * suyo * .16;
         var x = fx + E * o[0] * (1 + (1 - a) * .9);
         var y = fy + E * o[1] * (1 + (1 - a) * .9);
-        cx.beginPath(); cx.arc(x, y, E * o[2], 0, 6.2832); cx.fill();
+        cx.beginPath(); cx.arc(x, y, E * o[2] * cerca, 0, 6.2832); cx.fill();
       });
       // La boca: entreabierta, casi recta, corrida del centro.
       var abre = E * (.035 + .006 * Math.sin(t * 1.3)) * a;

@@ -69,7 +69,7 @@ var Bel = (function () {
     /* El gesto entra en algo mas de medio segundo y sale mas lento: apurarse
        en soltarlo se lee como que se arrepintio. */
     var meta = b.gesto ? 1 : 0;
-    if (b.gestoU < meta) b.gestoU = Math.min(1, b.gestoU + dt * 1.7);
+    if (b.gestoU < meta) b.gestoU = Math.min(1, b.gestoU + dt * 1.05);
     else if (b.gestoU > meta) b.gestoU = Math.max(0, b.gestoU - dt * 1.1);
     // Lo que la empuja o la asombra vuelve a cero solo, con distinta inercia:
     // el golpe pasa rapido, la impresion tarda.

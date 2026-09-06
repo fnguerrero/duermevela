@@ -1441,7 +1441,14 @@
        marca se corre, y Bel se acomoda unos pasos en vez de saltar. */
     var falta = J.belMeta - J.belX;
     if (Math.abs(falta) > .004) {
-      var paso2 = Math.min(Math.abs(falta), dt * .13);
+      /* Menos de la mitad de rapido cuando la mueve un gesto.
+
+         El .13 es para reacomodarse cuando la figura cambia de tamaño y la
+         marca se corre: ahi conviene que resuelva rapido y sin hacerse notar.
+         Pero acercarse a algo para asomarse o para abrazarlo es una decision
+         suya, y a esa velocidad parecia que la empujaban. */
+      var velCamina = bel.gesto ? .052 : .13;
+      var paso2 = Math.min(Math.abs(falta), dt * velCamina);
       J.belX += paso2 * (falta > 0 ? 1 : -1);
       J.andando = true;
       bel.vx = falta > 0 ? 60 : -60;
@@ -1854,7 +1861,10 @@
        de abajo la sigue frenando en el borde de la figura, asi que llega
        pegada y no encima. */
     if (bel.gesto === 'abraza' || bel.gesto === 'asoma') {
-      cerca += (bel.gestoU || 0) * .55;
+      /* Con una curva suave y no derecha: asi arranca despacio, agarra ritmo
+         en el medio y llega frenando. Lineal, el primer paso salia de golpe. */
+      var gu = bel.gestoU || 0;
+      cerca += gu * gu * (3 - 2 * gu) * .55;
     }
     /* El tope de la derecha la deja pegada al borde de la figura, para que no
        se le suba encima. Abrazar es la excepcion: el tronco esta en el medio

@@ -99,6 +99,8 @@ llegada ancla el lugar a algo de ella. Ahí el juego se vuelve genérico.
 - [x] N2 · Se acerca a la figura con cada indicio · verif: hasta un 13% del ancho al final del recorrido
 - [x] N3 · En abrazar llega hasta el tronco, que es la única excepción al tope que la mantiene fuera de la figura · verif: la lámina la muestra tocándolo
 - [x] N4 · Los gestos y la caminata entran completos en modo captura, donde dt es 0 · verif: las cuatro láminas los muestran hechos
+- [x] N5 · Camina más despacio cuando la mueve un gesto, y con curva suave · verif: de .13 a .052 del ancho por segundo
+- [x] N6 · La luna gira la cara hacia ella, que es lo que el texto ya decía · verif: rasgos corridos y juntados, con el ojo de su lado más grande
 
 ## D · Cierre
 
