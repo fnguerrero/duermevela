@@ -123,6 +123,8 @@ llegada ancla el lugar a algo de ella. Ahí el juego se vuelve genérico.
 
 - [x] Q1 · Las tres reglas de la portada se contradecían sobre quién está adentro del sueño · verif: ahora las tres dicen que ella vive y vos mirás
 - [x] Q2 · Prender el sonido guardaba la preferencia de silencio · verif: prender guarda 0, apagar 1, prender otra vez 0
+- [x] Q3 · REGRESIÓN mía: al mover la frase de la carta al arranque, nada limpiaba el texto anterior · verif: partida entera con 8 indicios y 0 errores
+- [x] Q4 · El árbol más alto y más ancho, con copa de hojas y no de resplandor · verif: 18 masas desenfocadas al 7,5% del radio
 
 ## D · Cierre
 

@@ -953,9 +953,9 @@ var Pintores = (function () {
          cuanto se le NOTA. Quieto y apagado mientras nada pasa; respirando y
          encendido cuando ella se queda mirando, que es lo que el texto dice
          que ve. */
-      var alt = E * (1.42 + respira * .045 * ar);
-      var gordo = E * (.155 + respira * .006 * ar);   // medio tronco
-      var abre = E * .62;
+      var alt = E * (1.78 + respira * .05 * ar);
+      var gordo = E * (.205 + respira * .007 * ar);   // medio tronco
+      var abre = E * .78;
       cx.save();
 
       /* La luz que da, que late con la respiracion y no con el corazon. Con
@@ -1015,18 +1015,44 @@ var Pintores = (function () {
              '248,228,180', .10 + ar * (.18 + respira * .22));
       }
 
-      /* La copa: verde propio y no un resplandor crema. Es lo unico vivo del
-         cuadro y tiene que verse vivo. Respira con el resto. */
-      var copaR = abre * (1.22 + respira * .06);
-      var copa = cx.createRadialGradient(0, cy - alt * .92, copaR * .1,
-                                         0, cy - alt * .92, copaR);
-      copa.addColorStop(0, 'rgba(120,168,116,' + (.30 + respira * .10 * ar).toFixed(3) + ')');
-      copa.addColorStop(.55, 'rgba(84,132,96,' + (.18 + respira * .07 * ar).toFixed(3) + ')');
-      copa.addColorStop(1, 'rgba(70,112,88,0)');
-      cx.fillStyle = copa;
-      cx.beginPath();
-      cx.ellipse(0, cy - alt * .92, copaR, copaR * .78, 0, 0, 6.2832);
-      cx.fill();
+      /* La copa: masas de hojas y no un resplandor.
+
+         Era un solo degradado radial verde, o sea una nube: se leia como luz
+         de color y no como follaje. Ahora son dieciocho manchas de distinto
+         tamaño repartidas en un ovalo, desenfocadas, que se tapan entre si —
+         el borde irregular que sale de eso es lo unico que hace que un verde
+         se lea como hojas. Van oscuras a proposito, del lado del indigo del
+         cielo, para que la copa no termine en un canto sino que se disuelva
+         hacia arriba: un arbol de noche no tiene contorno. */
+      var copaY = cy - alt * .92;
+      var copaR = abre * (1.45 + respira * .06);
+      cx.save();
+      if (typeof cx.filter === 'string') {
+        /* Poco desenfoque: con .16 las dieciocho manchas se fundian en una
+           sola nube verde pareja y se perdia el borde irregular, que es lo
+           unico que hace que un verde se lea como hojas. */
+        cx.filter = 'blur(' + (copaR * .075).toFixed(1) + 'px)';
+      }
+      var rndC = sembrado(41);
+      for (var hj = 0; hj < 18; hj++) {
+        var ah = rndC() * 6.2832;
+        var dh = Math.pow(rndC(), .62) * copaR * .74;
+        var hx = Math.cos(ah) * dh;
+        var hy = copaY + Math.sin(ah) * dh * .60 - copaR * .06;
+        var hr = copaR * (.24 + rndC() * .24);
+        /* Mas claras abajo y en el medio, mas oscuras arriba y en los bordes:
+           es donde daria la luz de las puntas si la copa tuviera volumen. */
+        var cerca = 1 - Math.min(1, dh / (copaR * .74));
+        var vr = Math.round(40 + cerca * 34 + rndC() * 10);
+        var vg = Math.round(66 + cerca * 52 + rndC() * 14);
+        var vb = Math.round(56 + cerca * 24);
+        cx.fillStyle = 'rgba(' + vr + ',' + vg + ',' + vb + ',' +
+                       (.30 + cerca * .26 + respira * .05 * ar).toFixed(3) + ')';
+        cx.beginPath();
+        cx.ellipse(hx, hy, hr, hr * .82, ah, 0, 6.2832);
+        cx.fill();
+      }
+      cx.restore();
 
       /* Y las raices, que lo terminan de plantar. Cortas y cayendo: salieron
          primero largas y casi horizontales y parecian una barra clavada de

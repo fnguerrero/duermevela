@@ -893,6 +893,17 @@
     J.avanzarPaso = function () {
       if (yaAvanzo) return;
       yaAvanzo = true;
+      /* El texto se va con el lugar que lo dijo.
+
+         Antes esto lo hacia solo: al cerrar el paso se decia la frase de la
+         carta y esa frase REEMPLAZABA lo que hubiera en el panel. Al mover la
+         frase al arranque de la mutacion —para que se entienda, que era el
+         otro arreglo— nada quedo reemplazando: el parrafo de lo que escondia
+         el lugar viejo se quedaba puesto mientras el paso avanzaba y el
+         rotulo cambiaba, y en pantalla quedaban el nombre de un lugar y el
+         texto de otro. Es la misma mezcla que ya habia pasado antes por otra
+         causa. */
+      elRelato.classList.remove('ver');
       /* Normalmente el bucle de dibujo ya lo movio, apenas termino la
          mutacion. Pero el bucle puede no correr — una pestana en segundo
          plano no recibe frames — y el estado del juego no puede depender de
