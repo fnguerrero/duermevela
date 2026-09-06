@@ -726,7 +726,7 @@ var Guion = (function () {
 
       'Si llegaste hasta acá, significa que terminaste el juego. Espero que te haya gustado jajaja.',
 
-      'Simplemente quería hacer algo distinto para alguien que, de una forma u otra, sigue siendo muy importante para mí.',
+      'Simplemente quería hacer algo distinto para alguien que sigue siendo muy importante para mí.',
 
       'Pasaron muchas cosas desde que nos conocimos. Algunas fueron hermosas, otras fueron bastante difíciles. Nos acercamos, nos alejamos y, de alguna manera, siempre terminamos volviéndonos a encontrar.',
 
