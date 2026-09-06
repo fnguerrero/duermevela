@@ -1,6 +1,6 @@
 # Informe — tanda 8: lo que quedó abierto
 
-Catorce iteraciones, #221 a #234, sobre un presupuesto de 40.
+Diecinueve iteraciones, #221 a #239, sobre un presupuesto de 40.
 
 ## Qué se hizo
 
@@ -42,6 +42,9 @@ casi negra sobre el vidrio encendido, el máximo contraste de toda la pantalla.
 | El faro, menos obvio | el pico deriva 5° durante la revelación y ya no cae en ella |
 | La luz sobre ella | estable entre 20,5 y 23,3 — no se clava ni parpadea |
 | La silueta | contraste de 190 a 66; sigue midiendo 34.140 px de cambio |
+| El haz, difuso | 0 quiebres de pendiente en el corte, contra 210 con capas |
+| El haz, amplio | 31 grados de ancho; brillo sobre ella de 7,9 a 2,8 veces el fondo |
+| El desenfoque | 0,09 ms por cuadro |
 | Consola | sin errores |
 | `dist/el-segundo-de-mas.html` | 449,8 KB, abre solo, juega y audita en verde |
 

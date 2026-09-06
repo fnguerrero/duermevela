@@ -38,6 +38,12 @@ llegada ancla el lugar a algo de ella. Ahí el juego se vuelve genérico.
 - [x] F1 · Que no sea tan obvio que la está iluminando a ella · verif: medir cuánto del brillo cae sobre ella contra cuánto cae alrededor
 - [x] F2 · Que no sea tan obvio que hay alguien adentro del faro · verif: medir el contraste de la silueta contra la linterna
 
+## G · El faro difuso (segunda vuelta de Nico)
+
+- [x] G1 · El haz más amplio, no más angosto: cerrarlo fue el error de la vuelta anterior · verif: 31 grados de ancho angular
+- [x] G2 · Difuso de verdad, sin las bandas de las capas · verif: 0 quiebres de pendiente en el corte transversal, contra 210
+- [x] G3 · Adentro de la linterna no está todo encendido: lámpara y penumbra, no un bloque blanco · verif: el faro sin revelar sigue leyéndose prendido
+
 ## D · Cierre
 
 - [x] D1 · `auditarTodo()` en verde · verif: todos los sub-resultados ok

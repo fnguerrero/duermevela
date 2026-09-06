@@ -3892,28 +3892,52 @@ var Pintores = (function () {
        asi que va al reves cuando apunta para el otro lado. */
     /* Y el eje del cono no le cae encima: pasa unos grados mas alla, asi ella
        queda en el flanco de la luz y no en el medio. Que el maximo del haz
-       coincida exacto con donde esta parada es lo que lo hacia obvio. */
+       coincida exacto con donde esta parada es lo que lo hacia obvio.
+
+       Nueve grados y no cinco, ahora que el cono se abrio a casi treinta:
+       corrido de a poco, un haz ancho vuelve a tener el maximo justo encima
+       suyo y el corrimiento no se nota. Lo que hace falta correrlo depende de
+       lo ancho que sea. */
     var inclBel = m > 0
-      ? Math.atan2(bel.dy * dirBel, bel.dx * dirBel) + .085 * dirBel : 0;
+      ? Math.atan2(bel.dy * dirBel, bel.dx * dirBel) + .157 * dirBel : 0;
     /* Un tercio mas largo que la distancia hasta ella: asi el haz no termina
        en un borde recto justo encima suyo, sino que la pasa apagandose. Lo que
        la alcanza es la parte del cono que todavia tiene cuerpo. */
     var largoBel = m > 0 ? Math.sqrt(bel.dx * bel.dx + bel.dy * bel.dy) * 1.34 : 0;
+    /* Donde termina cada uno de los dos haces despues del frenado. Se saca
+       aca afuera porque no lo usa solo el haz: la linterna necesita saber si
+       la luz viene hacia el que mira o se esta yendo para el otro lado. */
+    function anguloDe(d) {
+      var a = giro + d * Math.PI;
+      if (m > 0) {
+        var falta = (angPara + d * Math.PI) - a;
+        a += Math.atan2(Math.sin(falta), Math.cos(falta)) * q;
+      }
+      return a;
+    }
+    var deFrente = Math.max(0, Math.cos(anguloDe(0)), Math.cos(anguloDe(1)));
+
     // Dos haces opuestos que barren. De cada uno solo se ve la parte que
-    // apunta hacia adelante. Van en tres capas concentricas, de la mas ancha y
-    // tenue a la mas fina y brillante: eso es lo que le da el borde blando.
+    // apunta hacia adelante. Van en cuatro capas concentricas, de la mas ancha
+    // y tenue a la mas fina y brillante: eso le da el borde blando.
     cx.save();
     cx.globalCompositeOperation = 'lighter';
+    /* Y un desenfoque de verdad sobre el haz.
+
+       Cada capa es un trapecio de borde recto, y apilarlas deja escalones: en
+       un corte transversal se contaban 210 quiebres de pendiente, que en
+       pantalla son las bandas que se ven en la parte tenue. Difuminarlo
+       sumando capas es aproximar un degradado con escalones cada vez mas
+       finos; con el filtro no hay escalones que aproximar. Va aca adentro del
+       save, asi que no toca nada mas de la figura. */
+    var borroso = typeof cx.filter === 'string';
+    if (borroso) cx.filter = 'blur(' + (E * .05).toFixed(1) + 'px)';
     if (m > 0) { cx.translate(0, -E * .57); cx.rotate(inclBel * q); cx.translate(0, E * .57); }
     for (var d = 0; d < 2; d++) {
-      var ang = giro + d * Math.PI;
       /* Frenar no es congelar de golpe: el haz sigue viniendo de donde venia y
          se va quedando. Por el camino corto, para que no pegue la vuelta
          entera para llegar a un angulo que tenia al lado. */
-      if (m > 0) {
-        var falta = (angPara + d * Math.PI) - ang;
-        ang += Math.atan2(Math.sin(falta), Math.cos(falta)) * q;
-      }
+      var ang = anguloDe(d);
       var frente = Math.cos(ang);
       if (frente <= .05) continue;
       var lado = Math.sin(ang);
@@ -3921,19 +3945,28 @@ var Pintores = (function () {
       var y0 = -E * .57;
       var largo = E * 2.6 * (1 - m) + E * largoBel * m;
 
-      for (var capa = 0; capa < 3; capa++) {
-        var k = 1 - capa * .34;              // 1, .66, .32
+      /* Cuatro capas, que con el desenfoque puesto alcanzan y sobran. Fueron
+         ocho mientras el degradado transversal habia que fabricarlo apilando
+         escalones; ahora las capas solo dan el nucleo mas vivo en el medio, y
+         el borde blando lo hace el filtro. Cuatro fills borrosos por cuadro en
+         vez de ocho. */
+      for (var capa = 0; capa < 4; capa++) {
+        var k = 1 - capa * .23;              // de 1 a .31
         /* Y sin subirle el brillo al frenar. Con `lighter` cualquier subida
            se va a blanco, y un haz que ademas de quedarse se enciende da dos
            veces la misma noticia. */
-        var fuerza = (.10 + capa * .09) * frente;
-        /* Se cierra un poco, no mucho: cerrado del todo se lee como un
-           reflector que apunta. Ancho y quieto se lee como luz que quedo ahi,
-           que es lo que tiene que parecer. */
-        var altoFin = E * (.30 + Math.abs(lado) * .45) * k * (1 - m * .20);
+        var fuerza = (.052 + capa * .052) * frente;
+        /* Y al frenar se ABRE, no se cierra. Cerrarlo fue el error de la
+           vuelta anterior: un cono angosto es un reflector que apunta, y
+           apuntar era justo lo que habia que dejar de hacer. Abierto, la luz
+           no señala un punto — baña un pedazo de campo, y ella esta adentro
+           de ese pedazo. */
+        var altoFin = E * (.34 + Math.abs(lado) * .52) * k * (1 + m * .62);
         var g = cx.createLinearGradient(0, y0, largo * dir, y0);
         g.addColorStop(0, 'rgba(255,244,212,' + (fuerza * 1.7).toFixed(3) + ')');
+        g.addColorStop(.18, 'rgba(255,240,200,' + (fuerza * .92).toFixed(3) + ')');
         g.addColorStop(.35, 'rgba(255,236,190,' + (fuerza * .55).toFixed(3) + ')');
+        g.addColorStop(.58, 'rgba(255,234,186,' + (fuerza * .27).toFixed(3) + ')');
         // Muere antes del borde: un haz cortado por el marco no parece luz.
         // Muere antes del borde: un haz cortado por el marco no parece luz.
         // Frenado se apaga igual, solo que un poco mas tarde, porque lo que
@@ -3978,16 +4011,44 @@ var Pintores = (function () {
     // Balcon.
     cx.fillStyle = '#2e2838';
     cx.fillRect(-E * .25, -E * .46, E * .50, E * .06);
-    // Linterna.
-    var lin = cx.createLinearGradient(0, -E * .72, 0, -E * .42);
-    lin.addColorStop(0, 'rgba(255,248,220,.98)');
-    lin.addColorStop(1, 'rgba(255,208,126,.88)');
-    cx.fillStyle = lin;
-    cx.fillRect(-E * .17, -E * .72, E * .34, E * .28);
+    /* Linterna. Adentro no esta todo encendido.
+
+       Era un rectangulo de relleno casi blanco y parejo, de lado a lado, y eso
+       tiene dos problemas. Uno: un faro no es una caja de luz, es una lampara
+       adentro de una caja de vidrio, y lo que se ve son las dos cosas — el
+       nucleo brillante y el resto en penumbra. Dos: cualquier cosa que se
+       dibuje ahi adentro queda recortada contra el blanco mas fuerte de toda
+       la pantalla, que es exactamente lo que hacia que la silueta se leyera de
+       una en vez de entreverse. */
+    var lx0 = -E * .17, ly0 = -E * .72, lw = E * .34, lh = E * .28;
+    // El interior en sombra, que es el estado por defecto de adentro de algo.
+    cx.fillStyle = 'rgba(30,24,40,.95)';
+    cx.fillRect(lx0, ly0, lw, lh);
+    /* Y la lampara: un nucleo arriba, no el vidrio entero. Va arriba a
+       proposito — abajo esta el piso de la linterna, que es donde se para
+       cualquiera que este ahi, y esa mitad tiene que quedar en penumbra. */
+    cx.save();
+    cx.beginPath(); cx.rect(lx0, ly0, lw, lh); cx.clip();
+    var nucleo = cx.createRadialGradient(0, ly0 + lh * .34, 0,
+                                         0, ly0 + lh * .34, lh * .95);
+    /* Cuanto se la ve encendida depende de si el haz viene hacia el que mira
+       o se esta yendo: de frente enciende, de perfil baja. Pero baja, no se
+       apaga — la lampara de un faro esta prendida siempre, lo que cambia es
+       cuanta luz te llega. Con el piso en .34 el faro sin revelar quedaba
+       marron y muerto la mitad del tiempo, porque de perfil `deFrente` cae a
+       .08. Lo que separa la silueta del fondo no es esto: es que el nucleo
+       este arriba y ella abajo. */
+    var vivo = .60 + .40 * deFrente;
+    nucleo.addColorStop(0, 'rgba(255,250,226,' + (.96 * vivo).toFixed(3) + ')');
+    nucleo.addColorStop(.42, 'rgba(255,226,164,' + (.62 * vivo).toFixed(3) + ')');
+    nucleo.addColorStop(1, 'rgba(255,196,110,0)');
+    cx.fillStyle = nucleo;
+    cx.fillRect(lx0, ly0, lw, lh);
+    cx.restore();
     cx.strokeStyle = '#2e2838';
     cx.lineWidth = E * .016;
-    cx.strokeRect(-E * .17, -E * .72, E * .34, E * .28);
-    halo(cx, 0, -E * .58, E * .60, '255,232,170', .65);
+    cx.strokeRect(lx0, ly0, lw, lh);
+    halo(cx, 0, -E * .58, E * .60, '255,232,170', .42 + .30 * deFrente);
     // Cupula.
     cx.fillStyle = '#2e2838';
     cx.beginPath();
