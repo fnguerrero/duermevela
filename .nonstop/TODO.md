@@ -116,7 +116,8 @@ llegada ancla el lugar a algo de ella. Ahí el juego se vuelve genérico.
 - [x] P1 · Las ventanas de la anomalía de la casa estaban en ±.17E y las reales en -.46E y +.30E · verif: 100% pegada, y ahora se ve el marco encendido con el vidrio apagado
 - [x] P2 · Las naves: del 22% al 9% de los eventos, la mitad de tamaño y desenfocadas · verif: de .017 a .0095 del lado corto
 - [x] P4 · La raya de luz de la persiana, dibujada en el cierre · verif: aparece a los 5,5 s, cuando el texto la nombra
-- [ ] P3 · PENDIENTE: 13 de las 14 frases de carta tienen el sujeto oculto — hablan del lugar que se está yendo y no lo nombran. Nico preguntó por tres distintas
+- [x] P3 · Las frases de carta se dicen durante la transformación, con el sujeto todavía en pantalla · verif: partida entera con 8 pasos y 0 errores
+- [x] P5 · El sobre dejaba ver la escena de atrás entre que se iba y llegaba la carta · verif: el peor momento del cruce deja 2% de fondo
 
 ## D · Cierre
 

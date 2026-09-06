@@ -9507,8 +9507,21 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     if (elCarta) elCarta.classList.add('elegida');
     elMano.classList.add('fuera');
     medirMano();
-    elRelato.classList.remove('ver');
     actualizarRestan();
+
+    /* Lo que hizo la carta se dice AHORA, mientras el lugar se esta
+       transformando, y no cuando la transformacion termino.
+
+       Las catorce frases hablan del lugar que se va —"se encendio", "le
+       crecio una vela", "dio la vuelta entera"— y ninguna lo nombra, porque
+       la misma frase sirve saliendo de cualquier lado. Dichas al final, el
+       sujeto ya no estaba en pantalla: uno leia "se encendio" mirando una
+       casa que acababa de aparecer, y no habia con que atar ese "se". Nico
+       pregunto por tres distintas en una sola partida.
+
+       Dichas aca, la montaña rusa todavia se esta volviendo casa y el sujeto
+       esta a la vista. No se toco ni una palabra de las catorce. */
+    decir(c.accion);
 
     Audio2.golpe(c.tono === 'sombra' ? 3 : 0);
     Audio2.transformar(c.tono);
@@ -9578,10 +9591,13 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     J.seguirPaso = function () {
       if (yaSiguio) return;
       yaSiguio = true;
-      decir(c.accion, function () {
-        // decir() ya espero lo que se tarda en leerlo; esto es el respiro.
+      /* La frase de la carta ya se dijo al arrancar la mutacion, asi que aca
+         solo queda esperar. Antes se decia en este punto y hacia dos cosas
+         mal: llegaba con el sujeto ya fuera de pantalla, y ademas empujaba el
+         texto del indicio —que se acababa de leer— antes de tiempo. */
+      pedirSeguir(function () {
         luego(1100, J.avanzarPaso);
-      });
+      }, tiempoDeLectura(c.accion) * .45);
     };
 
     /* El texto entra cuando la transformacion ya se ve — salvo que se haya
@@ -9793,12 +9809,22 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
       f.textContent = c.firma;
       hoja.appendChild(f);
     }
-    elSobre.classList.remove('ver');
+    /* Primero entra la carta y DESPUES se saca el sobre, no al reves.
+
+       Estaba escrito al reves: se sacaba el sobre y la carta llegaba 900 ms
+       mas tarde. Como las dos capas se desvanecen —el sobre en 1,6 s y la
+       carta en 1,8— en ese hueco ninguna de las dos estaba entera y las dos
+       son casi opacas: por el medio se veia la escena del juego que quedo
+       abajo. Nico lo vio y pregunto si volver a la cama antes de abrir la
+       carta era a proposito. No lo era: era un agujero.
+
+       La carta esta en la capa de arriba, asi que entrando primero tapa al
+       sobre mientras el sobre sigue entero. Cuando el sobre se va, ya no lo
+       ve nadie. */
     Audio2.volteo();
-    luego(900, function () {
-      elCarta.classList.add('ver');
-      elCarta.scrollTop = 0;
-    });
+    elCarta.classList.add('ver');
+    elCarta.scrollTop = 0;
+    luego(1900, function () { elSobre.classList.remove('ver'); });
   }
 
   if (btnAbrir) btnAbrir.addEventListener('click', abrirCarta);
