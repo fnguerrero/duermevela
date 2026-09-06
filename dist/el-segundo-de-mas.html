@@ -581,6 +581,38 @@
     background:radial-gradient(ellipse at 50% 40%,rgba(26,22,46,.95),rgba(4,5,12,1));
     opacity:0;pointer-events:none;transition:opacity 2s;z-index:7}
   #cierre.ver{opacity:1;pointer-events:auto}
+  /* La raya de luz de la persiana, que es lo ultimo que ella mira.
+
+     El texto termina en "me quede mirando la raya de luz de la persiana un
+     rato largo" y la pantalla estaba vacia: el final nombraba una imagen y no
+     la mostraba, que es el mismo problema que tenian los gestos de Bel.
+
+     Va con `::before` y no con un elemento, para no tocar el HTML que arma el
+     codigo parrafo por parrafo. Es una franja inclinada, mas ancha en el medio
+     y muerta en las puntas, cruzando el cuadro de arriba a la izquierda hacia
+     abajo a la derecha: asi entra la luz por una persiana a las cuatro y
+     monedas, en diagonal y sin llegar a ningun lado.
+
+     Y llega TARDE — cinco segundos y medio — porque en el texto llega al
+     final: aparece justo cuando ella dice que se queda mirandola. */
+  #cierre::before{content:"";position:absolute;inset:0;pointer-events:none;
+    opacity:0;transition:opacity 3.4s 5.5s;
+    background:linear-gradient(102deg,
+      rgba(255,236,190,0) 41%,
+      rgba(255,238,196,.028) 46%,
+      rgba(255,242,206,.075) 50%,
+      rgba(255,238,196,.028) 54%,
+      rgba(255,236,190,0) 59%)}
+  #cierre.ver::before{opacity:1}
+  /* Y una segunda raya, mucho mas tenue y apenas corrida: una persiana deja
+     mas de una linea, y con una sola se lee como un reflejo en la pantalla. */
+  #cierre::after{content:"";position:absolute;inset:0;pointer-events:none;
+    opacity:0;transition:opacity 3.4s 6.2s;
+    background:linear-gradient(102deg,
+      rgba(255,236,190,0) 60%,
+      rgba(255,240,200,.022) 64%,
+      rgba(255,236,190,0) 68%)}
+  #cierre.ver::after{opacity:1}
   #cierre p{max-width:56ch;text-align:center;font-size:clamp(18px,2.4vw,23px);
     line-height:1.65;font-weight:300;margin:0;color:rgba(236,230,216,.92);
     opacity:0;transform:translateY(10px);
