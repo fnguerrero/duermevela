@@ -2065,8 +2065,16 @@
   var LLAVE_SILENCIO = 'elsegundo.silencio';
   var LLAVE_VOLUMEN = 'elsegundo.volumen';
 
-  function recordarSonido() {
-    try { localStorage.setItem(LLAVE_SILENCIO, Audio2.activo() ? '0' : '1'); }
+  /* Recibe lo que la accion QUISO hacer, no lo que el audio contesta.
+
+     Preguntaba `Audio2.activo()` justo despues de prender, y `activo()` mira
+     `ac.state === 'running'` — pero arrancar el contexto es asincrono, asi que
+     en ese instante todavia dice 'suspended' y contesta que no. Resultado: al
+     prender el sonido con el boton se guardaba que el jugador queria SILENCIO,
+     y la partida siguiente arrancaba muda. Habia que volver a tocar el icono
+     cada vez, y cada vez se volvia a guardar mal. */
+  function recordarSonido(quiereSonido) {
+    try { localStorage.setItem(LLAVE_SILENCIO, quiereSonido ? '0' : '1'); }
     catch (e) { /* sin almacenamiento: se juega igual */ }
   }
   function preferenciaEsSilencio() {
@@ -2081,9 +2089,10 @@
   }
 
   elSonido.addEventListener('click', function () {
-    Audio2.alternar();
+    // `alternar` devuelve si quedo prendido, que es lo que hay que recordar.
+    var prendido = Audio2.alternar();
     pintarSonido();
-    recordarSonido();
+    recordarSonido(prendido);
   });
 
   var elVol = document.getElementById('vol');

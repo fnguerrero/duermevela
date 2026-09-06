@@ -119,6 +119,11 @@ llegada ancla el lugar a algo de ella. Ahí el juego se vuelve genérico.
 - [x] P3 · Las frases de carta se dicen durante la transformación, con el sujeto todavía en pantalla · verif: partida entera con 8 pasos y 0 errores
 - [x] P5 · El sobre dejaba ver la escena de atrás entre que se iba y llegaba la carta · verif: el peor momento del cruce deja 2% de fondo
 
+## Q · Las personas y el sonido
+
+- [x] Q1 · Las tres reglas de la portada se contradecían sobre quién está adentro del sueño · verif: ahora las tres dicen que ella vive y vos mirás
+- [x] Q2 · Prender el sonido guardaba la preferencia de silencio · verif: prender guarda 0, apagar 1, prender otra vez 0
+
 ## D · Cierre
 
 - [x] D1 · `auditarTodo()` en verde · verif: 10 de 10, con `tramos` incluido
