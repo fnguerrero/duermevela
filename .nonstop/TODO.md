@@ -1,37 +1,39 @@
-# TODO — tanda 7: lo que esconden dos lugares, y lo que salió al jugarlo
+# TODO — tanda 8: lo que quedó abierto
 
-Dos ideas de Nico sobre las anomalías. No son arreglos: es contenido nuevo.
-El TODO de la tanda 6 queda archivado en tanda6/.
+Lo que Nico dejó señalado y no se resolvió, más los dos cabos sueltos que
+anoté yo. El TODO de la tanda 7 queda archivado en tanda7/.
 
 Estados: `[ ]` pendiente · `[~]` en curso · `[x]` hecho y verificado · `[!]` bloqueado
 
-## A · El faro
+## A · El faro: una sola luz
 
-- [x] A1 · Alguien arriba, adentro de la linterna: una silueta de mujer, lejos, quieta, mirando para abajo. Sin saludo — una silueta que saluda es alguien que la conoce · verif: se lee entera en el juego real y en 375x812, y no tiene cara
-- [x] A2 · Bel sonríe apenas, y en el faro — y solo ahí — no cierra los ojos · verif: medido cuánto cambia la sonrisa en pantalla, y dicho en el código
+Nico: "son como dos haz de luz diferente, uno el que le da a Bel todo el
+tiempo y otro el que gira constantemente". Y son dos de verdad: el pintor
+barre su haz y la anomalía dibuja un cono aparte encima. Mismo error de
+familia que las vías y el platillo — el efecto tiene que hacerlo la figura.
 
-## B · La calesita
+- [x] A1 · El haz del pintor frena y se inclina hasta ella, en vez de que la anomalía dibuje un segundo cono · verif: contar cuántos conos claros salen de la linterna en el cuadro revelado — tiene que ser uno
+- [x] A2 · La anomalía se queda solo con lo que no es luz: el charco en el piso y la silueta · verif: verificarAnomalias() y verificarUbicacion() siguen en verde para el faro
 
-- [x] B1 · Se despega un dedo del piso y sigue girando, con las luces del borde dando toda la vuelta para el mismo lado. NO se convierte en platillo: transformar es lo que hacen las cartas · verif: la anomalía sube de 1.696 a 10.749 píxeles
-- [x] B2 · La frase de la música se muda al texto de llegada, y el indicio del cierre pasa a ser "La calesita que no tocaba el piso" · verif: verificarTextos() en verde
+## B · Los cinco lugares sin recuerdo
 
-## D · Lo que salió mirándolo jugar
+Cinco de los catorce lugares no dicen de qué recuerdo salen: el agua, la
+luna, la puerta, la ruina y los pájaros. En los otros nueve el texto de
+llegada ancla el lugar a algo de ella. Ahí el juego se vuelve genérico.
 
-- [x] D1 · La nave no aparece en los dos primeros lugares: al principio todo tiene que poder pasar por raro pero terrestre · verif: 300 sorteos, 0 naves en los pasos 0 y 1, 23% después
-- [x] D2 · Se va el cartel de "LO VISTE". De lo que apareció sale una luz que viaja hasta el marcador, y recién al llegar se enciende la bolita y late el contador · verif: al acertar el aviso queda vacío y el marcador toma la clase `suma`
-- [x] D3 · La guía sale de la caja y se va al pie, en versalitas y sin borde. Con cartas repartidas se queda arriba de ellas · verif: medida su caja abajo y con cartas
-- [x] D4 · El icono de seguir era un sobre — y el sobre es el objeto del final. Pasa a ser un chevron de contorno · verif: transform en matrix(.707,.707,-.707,.707), o sea rotado de verdad
-- [x] D5 · Y un solo cartel al seguir de largo, igual que al acertar: la primera vez dice también cómo se hace, la segunda solo que había algo, después se calla · verif: una partida sin mirar muestra un único aviso
-- [x] D6 · Dos `@keyframes latir` distintos en la misma hoja, y el del marcador le borraba la rotación al chevron · verif: cada animación con su nombre
+- [x] B1 · Relevar cuáles son y qué dice hoy cada uno · verif: listado con el texto actual de los cinco
+- [x] B2 · Escribir el anclaje de los cinco, sin nombrar a nadie · verif: verificarTextos() en verde y ninguno nombra la pérdida
 
-## C · Cierre
+## C · La portada
 
-- [x] C1 · `auditarTodo()` en verde · verif: todos los sub-resultados ok
-- [x] C2 · Reempaquetar `dist/` · verif: el `.html` suelto abre y juega
+- [x] C1 · El botón ENTRAR es lo único que quedó con forma de botón de formulario · verif: sin borde de caja, y sigue siendo pulsable con el dedo en 375x812
 
-## Los laboratorios
+## E · Lo que salió verificando (no estaba previsto)
 
-`test/faro.html` y `test/calesita.html` quedan puestos: muestran el ciclo de
-mirada del juego y guardan láminas. El de la calesita conserva las tres
-variantes que se compararon — la de hoy, la que se despega y la del platillo —
-para que se vea por qué se eligió la del medio.
+- [x] E1 · El bloque de texto se ancla por el pie: con el texto de volver, que es la mitad de corto, quedaba un tercio de pantalla vacío y el chevron flotando · verif: llegada y vuelta dan el mismo hueco en los 14 lugares
+- [x] E2 · `verificarCelular()` medía un texto u otro según cuántas veces la habías corrido, así que encontraba el caso malo por azar. Mide los dos · verif: 28 mediciones en vez de 14
+
+## D · Cierre
+
+- [x] D1 · `auditarTodo()` en verde · verif: todos los sub-resultados ok
+- [x] D2 · Reempaquetar `dist/` · verif: el `.html` suelto abre y juega

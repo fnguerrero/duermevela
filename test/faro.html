@@ -64,7 +64,11 @@
     g.addColorStop(1, '#0d0b1c');
     cx.fillStyle = g;
     cx.fillRect(0, 0, W, H);
-    Pintores.pintar(cx, 'faro', fx, fy, E, t, { alPiso: E, tension: 0 });
+    /* El haz que frena es el del pintor, asi que el lugar tiene que saber
+       cuanto esta revelado y donde esta ella. */
+    Pintores.pintar(cx, 'faro', fx, fy, E, t, { alPiso: E, tension: 0, mira: v,
+      haciaBel: { dx: (belX - fx) / E,
+                  dy: ((piso - E * .5) - (fy - E * .57)) / E } });
     var s = cx.createLinearGradient(0, piso, 0, H);
     s.addColorStop(0, 'rgba(7,5,16,0)');
     s.addColorStop(.60, 'rgba(6,4,14,.72)');

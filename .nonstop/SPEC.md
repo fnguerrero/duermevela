@@ -43,7 +43,8 @@ juego, publicar o commitear.
 2. Partida completa sin errores en consola, con la batería en verde.
 3. Ningún desborde ni colisión de layout en 390x760, 1395x920 y 1532x783.
 4. Toda mejora marcada `[x]` tiene su verificación registrada en la bitácora.
-5. `dist/el-instante.html` se abre solo y juega completo.
+5. `dist/el-segundo-de-mas.html` se abre solo y juega completo.
+   (Se llamaba `el-instante.html` cuando se escribio esta spec.)
 6. Cero regresiones: los criterios de la tanda 2 siguen pasando (cama solo al
    final, La Muerte fuera de la primera mano, recorridos variados, 4 finales).
 

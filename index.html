@@ -79,10 +79,20 @@
     0%,100%{text-shadow:0 0 40px rgba(220,178,108,.20)}
     50%{text-shadow:0 0 74px rgba(226,180,110,.42)}
   }
-  #empezar{animation:latido 3.4s ease-in-out infinite}
-  @keyframes latido{
-    0%,100%{box-shadow:0 0 0 0 rgba(220,178,108,0)}
-    50%{box-shadow:0 0 26px 2px rgba(220,178,108,.20)}
+  /* El latido era un box-shadow, y un resplandor asi dibuja el RECTANGULO del
+     elemento. Con la caja puesta se leia como el borde encendiendose; sin la
+     caja, el resplandor quedo siendo lo unico que la dibujaba, y volvia a
+     verse el boton de formulario que se acababa de sacar. Ahora late lo que
+     hay de verdad: la palabra y la linea de abajo. */
+  #empezar{animation:respiraEntrar 3.4s ease-in-out infinite}
+  @keyframes respiraEntrar{
+    0%,100%{text-shadow:0 0 0 rgba(220,178,108,0)}
+    50%{text-shadow:0 0 22px rgba(226,180,110,.55)}
+  }
+  #portada .boton::after{animation:respiraLinea 3.4s ease-in-out infinite}
+  @keyframes respiraLinea{
+    0%,100%{opacity:.55}
+    50%{opacity:1}
   }
   /* La bajada estaba pegada a las reglas y competia con ellas: mismo cuerpo,
      mismo ancho. Ahora respira arriba y abajo, y es lo unico en italica. */
@@ -124,7 +134,21 @@
     #cartaPortada{display:none}
   }
 
-  #portada .boton{margin-top:1.6em}
+  /* El de la portada es el unico boton que se ve antes de que el juego
+     empiece, y con su caja de borde entero era lo unico ahi adentro con forma
+     de formulario: todo lo demas —el titulo, la bajada, las tres reglas— es
+     texto suelto con aire. Le queda la palabra en oro y una linea fina que se
+     apaga en las puntas, que es el mismo trazo que lleva el indicio al mirar.
+     La caja se va del dibujo, no del dedo: el relleno queda igual, asi que el
+     area para tocar sigue midiendo lo mismo en el celular. */
+  #portada .boton{margin-top:1.9em;border:0;border-radius:0;padding:14px 30px;
+    position:relative;background:transparent}
+  #portada .boton::after{content:'';position:absolute;left:30px;right:30px;
+    bottom:8px;height:1px;transition:opacity .4s;opacity:.85;
+    background:linear-gradient(90deg,rgba(220,178,108,0),
+      rgba(220,178,108,.6) 22%,rgba(220,178,108,.6) 78%,rgba(220,178,108,0))}
+  #portada .boton:hover{background:transparent;color:#f6e2ba}
+  #portada .boton:hover::after{opacity:1}
   .boton{pointer-events:auto;font-family:inherit;font-size:17px;letter-spacing:.20em;
     touch-action:manipulation;-webkit-tap-highlight-color:transparent;
     text-transform:uppercase;color:var(--oro);background:transparent;cursor:pointer;
@@ -590,7 +614,15 @@
        de nada en el medio de la pantalla, y arriba en cambio no habia
        mas que el marcador. Bajarlo reparte ese aire y de paso lo deja
        cerca de la escena que esta contando. */
-    #arriba{top:clamp(112px,15.5vh,140px);width:96vw;gap:7px}
+    /* Y ademas se ancla por el PIE. Bajarlo con un `top` fijo alcanza para
+       el texto largo, pero cada lugar tiene dos textos y el de volver es la
+       mitad de corto a proposito: el bloque media entre 132 y 225 pixeles y
+       esos 93 de diferencia caian todos como vacio abajo, con el chevron
+       flotando en el medio de la nada. Con una altura minima y el contenido
+       apoyado abajo, el pie del texto —y con el la accion— queda siempre a la
+       misma altura, escriba lo que escriba. */
+    #arriba{top:clamp(112px,15.5vh,140px);width:96vw;gap:7px;
+      min-height:min(28vh,238px);justify-content:flex-end}
     #relato{font-size:clamp(16px,4.2vw,19px);padding:11px 22px 13px}
     #aviso{font-size:clamp(11px,3vw,13px);letter-spacing:.10em;padding:6px 11px}
     /* El rotulo baja debajo del marcador. Arriba no entran los dos: en celular

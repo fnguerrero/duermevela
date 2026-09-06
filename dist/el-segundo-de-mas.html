@@ -79,10 +79,20 @@
     0%,100%{text-shadow:0 0 40px rgba(220,178,108,.20)}
     50%{text-shadow:0 0 74px rgba(226,180,110,.42)}
   }
-  #empezar{animation:latido 3.4s ease-in-out infinite}
-  @keyframes latido{
-    0%,100%{box-shadow:0 0 0 0 rgba(220,178,108,0)}
-    50%{box-shadow:0 0 26px 2px rgba(220,178,108,.20)}
+  /* El latido era un box-shadow, y un resplandor asi dibuja el RECTANGULO del
+     elemento. Con la caja puesta se leia como el borde encendiendose; sin la
+     caja, el resplandor quedo siendo lo unico que la dibujaba, y volvia a
+     verse el boton de formulario que se acababa de sacar. Ahora late lo que
+     hay de verdad: la palabra y la linea de abajo. */
+  #empezar{animation:respiraEntrar 3.4s ease-in-out infinite}
+  @keyframes respiraEntrar{
+    0%,100%{text-shadow:0 0 0 rgba(220,178,108,0)}
+    50%{text-shadow:0 0 22px rgba(226,180,110,.55)}
+  }
+  #portada .boton::after{animation:respiraLinea 3.4s ease-in-out infinite}
+  @keyframes respiraLinea{
+    0%,100%{opacity:.55}
+    50%{opacity:1}
   }
   /* La bajada estaba pegada a las reglas y competia con ellas: mismo cuerpo,
      mismo ancho. Ahora respira arriba y abajo, y es lo unico en italica. */
@@ -124,7 +134,21 @@
     #cartaPortada{display:none}
   }
 
-  #portada .boton{margin-top:1.6em}
+  /* El de la portada es el unico boton que se ve antes de que el juego
+     empiece, y con su caja de borde entero era lo unico ahi adentro con forma
+     de formulario: todo lo demas —el titulo, la bajada, las tres reglas— es
+     texto suelto con aire. Le queda la palabra en oro y una linea fina que se
+     apaga en las puntas, que es el mismo trazo que lleva el indicio al mirar.
+     La caja se va del dibujo, no del dedo: el relleno queda igual, asi que el
+     area para tocar sigue midiendo lo mismo en el celular. */
+  #portada .boton{margin-top:1.9em;border:0;border-radius:0;padding:14px 30px;
+    position:relative;background:transparent}
+  #portada .boton::after{content:'';position:absolute;left:30px;right:30px;
+    bottom:8px;height:1px;transition:opacity .4s;opacity:.85;
+    background:linear-gradient(90deg,rgba(220,178,108,0),
+      rgba(220,178,108,.6) 22%,rgba(220,178,108,.6) 78%,rgba(220,178,108,0))}
+  #portada .boton:hover{background:transparent;color:#f6e2ba}
+  #portada .boton:hover::after{opacity:1}
   .boton{pointer-events:auto;font-family:inherit;font-size:17px;letter-spacing:.20em;
     touch-action:manipulation;-webkit-tap-highlight-color:transparent;
     text-transform:uppercase;color:var(--oro);background:transparent;cursor:pointer;
@@ -590,7 +614,15 @@
        de nada en el medio de la pantalla, y arriba en cambio no habia
        mas que el marcador. Bajarlo reparte ese aire y de paso lo deja
        cerca de la escena que esta contando. */
-    #arriba{top:clamp(112px,15.5vh,140px);width:96vw;gap:7px}
+    /* Y ademas se ancla por el PIE. Bajarlo con un `top` fijo alcanza para
+       el texto largo, pero cada lugar tiene dos textos y el de volver es la
+       mitad de corto a proposito: el bloque media entre 132 y 225 pixeles y
+       esos 93 de diferencia caian todos como vacio abajo, con el chevron
+       flotando en el medio de la nada. Con una altura minima y el contenido
+       apoyado abajo, el pie del texto —y con el la accion— queda siempre a la
+       misma altura, escriba lo que escriba. */
+    #arriba{top:clamp(112px,15.5vh,140px);width:96vw;gap:7px;
+      min-height:min(28vh,238px);justify-content:flex-end}
     #relato{font-size:clamp(16px,4.2vw,19px);padding:11px 22px 13px}
     #aviso{font-size:clamp(11px,3vw,13px);letter-spacing:.10em;padding:6px 11px}
     /* El rotulo baja debajo del marcador. Arriba no entran los dos: en celular
@@ -3819,31 +3851,77 @@ var Pintores = (function () {
   }
 
   /* ============ el faro ============ */
-  function faro(cx, E, t) {
+  /* `mira` va de 0 a 1 y es lo que este lugar esconde: el haz deja de barrer
+     el campo y se queda quieto encima de ella.
+
+     Va aca, y no en la anomalia, por la misma razon que las vias y el
+     platillo. Antes la anomalia dibujaba su propio cono desde la linterna
+     hasta Bel, y ese cono convivia con el haz que seguia girando: en pantalla
+     se veian DOS luces distintas saliendo del mismo farol, una fija y una que
+     pasaba de largo. Un faro tiene una lampara. Frenar un haz es frenarlo, no
+     dibujar otro al lado que este quieto.
+
+     `bel` es {dx, dy} en unidades de E, medido desde donde nace el haz: el
+     pintor no sabe donde esta ella, se lo dice el motor, que es el unico que
+     conoce el cuadro entero. */
+  function faro(cx, E, t, mira, bel) {
+    var m = Math.max(0, Math.min(1, mira || 0));
+    if (!bel) m = 0;
     var giro = t * .55;
+    /* El angulo del barrido en el que el haz sale para el lado de ella. No es
+       el angulo hacia ella —ese es la inclinacion, mas abajo— sino en que
+       punto de la vuelta se lo frena: de .60 de frente y .80 de lado, que es
+       donde el haz esta abierto y todavia brilla. Mas de perfil se apagaria. */
+    var dirBel = m > 0 && bel.dx < 0 ? -1 : 1;
+    var angPara = Math.atan2(dirBel * .80, .60);
+    /* Y la inclinacion: cuanto hay que bajar el haz, que sale horizontal, para
+       que toque el piso donde esta ella. Medida desde el eje del propio haz,
+       asi que va al reves cuando apunta para el otro lado. */
+    var inclBel = m > 0 ? Math.atan2(bel.dy * dirBel, bel.dx * dirBel) : 0;
+    /* Un tercio mas largo que la distancia hasta ella: asi el haz no termina
+       en un borde recto justo encima suyo, sino que la pasa apagandose. Lo que
+       la alcanza es la parte del cono que todavia tiene cuerpo. */
+    var largoBel = m > 0 ? Math.sqrt(bel.dx * bel.dx + bel.dy * bel.dy) * 1.30 : 0;
     // Dos haces opuestos que barren. De cada uno solo se ve la parte que
     // apunta hacia adelante. Van en tres capas concentricas, de la mas ancha y
     // tenue a la mas fina y brillante: eso es lo que le da el borde blando.
     cx.save();
     cx.globalCompositeOperation = 'lighter';
+    if (m > 0) { cx.translate(0, -E * .57); cx.rotate(inclBel * m); cx.translate(0, E * .57); }
     for (var d = 0; d < 2; d++) {
       var ang = giro + d * Math.PI;
+      /* Frenar no es congelar de golpe: el haz sigue viniendo de donde venia y
+         se va quedando. Por el camino corto, para que no pegue la vuelta
+         entera para llegar a un angulo que tenia al lado. */
+      if (m > 0) {
+        var falta = (angPara + d * Math.PI) - ang;
+        ang += Math.atan2(Math.sin(falta), Math.cos(falta)) * m;
+      }
       var frente = Math.cos(ang);
       if (frente <= .05) continue;
       var lado = Math.sin(ang);
       var dir = lado >= 0 ? 1 : -1;
       var y0 = -E * .57;
-      var largo = E * 2.6;
+      var largo = E * 2.6 * (1 - m) + E * largoBel * m;
 
       for (var capa = 0; capa < 3; capa++) {
         var k = 1 - capa * .34;              // 1, .66, .32
-        var fuerza = (.10 + capa * .09) * frente;
-        var altoFin = E * (.30 + Math.abs(lado) * .45) * k;
+        /* Apenas mas fuerte al frenar, no mucho: con `lighter` cualquier
+           subida se va a blanco, y un haz blanco y macizo deja de ser luz para
+           ser un bloque gris pegado encima. */
+        var fuerza = (.10 + capa * .09) * frente * (1 + m * .18);
+        /* Al frenar se cierra: un haz que va a buscar a alguien apunta, y
+           apuntar es abrirse menos. Ademas a esta distancia el abanico de
+           antes le pasaba por encima a media escena. */
+        var altoFin = E * (.30 + Math.abs(lado) * .45) * k * (1 - m * .45);
         var g = cx.createLinearGradient(0, y0, largo * dir, y0);
         g.addColorStop(0, 'rgba(255,244,212,' + (fuerza * 1.7).toFixed(3) + ')');
         g.addColorStop(.35, 'rgba(255,236,190,' + (fuerza * .55).toFixed(3) + ')');
         // Muere antes del borde: un haz cortado por el marco no parece luz.
-        g.addColorStop(.8, 'rgba(255,232,182,' + (fuerza * .08).toFixed(3) + ')');
+        // Muere antes del borde: un haz cortado por el marco no parece luz.
+        // Frenado se apaga igual, solo que un poco mas tarde, porque lo que
+        // tiene que alcanzar —ella— esta antes de que el cono se acabe.
+        g.addColorStop(.8, 'rgba(255,232,182,' + (fuerza * (.08 + m * .16)).toFixed(3) + ')');
         g.addColorStop(1, 'rgba(255,230,180,0)');
         cx.fillStyle = g;
         cx.beginPath();
@@ -4158,6 +4236,7 @@ var Pintores = (function () {
     if (clave === 'montania') montania(cx, E, t, extra.perfil, extra.corte);
     else if (clave === 'platillo') platillo(cx, E, t, extra.alPiso, extra.apaga);
     else if (clave === 'bandada') bandada(cx, E, t, extra.sincro);
+    else if (clave === 'faro') faro(cx, E, t, extra.mira, extra.haciaBel);
     else if (PINTORES[clave]) PINTORES[clave](cx, E, t);
     cx.restore();
   }
@@ -4433,26 +4512,19 @@ var Anomalias = (function () {
       cx.restore();
     },
 
-    /* El haz frena sobre ella. Deja de barrer y se queda. */
+    /* El haz frena sobre ella. Deja de barrer y se queda.
+
+       Frenarlo lo hace el PINTOR —`mira` en pintores.js— porque el faro tiene
+       una sola lampara. Aca estaba dibujado un segundo cono, fijo, desde la
+       linterna hasta ella, mientras el del pintor seguia dando la vuelta: dos
+       luces saliendo del mismo farol, que es justo lo que Nico vio. Lo que
+       queda aca es lo que NO es el haz: donde la luz apoya, y quien la manda. */
     faro: function (cx, fx, fy, E, t, v, extra, W, H, belX, piso) {
       var a = entra(v);
       if (belX === undefined) return;
-      var ox = fx - E * .04, oy = fy - E * .62;
-      var dx = belX - ox, dy = (piso - E * .5) - oy;
-      var largo = Math.sqrt(dx * dx + dy * dy) * 1.15;
-      var ang = Math.atan2(dy, dx);
-      var abre = .13;
+      var ox = fx - E * .04;
       cx.save();
       cx.globalAlpha = a;
-      var g = cx.createRadialGradient(ox, oy, 0, ox, oy, Math.max(1, largo));
-      g.addColorStop(0, 'rgba(255,244,214,.30)');
-      g.addColorStop(.7, 'rgba(255,240,200,.10)');
-      g.addColorStop(1, 'rgba(255,240,200,0)');
-      cx.fillStyle = g;
-      cx.beginPath();
-      cx.moveTo(ox, oy);
-      cx.arc(ox, oy, largo, ang - abre, ang + abre);
-      cx.closePath(); cx.fill();
       // La quietud: el haz no tiembla, late apenas.
       halo(cx, belX, piso - E * .30, E * (.34 + .04 * Math.sin(t * 1.4)), '255,240,205', .13 * a);
       cx.restore();
@@ -6943,7 +7015,8 @@ var Guion = (function () {
       nombre: 'El platillo',
       llegada: 'Una cosa enorme, quieta en el aire, con una luz que baja hasta ' +
                'el pasto. No hace ruido, y nada que pese tanto se queda quieto ' +
-               'sin hacer ruido. Igual ahí está, esperando.',
+               'sin hacer ruido. Me paro justo afuera del borde de la luz, sin ' +
+               'meterme. Igual ahí está, esperando.',
       vuelta: 'Volvió. Está en el mismo lugar exacto del aire, como si nunca ' +
               'se hubiera ido.',
       esconde: 'No vino a llevarme. Vino a decirme algo y no sabe cómo, así que ' +
@@ -6969,9 +7042,10 @@ var Guion = (function () {
     },
     laguna: {
       nombre: 'El agua',
-      llegada: 'Un agua quieta con una luz adentro. Arriba no hay nada que ' +
-               'pueda estar haciendo esa luz: ni farol, ni luna en ese lado del ' +
-               'cielo. La luz sale del agua, no cae sobre ella.',
+      llegada: 'Un agua quieta con una luz adentro. Busco arriba qué la hace y ' +
+               'no encuentro nada: ni un farol, ni la luna, que esta noche anda ' +
+               'por el otro lado del cielo. La luz sale del agua, no cae sobre ' +
+               'ella.',
       vuelta: 'El agua de nuevo. El reflejo sigue ahí, todavía sin nada arriba ' +
               'que lo explique, y a esta altura ya dejé de buscarle el origen.',
       esconde: 'Me asomo y el agua no me copia. Devuelve la orilla, los juncos, ' +
@@ -7076,10 +7150,10 @@ var Guion = (function () {
     },
     bandada: {
       nombre: 'Los pájaros',
-      llegada: 'Un montón de pájaros cruzando, todos para el mismo lado. No se ' +
-               'acaban nunca: hace rato que cruzan y siguen viniendo desde atrás ' +
-               'del cielo, como si alguien los estuviera soltando de a puñados y ' +
-               'no se cansara.',
+      llegada: 'Un montón de pájaros cruzando, todos para el mismo lado. Los ' +
+               'sigo con la cabeza y no se acaban nunca: hace rato que cruzan y ' +
+               'siguen viniendo desde atrás del cielo, como si alguien los ' +
+               'estuviera soltando de a puñados y no se cansara.',
       vuelta: 'Los pájaros otra vez, cruzando para el mismo lado. Puede que ' +
               'sean los mismos dando la vuelta, y puede que la vuelta sea ' +
               'cortita.',
@@ -9043,7 +9117,15 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
                      se dibuja. */
                   corte: J.lugar === 'montania' ? J.revelando : 0,
                   // Y la luz del platillo se apaga de verdad, no se tapa.
-                  apaga: J.lugar === 'platillo' ? J.revelando : 0 };
+                  apaga: J.lugar === 'platillo' ? J.revelando : 0,
+                  /* Y el faro tiene UNA lampara: el haz que barre es el mismo
+                     que se queda encima de ella. Antes la anomalia dibujaba un
+                     segundo cono fijo mientras el primero seguia girando, y se
+                     veian dos luces. El pintor no sabe donde esta Bel, asi que
+                     se le pasa en unidades de E desde donde nace el haz. */
+                  mira: J.lugar === 'faro' ? J.revelando : 0,
+                  haciaBel: { dx: (W * J.belX - fx) / E,
+                              dy: ((piso - E * .5) - (fy - E * .57)) / E } };
     var u = J.u;
 
     // Halo propio: cada figura tine el aire que la rodea con su color.
@@ -9762,6 +9844,17 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
 
      Usa el buffer del canvas y no su tamano en pantalla: con la pestana oculta
      el segundo es cero y la prueba mide sobre la nada. */
+  /* El `extra` de un lugar completamente revelado. Lo usan los dos
+     verificadores que miden que se ve al descubrir algo: varias revelaciones
+     ya no las dibuja la anomalia sino la figura, asi que hay que pedirle a la
+     figura que este revelada o se mide de menos. */
+  function revelado(fx, fy, E, belX, piso) {
+    return { alPiso: E, tension: 0, perfil: Figuras.perfilMontania(),
+             sincro: 1, corte: 1, apaga: 1, mira: 1,
+             haciaBel: { dx: (belX - fx) / E,
+                         dy: ((piso - E * .5) - (fy - E * .57)) / E } };
+  }
+
   window.verificarAnomalias = function () {
     var cv2 = document.createElement('canvas');
     var W = 1100, H = 700;
@@ -9813,9 +9906,7 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
       c2.fillStyle = '#0b0917';
       c2.fillRect(0, 0, W, H);
       c2.save();
-      Pintores.pintar(c2, k, fx, fy, E, 3, { alPiso: E, tension: 0,
-                                             perfil: Figuras.perfilMontania(),
-                                             sincro: 1, corte: 1, apaga: 1 });
+      Pintores.pintar(c2, k, fx, fy, E, 3, revelado(fx, fy, E, belX, piso));
       c2.restore();
       Anomalias.pintar(c2, k, fx, fy, E, 3, 1, {}, W, H, belX, piso);
       var cambio = cuantosCambiaron(antes, foto());
@@ -9904,6 +9995,13 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
       var conFigura = c2.getImageData(0, 0, W, H).data;
       var gorda = engordar(siluetaDe(conFigura, null), radio);
 
+      /* Y lo que se mide es todo lo que aparece al revelar, no solo lo que
+         dibuja la anomalia: el haz del faro que frena, la luz del platillo que
+         baja y las vias que se deshacen las hace la FIGURA. Midiendo la
+         anomalia sola, el faro daba el charco en el piso y nada mas — un
+         puntito lejos del faro, sin nada que lo uniera a el. */
+      fondo();
+      Pintores.pintar(c2, k, fx, fy, E, 3, revelado(fx, fy, E, belX, piso));
       Anomalias.pintar(c2, k, fx, fy, E, 3, 1, {}, W, H, belX, piso);
       var conAnomalia = c2.getImageData(0, 0, W, H).data;
       var cambio = siluetaDe(conAnomalia, conFigura);
@@ -10403,13 +10501,31 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
           }
         }
         /* El hueco entre el pie del relato y lo mas alto de la figura. Con un
-           texto de dos renglones quedaba media pantalla vacia en el medio. */
+           texto de dos renglones quedaba media pantalla vacia en el medio.
+
+           Se miden los DOS textos del lugar, no el que este puesto. Cada lugar
+           tiene el de llegar y el de volver, y el de volver es a proposito la
+           mitad de corto; como `irA` muestra uno u otro segun si el lugar ya
+           fue visitado, esta verificacion daba numeros distintos en la primera
+           corrida y en la segunda, y encontraba el caso malo solo por azar.
+           Una verificacion que depende de cuantas veces la corriste puede dar
+           verde por no haber mirado. */
         if (relato && f) {
-          var hueco = f.techo - relato.bottom;
-          tabla.push({ lugar: k, hueco: Math.round(hueco) });
-          if (hueco > window.innerHeight * .30) {
-            huecos.push({ lugar: k, px: Math.round(hueco) });
-          }
+          var textos = Guion.LUGARES[k] || {};
+          var puesto = document.getElementById('relato').textContent;
+          [textos.llegada, textos.vuelta].forEach(function (txt, n) {
+            if (!txt) return;
+            document.getElementById('relato').textContent = txt;
+            var caja2 = document.getElementById('relato').getBoundingClientRect();
+            var h = f.techo - caja2.bottom;
+            tabla.push({ lugar: k, texto: n ? 'vuelta' : 'llegada',
+                         hueco: Math.round(h) });
+            if (h > window.innerHeight * .30) {
+              huecos.push({ lugar: k, texto: n ? 'vuelta' : 'llegada',
+                            px: Math.round(h) });
+            }
+          });
+          document.getElementById('relato').textContent = puesto;
         }
         return unLugar(i + 1);
       });

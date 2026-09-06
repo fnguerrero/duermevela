@@ -167,7 +167,8 @@ var Guion = (function () {
       nombre: 'El platillo',
       llegada: 'Una cosa enorme, quieta en el aire, con una luz que baja hasta ' +
                'el pasto. No hace ruido, y nada que pese tanto se queda quieto ' +
-               'sin hacer ruido. Igual ahí está, esperando.',
+               'sin hacer ruido. Me paro justo afuera del borde de la luz, sin ' +
+               'meterme. Igual ahí está, esperando.',
       vuelta: 'Volvió. Está en el mismo lugar exacto del aire, como si nunca ' +
               'se hubiera ido.',
       esconde: 'No vino a llevarme. Vino a decirme algo y no sabe cómo, así que ' +
@@ -193,9 +194,10 @@ var Guion = (function () {
     },
     laguna: {
       nombre: 'El agua',
-      llegada: 'Un agua quieta con una luz adentro. Arriba no hay nada que ' +
-               'pueda estar haciendo esa luz: ni farol, ni luna en ese lado del ' +
-               'cielo. La luz sale del agua, no cae sobre ella.',
+      llegada: 'Un agua quieta con una luz adentro. Busco arriba qué la hace y ' +
+               'no encuentro nada: ni un farol, ni la luna, que esta noche anda ' +
+               'por el otro lado del cielo. La luz sale del agua, no cae sobre ' +
+               'ella.',
       vuelta: 'El agua de nuevo. El reflejo sigue ahí, todavía sin nada arriba ' +
               'que lo explique, y a esta altura ya dejé de buscarle el origen.',
       esconde: 'Me asomo y el agua no me copia. Devuelve la orilla, los juncos, ' +
@@ -300,10 +302,10 @@ var Guion = (function () {
     },
     bandada: {
       nombre: 'Los pájaros',
-      llegada: 'Un montón de pájaros cruzando, todos para el mismo lado. No se ' +
-               'acaban nunca: hace rato que cruzan y siguen viniendo desde atrás ' +
-               'del cielo, como si alguien los estuviera soltando de a puñados y ' +
-               'no se cansara.',
+      llegada: 'Un montón de pájaros cruzando, todos para el mismo lado. Los ' +
+               'sigo con la cabeza y no se acaban nunca: hace rato que cruzan y ' +
+               'siguen viniendo desde atrás del cielo, como si alguien los ' +
+               'estuviera soltando de a puñados y no se cansara.',
       vuelta: 'Los pájaros otra vez, cruzando para el mismo lado. Puede que ' +
               'sean los mismos dando la vuelta, y puede que la vuelta sea ' +
               'cortita.',

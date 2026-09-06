@@ -262,26 +262,19 @@ var Anomalias = (function () {
       cx.restore();
     },
 
-    /* El haz frena sobre ella. Deja de barrer y se queda. */
+    /* El haz frena sobre ella. Deja de barrer y se queda.
+
+       Frenarlo lo hace el PINTOR —`mira` en pintores.js— porque el faro tiene
+       una sola lampara. Aca estaba dibujado un segundo cono, fijo, desde la
+       linterna hasta ella, mientras el del pintor seguia dando la vuelta: dos
+       luces saliendo del mismo farol, que es justo lo que Nico vio. Lo que
+       queda aca es lo que NO es el haz: donde la luz apoya, y quien la manda. */
     faro: function (cx, fx, fy, E, t, v, extra, W, H, belX, piso) {
       var a = entra(v);
       if (belX === undefined) return;
-      var ox = fx - E * .04, oy = fy - E * .62;
-      var dx = belX - ox, dy = (piso - E * .5) - oy;
-      var largo = Math.sqrt(dx * dx + dy * dy) * 1.15;
-      var ang = Math.atan2(dy, dx);
-      var abre = .13;
+      var ox = fx - E * .04;
       cx.save();
       cx.globalAlpha = a;
-      var g = cx.createRadialGradient(ox, oy, 0, ox, oy, Math.max(1, largo));
-      g.addColorStop(0, 'rgba(255,244,214,.30)');
-      g.addColorStop(.7, 'rgba(255,240,200,.10)');
-      g.addColorStop(1, 'rgba(255,240,200,0)');
-      cx.fillStyle = g;
-      cx.beginPath();
-      cx.moveTo(ox, oy);
-      cx.arc(ox, oy, largo, ang - abre, ang + abre);
-      cx.closePath(); cx.fill();
       // La quietud: el haz no tiembla, late apenas.
       halo(cx, belX, piso - E * .30, E * (.34 + .04 * Math.sin(t * 1.4)), '255,240,205', .13 * a);
       cx.restore();

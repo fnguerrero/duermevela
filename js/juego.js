@@ -1584,7 +1584,15 @@
                      se dibuja. */
                   corte: J.lugar === 'montania' ? J.revelando : 0,
                   // Y la luz del platillo se apaga de verdad, no se tapa.
-                  apaga: J.lugar === 'platillo' ? J.revelando : 0 };
+                  apaga: J.lugar === 'platillo' ? J.revelando : 0,
+                  /* Y el faro tiene UNA lampara: el haz que barre es el mismo
+                     que se queda encima de ella. Antes la anomalia dibujaba un
+                     segundo cono fijo mientras el primero seguia girando, y se
+                     veian dos luces. El pintor no sabe donde esta Bel, asi que
+                     se le pasa en unidades de E desde donde nace el haz. */
+                  mira: J.lugar === 'faro' ? J.revelando : 0,
+                  haciaBel: { dx: (W * J.belX - fx) / E,
+                              dy: ((piso - E * .5) - (fy - E * .57)) / E } };
     var u = J.u;
 
     // Halo propio: cada figura tine el aire que la rodea con su color.
@@ -2303,6 +2311,17 @@
 
      Usa el buffer del canvas y no su tamano en pantalla: con la pestana oculta
      el segundo es cero y la prueba mide sobre la nada. */
+  /* El `extra` de un lugar completamente revelado. Lo usan los dos
+     verificadores que miden que se ve al descubrir algo: varias revelaciones
+     ya no las dibuja la anomalia sino la figura, asi que hay que pedirle a la
+     figura que este revelada o se mide de menos. */
+  function revelado(fx, fy, E, belX, piso) {
+    return { alPiso: E, tension: 0, perfil: Figuras.perfilMontania(),
+             sincro: 1, corte: 1, apaga: 1, mira: 1,
+             haciaBel: { dx: (belX - fx) / E,
+                         dy: ((piso - E * .5) - (fy - E * .57)) / E } };
+  }
+
   window.verificarAnomalias = function () {
     var cv2 = document.createElement('canvas');
     var W = 1100, H = 700;
@@ -2354,9 +2373,7 @@
       c2.fillStyle = '#0b0917';
       c2.fillRect(0, 0, W, H);
       c2.save();
-      Pintores.pintar(c2, k, fx, fy, E, 3, { alPiso: E, tension: 0,
-                                             perfil: Figuras.perfilMontania(),
-                                             sincro: 1, corte: 1, apaga: 1 });
+      Pintores.pintar(c2, k, fx, fy, E, 3, revelado(fx, fy, E, belX, piso));
       c2.restore();
       Anomalias.pintar(c2, k, fx, fy, E, 3, 1, {}, W, H, belX, piso);
       var cambio = cuantosCambiaron(antes, foto());
@@ -2445,6 +2462,13 @@
       var conFigura = c2.getImageData(0, 0, W, H).data;
       var gorda = engordar(siluetaDe(conFigura, null), radio);
 
+      /* Y lo que se mide es todo lo que aparece al revelar, no solo lo que
+         dibuja la anomalia: el haz del faro que frena, la luz del platillo que
+         baja y las vias que se deshacen las hace la FIGURA. Midiendo la
+         anomalia sola, el faro daba el charco en el piso y nada mas — un
+         puntito lejos del faro, sin nada que lo uniera a el. */
+      fondo();
+      Pintores.pintar(c2, k, fx, fy, E, 3, revelado(fx, fy, E, belX, piso));
       Anomalias.pintar(c2, k, fx, fy, E, 3, 1, {}, W, H, belX, piso);
       var conAnomalia = c2.getImageData(0, 0, W, H).data;
       var cambio = siluetaDe(conAnomalia, conFigura);
@@ -2944,13 +2968,31 @@
           }
         }
         /* El hueco entre el pie del relato y lo mas alto de la figura. Con un
-           texto de dos renglones quedaba media pantalla vacia en el medio. */
+           texto de dos renglones quedaba media pantalla vacia en el medio.
+
+           Se miden los DOS textos del lugar, no el que este puesto. Cada lugar
+           tiene el de llegar y el de volver, y el de volver es a proposito la
+           mitad de corto; como `irA` muestra uno u otro segun si el lugar ya
+           fue visitado, esta verificacion daba numeros distintos en la primera
+           corrida y en la segunda, y encontraba el caso malo solo por azar.
+           Una verificacion que depende de cuantas veces la corriste puede dar
+           verde por no haber mirado. */
         if (relato && f) {
-          var hueco = f.techo - relato.bottom;
-          tabla.push({ lugar: k, hueco: Math.round(hueco) });
-          if (hueco > window.innerHeight * .30) {
-            huecos.push({ lugar: k, px: Math.round(hueco) });
-          }
+          var textos = Guion.LUGARES[k] || {};
+          var puesto = document.getElementById('relato').textContent;
+          [textos.llegada, textos.vuelta].forEach(function (txt, n) {
+            if (!txt) return;
+            document.getElementById('relato').textContent = txt;
+            var caja2 = document.getElementById('relato').getBoundingClientRect();
+            var h = f.techo - caja2.bottom;
+            tabla.push({ lugar: k, texto: n ? 'vuelta' : 'llegada',
+                         hueco: Math.round(h) });
+            if (h > window.innerHeight * .30) {
+              huecos.push({ lugar: k, texto: n ? 'vuelta' : 'llegada',
+                            px: Math.round(h) });
+            }
+          });
+          document.getElementById('relato').textContent = puesto;
         }
         return unLugar(i + 1);
       });

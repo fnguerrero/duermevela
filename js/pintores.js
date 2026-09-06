@@ -781,31 +781,77 @@ var Pintores = (function () {
   }
 
   /* ============ el faro ============ */
-  function faro(cx, E, t) {
+  /* `mira` va de 0 a 1 y es lo que este lugar esconde: el haz deja de barrer
+     el campo y se queda quieto encima de ella.
+
+     Va aca, y no en la anomalia, por la misma razon que las vias y el
+     platillo. Antes la anomalia dibujaba su propio cono desde la linterna
+     hasta Bel, y ese cono convivia con el haz que seguia girando: en pantalla
+     se veian DOS luces distintas saliendo del mismo farol, una fija y una que
+     pasaba de largo. Un faro tiene una lampara. Frenar un haz es frenarlo, no
+     dibujar otro al lado que este quieto.
+
+     `bel` es {dx, dy} en unidades de E, medido desde donde nace el haz: el
+     pintor no sabe donde esta ella, se lo dice el motor, que es el unico que
+     conoce el cuadro entero. */
+  function faro(cx, E, t, mira, bel) {
+    var m = Math.max(0, Math.min(1, mira || 0));
+    if (!bel) m = 0;
     var giro = t * .55;
+    /* El angulo del barrido en el que el haz sale para el lado de ella. No es
+       el angulo hacia ella —ese es la inclinacion, mas abajo— sino en que
+       punto de la vuelta se lo frena: de .60 de frente y .80 de lado, que es
+       donde el haz esta abierto y todavia brilla. Mas de perfil se apagaria. */
+    var dirBel = m > 0 && bel.dx < 0 ? -1 : 1;
+    var angPara = Math.atan2(dirBel * .80, .60);
+    /* Y la inclinacion: cuanto hay que bajar el haz, que sale horizontal, para
+       que toque el piso donde esta ella. Medida desde el eje del propio haz,
+       asi que va al reves cuando apunta para el otro lado. */
+    var inclBel = m > 0 ? Math.atan2(bel.dy * dirBel, bel.dx * dirBel) : 0;
+    /* Un tercio mas largo que la distancia hasta ella: asi el haz no termina
+       en un borde recto justo encima suyo, sino que la pasa apagandose. Lo que
+       la alcanza es la parte del cono que todavia tiene cuerpo. */
+    var largoBel = m > 0 ? Math.sqrt(bel.dx * bel.dx + bel.dy * bel.dy) * 1.30 : 0;
     // Dos haces opuestos que barren. De cada uno solo se ve la parte que
     // apunta hacia adelante. Van en tres capas concentricas, de la mas ancha y
     // tenue a la mas fina y brillante: eso es lo que le da el borde blando.
     cx.save();
     cx.globalCompositeOperation = 'lighter';
+    if (m > 0) { cx.translate(0, -E * .57); cx.rotate(inclBel * m); cx.translate(0, E * .57); }
     for (var d = 0; d < 2; d++) {
       var ang = giro + d * Math.PI;
+      /* Frenar no es congelar de golpe: el haz sigue viniendo de donde venia y
+         se va quedando. Por el camino corto, para que no pegue la vuelta
+         entera para llegar a un angulo que tenia al lado. */
+      if (m > 0) {
+        var falta = (angPara + d * Math.PI) - ang;
+        ang += Math.atan2(Math.sin(falta), Math.cos(falta)) * m;
+      }
       var frente = Math.cos(ang);
       if (frente <= .05) continue;
       var lado = Math.sin(ang);
       var dir = lado >= 0 ? 1 : -1;
       var y0 = -E * .57;
-      var largo = E * 2.6;
+      var largo = E * 2.6 * (1 - m) + E * largoBel * m;
 
       for (var capa = 0; capa < 3; capa++) {
         var k = 1 - capa * .34;              // 1, .66, .32
-        var fuerza = (.10 + capa * .09) * frente;
-        var altoFin = E * (.30 + Math.abs(lado) * .45) * k;
+        /* Apenas mas fuerte al frenar, no mucho: con `lighter` cualquier
+           subida se va a blanco, y un haz blanco y macizo deja de ser luz para
+           ser un bloque gris pegado encima. */
+        var fuerza = (.10 + capa * .09) * frente * (1 + m * .18);
+        /* Al frenar se cierra: un haz que va a buscar a alguien apunta, y
+           apuntar es abrirse menos. Ademas a esta distancia el abanico de
+           antes le pasaba por encima a media escena. */
+        var altoFin = E * (.30 + Math.abs(lado) * .45) * k * (1 - m * .45);
         var g = cx.createLinearGradient(0, y0, largo * dir, y0);
         g.addColorStop(0, 'rgba(255,244,212,' + (fuerza * 1.7).toFixed(3) + ')');
         g.addColorStop(.35, 'rgba(255,236,190,' + (fuerza * .55).toFixed(3) + ')');
         // Muere antes del borde: un haz cortado por el marco no parece luz.
-        g.addColorStop(.8, 'rgba(255,232,182,' + (fuerza * .08).toFixed(3) + ')');
+        // Muere antes del borde: un haz cortado por el marco no parece luz.
+        // Frenado se apaga igual, solo que un poco mas tarde, porque lo que
+        // tiene que alcanzar —ella— esta antes de que el cono se acabe.
+        g.addColorStop(.8, 'rgba(255,232,182,' + (fuerza * (.08 + m * .16)).toFixed(3) + ')');
         g.addColorStop(1, 'rgba(255,230,180,0)');
         cx.fillStyle = g;
         cx.beginPath();
@@ -1120,6 +1166,7 @@ var Pintores = (function () {
     if (clave === 'montania') montania(cx, E, t, extra.perfil, extra.corte);
     else if (clave === 'platillo') platillo(cx, E, t, extra.alPiso, extra.apaga);
     else if (clave === 'bandada') bandada(cx, E, t, extra.sincro);
+    else if (clave === 'faro') faro(cx, E, t, extra.mira, extra.haciaBel);
     else if (PINTORES[clave]) PINTORES[clave](cx, E, t);
     cx.restore();
   }
