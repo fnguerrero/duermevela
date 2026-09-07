@@ -372,21 +372,39 @@ var Guion = (function () {
     },
     ruina: {
       nombre: 'Lo que quedó',
-      /* Sin el reproche. Decia "y no puede ser que no haya escuchado", que ya
-         no es asombro sino culpa — el "como no me di cuenta". Es un
-         pensamiento real y por eso estaba, pero es el que menos ayuda y el que
-         igual se piensa solo: el juego no tiene por que reforzarlo. Lo que
-         queda es el desconcierto, que es lo mismo sin la acusacion. */
+      /* Este lugar es el dia en que paso.
+
+         Antes era otra cosa —"lo armaron ya roto", que no hay explicacion que
+         encontrar— y Nico no lo entendia. Tenia razon y el problema era el
+         texto: la metafora no tenia referente. Decia escombros pero nunca de
+         que, y la idea entera vivia en este comentario en vez de en la pagina.
+
+         Lo que hace legible un lugar de este juego es que haya algo suyo
+         adentro: la montaña rusa tiene una feria y un baldio, el arbol tiene el
+         pajaro. Aca no habia nada de ella, solo decorado.
+
+         El polvo que no baja se queda porque es lo mejor que tenia: es el
+         instante detenido, el mundo partido al medio y todavia sin asentarse.
+         Sin el reproche, ademas: "no puede ser que no haya escuchado" ya no es
+         asombro sino culpa, y ese pensamiento se piensa solo — el juego no
+         tiene por que reforzarlo. */
       llegada: 'Escombros. Se cayó algo grande y no hizo ruido, y eso es lo ' +
                'primero que no cierra. El polvo todavía está en el aire, ' +
-               'quieto, sin decidirse a bajar. Camino alrededor buscando de qué ' +
-               'era esto y no encuentro una sola pieza que me lo diga.',
+               'quieto, sin decidirse a bajar. Me quedo mirándolo: mientras no ' +
+               'baje, esto todavía está pasando.',
       vuelta: 'Otra vez los escombros. El polvo sigue sin bajar. Hace un rato ' +
               'larguísimo que sigue sin bajar, y ya me parece que no va a bajar ' +
               'nunca.',
-      esconde: 'Levanto un pedazo y abajo no hay tierra: hay más pedazos, y ' +
-               'abajo más. Esto no se cayó de ningún lado. Lo armaron ya roto, y ' +
-               'yo llegué después a buscarle una explicación que no tiene.',
+      /* El hallazgo es que no hay un momento.
+
+         Uno busca la linea —el instante exacto, el borde entre lo de antes y
+         lo de despues— y no esta en ningun lado. Del otro lado del corte uno
+         estaba haciendo cualquier cosa, sin saber. Eso es lo que de verdad
+         pasa, y es lo que el lugar tenia que decir desde el principio. */
+      esconde: 'Busco por dónde se partió: tiene que haber una línea, algo que ' +
+               'separe lo de antes de lo de después. No está. De un lado yo ' +
+               'estaba haciendo cualquier cosa, del otro ya era esto, y entre ' +
+               'las dos no hay nada. Ni un segundo.',
       // De los escombros, el tiempo: el arbol ya era el destino mas
       // frecuente del juego y el reloj no lo era de casi nadie.
       revela: 'reloj'
@@ -536,7 +554,7 @@ var Guion = (function () {
     reloj: 'Los números corridos de su hora',
     luna: 'La cara que armaban los cráteres',
     puerta: 'La puerta que volví a abrir sabiendo que no',
-    ruina: 'Los pedazos abajo de los pedazos',
+    ruina: 'El corte que no estaba en ningún lado',
     bandada: 'Los pájaros que se ordenaban cuando los miraba',
     barca: 'La soga atada a nada',
     /* La etiqueta va a la cita del cierre, asi que tampoco puede decirlo: si

@@ -673,37 +673,79 @@ var Anomalias = (function () {
 
     /* Abajo de los pedazos hay más pedazos. Se levanta uno y aparecen los de
        abajo, iguales, sin tierra en el fondo. */
+    /* La linea que ella busca, que no llega a ser una linea.
+
+       Antes esto dibujaba capas hundiendose —un pedazo levantado y abajo mas
+       pedazos, hasta perderse— porque el texto decia que no habia fondo. El
+       texto cambio: ahora ella busca por donde se partio esto, el borde entre
+       lo de antes y lo de despues, y el hallazgo es que ese borde no esta.
+       Un dibujo que ilustra el parrafo viejo es peor que ninguno: contradice
+       al que se esta leyendo.
+
+       Se dibuja el gesto de buscar. Un trazo fino recorre el monton de un lado
+       al otro y va apareciendo por tramos, con huecos entre uno y otro, y
+       ninguno se junta con el siguiente. Las puntas de cada tramo se encienden
+       —ahi es donde uno cree que encontro algo— y despues no sigue. Barre con
+       el tiempo: no es una figura puesta, es alguien pasando la mano. */
     ruina: function (cx, fx, fy, E, t, v) {
-      /* Se levanta un pedazo y abajo hay mas pedazos, y abajo mas. Se dibujan
-         las capas hundiendose: sin varias no se lee que no hay fondo. */
       var a = entra(v);
       cx.save();
       cx.lineCap = 'round';
-      // El pedazo levantado, en el aire.
-      cx.globalAlpha = a;
-      cx.strokeStyle = 'rgba(206,202,212,.95)';
-      cx.lineWidth = Math.max(1.6, E * .026);
-      cx.save();
-      cx.translate(fx - E * .30, fy - E * .10 - E * .34 * a);
-      cx.rotate(-.7 * a);
-      cx.beginPath(); cx.moveTo(-E * .15, 0); cx.lineTo(E * .15, 0); cx.stroke();
-      cx.restore();
-      // El hueco que dejo, y abajo mas de lo mismo hasta perderse.
-      cx.strokeStyle = 'rgba(150,148,162,.95)';
-      for (var i = 0; i < 6; i++) {
-        cx.globalAlpha = a * (.85 - i * .13);
-        cx.lineWidth = Math.max(1, E * (.022 - i * .002));
-        var y = fy + E * (.02 + i * .085);
-        var an = E * (.26 - i * .028);
+
+      /* A la altura del monton y no encima de el: con y0 en el centro de la
+         figura la linea quedaba flotando en el aire arriba de los escombros,
+         que es donde no hay nada que partir. */
+      var ancho = E * 1.02, y0 = fy + E * .72;
+      /* Cinco tramos con largos y huecos distintos: parejos se leerian como
+         una linea de puntos, que es justamente una linea. */
+      var TRAMOS = [[-1.00, -.62], [-.44, -.20], [-.02, .18], [.34, .52],
+                    [.70, .96]];
+      /* La mano barre de izquierda a derecha y vuelve. Cada tramo se enciende
+         cuando la barrida lo pasa por encima, asi que el trazo no esta: se va
+         haciendo. */
+      var barrido = Math.sin(t * .55) * 1.15;
+
+      for (var i = 0; i < TRAMOS.length; i++) {
+        var x1 = fx + ancho * TRAMOS[i][0], x2 = fx + ancho * TRAMOS[i][1];
+        var medio = (TRAMOS[i][0] + TRAMOS[i][1]) * .5;
+        /* Cuanto de encendido esta este tramo: maximo cuando la mano esta
+           encima, y se apaga a medida que se aleja. */
+        var cerca = Math.max(0, 1 - Math.abs(barrido - medio) * 1.0);
+        /* Con .16 de base los tramos que la mano no estaba tocando se perdian
+           entre las tablas —que son claras— y en pantalla se veia un solo
+           trazo suelto en vez de una linea cortada. La linea entera tiene que
+           leerse siempre: lo que cambia con la barrida es cual esta encendido,
+           no cuales existen. */
+        var brillo = a * (.38 + cerca * .58);
+        if (brillo < .02) continue;
+
+        /* La linea baja y sube un poco: sigue el terreno roto en vez de cruzar
+           derecha por encima, que se leeria como una regla apoyada. */
+        var yA = y0 + Math.sin(TRAMOS[i][0] * 4.1) * E * .055;
+        var yB = y0 + Math.sin(TRAMOS[i][1] * 4.1) * E * .055;
+        /* Con un reborde oscuro abajo. Las tablas del monton son claras y un
+           trazo blanco fino encima de ellas se confunde con el borde de una
+           tabla; el reborde lo despega y hace que se lea como una linea que
+           esta POR ENCIMA de todo esto, buscando. */
         cx.beginPath();
-        cx.moveTo(fx - E * .30 - an, y);
-        cx.lineTo(fx - E * .30 + an, y + E * .02);
+        cx.moveTo(x1, yA);
+        cx.quadraticCurveTo((x1 + x2) * .5, (yA + yB) * .5 - E * .03, x2, yB);
+        cx.globalAlpha = brillo * .75;
+        cx.strokeStyle = 'rgba(12,10,24,.9)';
+        cx.lineWidth = Math.max(2, E * .030);
         cx.stroke();
-        cx.beginPath();
-        cx.moveTo(fx - E * .30 - an * .5, y + E * .04);
-        cx.lineTo(fx - E * .30 + an * .8, y + E * .015);
+        cx.globalAlpha = brillo;
+        cx.strokeStyle = 'rgba(232,228,248,.98)';
+        cx.lineWidth = Math.max(1.4, E * .016);
         cx.stroke();
+
+        /* Las dos puntas encendidas: ahi es donde uno cree que encontro el
+           borde. Que sean las PUNTAS y no el medio es lo que hace que se lea
+           que la linea se corta, y no que esta desdibujada. */
+        halo(cx, x1, yA, E * .10, '255,240,210', .48 * brillo);
+        halo(cx, x2, yB, E * .10, '255,240,210', .48 * brillo);
       }
+
       cx.restore();
     },
 
