@@ -8908,6 +8908,10 @@ var Guion = (function () {
     return ' ' + claves.map(function (k) { return ETIQUETA[k] + '.'; }).join(' ');
   }
 
+  /* Las cuatro versiones arrancan con la MISMA frase, y por eso se cambian
+     juntas: "abri los ojos a la madrugada". Antes decia "a las cuatro y
+     monedas", que da la hora exacta del insomnio pero se lee como un dato; "a
+     la madrugada" es como se cuenta esto en voz alta. */
   function final(indicios, recorrido) {
     var n = indicios.length;
 
@@ -8915,7 +8919,7 @@ var Guion = (function () {
       return {
         titulo: 'Me desperté',
         partes: [
-          'Abrí los ojos a las cuatro y monedas. Mi cuarto, mi techo, la ' +
+          'Abrí los ojos a la madrugada. Mi cuarto, mi techo, la ' +
           'persiana con la misma raya de luz de siempre.',
           'No me quedó nada. Un campo, cosas grandes, la sensación de haber ' +
           'estado por entender algo y no haber llegado.',
@@ -8928,7 +8932,7 @@ var Guion = (function () {
       return {
         titulo: 'Me quedó algo',
         partes: [
-          'Abrí los ojos a las cuatro y monedas, con la cabeza en una cosa ' +
+          'Abrí los ojos a la madrugada, con la cabeza en una cosa ' +
           'suelta que había visto y no sabía dónde poner.',
           'No me acordaba de todo. Me acordaba de un detalle, nítido, de esos ' +
           'que quedan cuando lo demás se borra.',
@@ -8941,7 +8945,7 @@ var Guion = (function () {
       return {
         titulo: 'Até unos cabos',
         partes: [
-          'Abrí los ojos a las cuatro y monedas y me quedé quieta, juntando las ' +
+          'Abrí los ojos a la madrugada y me quedé quieta, juntando las ' +
           'piezas antes de que se me fueran.',
           'Nada de lo que había visto encajaba, y todas las cosas que no ' +
           'encajaban fallaban de la misma manera: se acomodaban cuando yo las ' +
@@ -8958,7 +8962,7 @@ var Guion = (function () {
            no dice QUE, y es la primera frase del final, donde hay que entender
            de una y no descifrar. Ademas adelantaba en clave lo que el parrafo
            siguiente cuenta derecho. */
-        'Abrí los ojos a las cuatro y monedas, despierta de una, como si no ' +
+        'Abrí los ojos a la madrugada, despierta de una, como si no ' +
         'hubiera dormido nada.',
         'Lo importante era cómo me di cuenta: cada cosa de ese lugar estaba ' +
         'esperando que yo la mirara para terminar de existir.' +
