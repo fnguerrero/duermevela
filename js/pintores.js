@@ -1218,7 +1218,13 @@ var Pintores = (function () {
   function faro(cx, E, t, mira, bel) {
     var m = Math.max(0, Math.min(1, mira || 0));
     if (!bel) m = 0;
-    var giro = t * .55;
+    /* Una vuelta cada quince segundos. Antes eran once, y a esa velocidad el
+       haz pasaba por encima de ella como quien barre: lo que el lugar cuenta
+       es una luz con paciencia —"sigue barriendo el campo vacio, con la misma
+       paciencia de antes"— y la paciencia se ve en el ritmo antes que en el
+       texto. Los faros de verdad giran entre cinco y treinta segundos por
+       vuelta, asi que quince no fuerza nada. */
+    var giro = t * .42;
     /* El angulo del barrido en el que el haz sale para el lado de ella. No es
        el angulo hacia ella —ese es la inclinacion, mas abajo— sino en que
        punto de la vuelta se lo frena: de .60 de frente y .80 de lado, que es
@@ -1230,11 +1236,11 @@ var Pintores = (function () {
        fijo apuntandola: un reflector de teatro es otra cosa, y encima delata
        de una lo que el lugar tendria que dejar entrever.
 
-       El numero sale de la cuenta, no del gusto: el barrido gira a .55 rad/s,
-       asi que lo que queda sin frenar deriva a .55*(1-q). Con .72 daban casi
-       9 grados por segundo — 26 en los tres que dura la revelacion, y el haz
+       El numero sale de la cuenta, no del gusto: el barrido gira a .42 rad/s,
+       asi que lo que queda sin frenar deriva a .42*(1-q). Con .72 daban casi
+       7 grados por segundo — 20 en los tres que dura la revelacion, y el haz
        se le iba de encima antes de que ella terminara de mirar. Con .92 son
-       2,5 por segundo: se mueve lo suficiente para no parecer clavado y lo
+       1,9 por segundo: se mueve lo suficiente para no parecer clavado y lo
        poco necesario para no perderla. */
     var q = m * .92;
     var angPara = Math.atan2(dirBel * .80, .60);
