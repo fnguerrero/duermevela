@@ -282,23 +282,56 @@ var Cielo = (function () {
       });
 
     } else if (e.tipo === 'sombra') {
-      // Algo oscuro que pasa por delante de las estrellas y las tapa. No se ve:
-      // se nota porque falta cielo.
+      /* Algo oscuro que pasa por delante de las estrellas y las tapa. No se
+         ve: se nota porque falta cielo.
+
+         Eso era la intencion y el dibujo hacia lo contrario. Era una elipse
+         SOLIDA, casi negra, al 82% y con borde: en las escenas oscuras pasaba
+         por un hueco, pero en el instante psicodelico —que tiene el cielo mas
+         claro de todo el juego— quedaba una mancha con contorno. En vez de
+         faltar cielo, sobraba una figura, y Nico pregunto si era una nave.
+
+         Ahora es un degradado sin borde, desenfocado, y ademas mide cuanto
+         alumbra el cielo que va a tapar: sobre un fondo claro se apaga sola.
+         Una sombra que no se adapta al fondo no es una sombra, es una forma
+         pintada encima. */
       var a6 = sobre(u, .22, .22);
       var ox = W * (e.x0 + e.dir * u * 1.24);
       var oy = H * e.y0;
-      var an = W * .14, al = H * .045;
+      var an = W * .16, al = H * .052;
+
+      /* Cuanto tapar: se lee el cielo justo donde va a pasar. Con un cielo
+         oscuro puede oscurecer bastante sin que se vea el borde; con uno
+         claro, cualquier mancha se nota, asi que apenas se insinua. */
+      /* Y se mide UNA vez y se guarda en el evento. Leer pixeles del canvas
+         sincroniza contra la GPU, y esto corre en cada cuadro durante los once
+         segundos que dura la sombra: seiscientas lecturas para un numero que
+         no cambia, porque el cielo de un lugar es el que es. */
+      if (e.fuerza === undefined) {
+        e.fuerza = .62;
+        try {
+          var m = cx.getImageData(Math.max(0, Math.min(W - 1, Math.round(ox))),
+                                  Math.max(0, Math.min(H - 1, Math.round(oy))),
+                                  1, 1).data;
+          var claro = (m[0] + m[1] + m[2]) / 765;
+          e.fuerza = .62 * Math.max(.22, 1 - claro * 2.6);
+        } catch (err) { /* sin acceso a los pixeles queda el valor de siempre */ }
+      }
+      var fuerza = e.fuerza;
+
       cx.save();
-      cx.globalAlpha = .82 * a6;
-      cx.fillStyle = '#080b14';
-      cx.beginPath();
-      cx.ellipse(ox, oy, an, al, e.inclina, 0, 6.2832);
-      cx.fill();
-      // Un borde apenas más claro, para que no sea un agujero plano.
-      cx.globalAlpha = .10 * a6;
-      cx.strokeStyle = '#3d4a68';
-      cx.lineWidth = 1.5;
-      cx.stroke();
+      if (typeof cx.filter === 'string') {
+        cx.filter = 'blur(' + Math.max(2, al * .34).toFixed(1) + 'px)';
+      }
+      cx.translate(ox, oy);
+      cx.rotate(e.inclina);
+      cx.scale(1, al / an);
+      var g6 = cx.createRadialGradient(0, 0, an * .10, 0, 0, an);
+      g6.addColorStop(0, 'rgba(8,11,20,' + (fuerza * a6).toFixed(3) + ')');
+      g6.addColorStop(.58, 'rgba(8,11,20,' + (fuerza * .62 * a6).toFixed(3) + ')');
+      g6.addColorStop(1, 'rgba(8,11,20,0)');
+      cx.fillStyle = g6;
+      cx.beginPath(); cx.arc(0, 0, an, 0, 6.2832); cx.fill();
       cx.restore();
     }
   }
