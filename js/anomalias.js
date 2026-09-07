@@ -645,35 +645,36 @@ var Anomalias = (function () {
     },
 
     /* La abre y del otro lado hay una habitación que antes no estaba. */
+    /* La luz que sale por el vano y se derrama en el piso.
+
+       La habitacion ya no se dibuja aca: la abre el pintor, porque abrir una
+       puerta es algo que le pasa a la puerta y no algo que se le pone encima.
+       Lo que queda es lo unico que de verdad va afuera — la luz que sale al
+       campo, que es lo que hace que del otro lado haya algo y no un cuadro
+       colgado. */
     puerta: function (cx, fx, fy, E, t, v) {
-      /* Del otro lado hay una habitacion. Un rectangulo iluminado no alcanza:
-         hace falta que se lea el fondo, o sea una pared y un piso. */
       var a = entra(v);
-      var an = E * .22, alto = E * .62;
-      var x0 = fx - an * .5, y0 = fy - alto * .40;
+      if (a < .01) return;
+      var an = E * .40;
       cx.save();
-      cx.globalAlpha = a;
-      // La pared del fondo.
-      cx.fillStyle = 'rgba(46,34,26,.92)';
-      cx.fillRect(x0, y0, an, alto);
-      // El piso, en perspectiva.
-      cx.fillStyle = 'rgba(74,52,34,.92)';
+      cx.globalCompositeOperation = 'lighter';
+
+      /* El haz que se abre hacia adelante, mas ancho abajo: es la sombra de la
+         luz, al reves. Va sobre el piso y no en el aire. */
+      var g = cx.createLinearGradient(0, fy + E * .70, 0, fy + E * 1.30);
+      g.addColorStop(0, 'rgba(255,222,158,' + (.30 * a).toFixed(3) + ')');
+      g.addColorStop(.55, 'rgba(255,214,146,' + (.13 * a).toFixed(3) + ')');
+      g.addColorStop(1, 'rgba(255,208,140,0)');
+      cx.fillStyle = g;
       cx.beginPath();
-      cx.moveTo(x0, y0 + alto);
-      cx.lineTo(x0 + an, y0 + alto);
-      cx.lineTo(x0 + an * .82, y0 + alto * .70);
-      cx.lineTo(x0 + an * .18, y0 + alto * .70);
-      cx.closePath(); cx.fill();
-      // Una lampara encendida contra la pared: es lo que la vuelve habitacion.
-      halo(cx, x0 + an * .68, y0 + alto * .30, E * .16, '255,222,160', .55 * a);
-      cx.fillStyle = 'rgba(255,232,180,' + (.85 * a).toFixed(3) + ')';
-      cx.beginPath();
-      cx.arc(x0 + an * .68, y0 + alto * .30, E * .022, 0, 6.2832);
+      cx.moveTo(fx - an * .86, fy + E * .70);
+      cx.lineTo(fx + an * .86, fy + E * .70);
+      cx.lineTo(fx + an * 2.3, fy + E * 1.30);
+      cx.lineTo(fx - an * 2.3, fy + E * 1.30);
+      cx.closePath();
       cx.fill();
-      // Y el marco, para que se lea que es lo de adentro y no un cuadro.
-      cx.strokeStyle = 'rgba(20,14,10,.8)';
-      cx.lineWidth = Math.max(1, E * .012);
-      cx.strokeRect(x0, y0, an, alto);
+
+      halo(cx, fx, fy + E * .74, E * .95, '255,216,150', .16 * a);
       cx.restore();
     },
 

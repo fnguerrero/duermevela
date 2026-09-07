@@ -1780,6 +1780,10 @@
                   corte: J.lugar === 'montania' ? J.revelando : 0,
                   // Y la luz del platillo se apaga de verdad, no se tapa.
                   apaga: J.lugar === 'platillo' ? J.revelando : 0,
+                  /* Y la puerta se abre de verdad. Antes la anomalia dibujaba
+                     la habitacion encima de la hoja cerrada, y lo que se veia
+                     era una puertita adentro de la puerta. */
+                  abre: J.lugar === 'puerta' ? J.revelando : 0,
                   /* Y el faro tiene UNA lampara: el haz que barre es el mismo
                      que se queda encima de ella. Antes la anomalia dibujaba un
                      segundo cono fijo mientras el primero seguia girando, y se

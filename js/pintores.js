@@ -564,29 +564,100 @@ var Pintores = (function () {
   }
 
   /* ============ la puerta parada sola ============ */
-  function puerta(cx, E, t) {
+  /* `abre` va de 0 a 1 y la abre de verdad: la hoja gira sobre su bisagra y
+     detras aparece la habitacion.
+
+     Antes esto lo hacia la anomalia, pintando un rectangulo con una pared, un
+     piso y una lampara en el MEDIO de la hoja cerrada. En pantalla no se leia
+     "abri la puerta" sino una puertita chiquita adentro de la puerta grande
+     —asi la vio Nico, y es exactamente lo que era—, y ademas dejaba la lampara
+     de la habitacion a la misma altura y del mismo tamaño que el picaporte:
+     dos puntos de luz gemelos en la misma hoja, que el ojo junta y lee como
+     una cara.
+
+     Es la misma regla que las vias que se cortan y el platillo que se apaga:
+     lo que el lugar hace lo hace el PINTOR. Una anomalia no puede abrir una
+     puerta desde afuera; solo puede dibujar algo encima de una puerta cerrada,
+     y eso ya se sabe como termina. */
+  function puerta(cx, E, t, abre) {
     var an = E * .40, al = E * .96;
+    var v = Math.max(0, Math.min(1, abre || 0));
+    /* Hasta sesenta y seis grados y no noventa: de canto la hoja desaparece y
+       la puerta deja de ser una puerta. Abierta dos tercios se entiende que se
+       abrio y sigue estando. */
+    var ang = v * 1.15;
+    var esc = Math.cos(ang);
+
     // Lo que se filtra por las juntas: es lo que hace que la puerta importe.
     var pul = .8 + .2 * Math.sin(t * .9);
     cx.save();
     cx.globalCompositeOperation = 'lighter';
     var luz = cx.createLinearGradient(0, E * .84, 0, E * .62);
     luz.addColorStop(0, 'rgba(255,224,160,0)');
-    luz.addColorStop(1, 'rgba(255,214,140,' + (.5 * pul) + ')');
+    luz.addColorStop(1, 'rgba(255,214,140,' + (.5 * pul * (1 + v * .9)) + ')');
     cx.fillStyle = luz;
     cx.beginPath();
     cx.moveTo(-an, E * .70); cx.lineTo(an, E * .70);
     cx.lineTo(an * 1.9, E * .90); cx.lineTo(-an * 1.9, E * .90);
     cx.closePath(); cx.fill();
     cx.restore();
-    halo(cx, 0, E * .70, E * .8, '255,208,130', .3 * pul);
+    halo(cx, 0, E * .70, E * .8, '255,208,130', .3 * pul * (1 + v * .6));
 
-    // Marco.
+    /* La habitacion, en el VANO entero y detras de la hoja. Se dibuja primero
+       para que la hoja la tape mientras la puerta esta cerrada. */
+    if (v > .004) {
+      var vy0 = -al + E * .06, vy1 = E * .70;
+      cx.save();
+      cx.globalAlpha = Math.min(1, v * 2.2);
+      cx.beginPath();
+      cx.rect(-an, vy0, an * 2, vy1 - vy0);
+      cx.clip();
+
+      // La pared del fondo.
+      var pared = cx.createLinearGradient(0, vy0, 0, vy1);
+      pared.addColorStop(0, '#3a2a1e');
+      pared.addColorStop(1, '#241a12');
+      cx.fillStyle = pared;
+      cx.fillRect(-an, vy0, an * 2, vy1 - vy0);
+
+      // El piso, en perspectiva: es lo que la vuelve una habitacion y no un
+      // telon pintado.
+      cx.fillStyle = '#4a3422';
+      cx.beginPath();
+      cx.moveTo(-an, vy1);
+      cx.lineTo(an, vy1);
+      cx.lineTo(an * .62, vy1 - (vy1 - vy0) * .30);
+      cx.lineTo(-an * .62, vy1 - (vy1 - vy0) * .30);
+      cx.closePath(); cx.fill();
+
+      /* Y una lampara colgando, ARRIBA. Antes estaba a media altura, o sea
+         justo donde vive el picaporte: dos luces del mismo tamaño a la misma
+         altura en la misma hoja. Colgada del techo no se confunde con nada, y
+         ademas es lo que tiene una habitacion vacia. */
+      var lx = an * .30, ly = vy0 + (vy1 - vy0) * .17;
+      cx.strokeStyle = 'rgba(30,20,14,.75)';
+      cx.lineWidth = Math.max(1, E * .006);
+      cx.beginPath(); cx.moveTo(lx, vy0); cx.lineTo(lx, ly); cx.stroke();
+      halo(cx, lx, ly, E * .19, '255,222,160', .50);
+      cx.fillStyle = 'rgba(255,236,190,.92)';
+      cx.beginPath(); cx.arc(lx, ly, E * .020, 0, 6.2832); cx.fill();
+      cx.restore();
+    }
+
+    // Marco. Va despues del vano y antes de la hoja: enmarca las dos cosas.
     cx.fillStyle = '#4a3728';
     cx.fillRect(-an - E * .12, -al, E * .10, al + E * .70);
     cx.fillRect(an + E * .02, -al, E * .10, al + E * .70);
     cx.fillRect(-an - E * .12, -al - E * .04, (an + E * .12) * 2, E * .10);
-    // Hoja.
+
+    /* La hoja, comprimida hacia su bisagra. Todo lo de adentro se dibuja con
+       las medidas de siempre y se aplasta de una sola vez: asi los paneles y
+       el picaporte acompañan el giro sin tener que recalcularlos. */
+    cx.save();
+    cx.translate(-an, 0);
+    cx.scale(Math.max(.001, esc), 1);
+    cx.translate(an, 0);
+
     var mad = cx.createLinearGradient(-an, 0, an, 0);
     mad.addColorStop(0, '#6b4e35');
     mad.addColorStop(.4, '#5a4029');
@@ -603,10 +674,22 @@ var Pintores = (function () {
       cx.lineWidth = E * .006;
       cx.strokeRect(-an + E * .125, y0 + E * .012, (an - E * .125) * 2, E * .33);
     }
-    // Picaporte.
-    halo(cx, an - E * .15, -E * .10, E * .06, '255,220,150', .5);
+    /* Picaporte. Su halo se apaga a medida que la puerta se abre: de canto la
+       bola ya no da a la luz, y ademas es lo que lo hacia pelear con la
+       lampara de adentro. */
+    halo(cx, an - E * .15, -E * .10, E * .06, '255,220,150', .5 * (1 - v * .85));
     cx.fillStyle = '#d8b878';
     cx.beginPath(); cx.arc(an - E * .15, -E * .10, E * .028, 0, 6.2832); cx.fill();
+    cx.restore();
+
+    /* Y el canto de la hoja: el grosor de la madera, que aparece recien cuando
+       se abre. Sin el, la hoja se lee como una lamina de papel encogiendose en
+       vez de como algo que gira. */
+    if (v > .02) {
+      var xc = -an + an * 2 * esc;
+      cx.fillStyle = 'rgba(58,42,28,.95)';
+      cx.fillRect(xc, -al + E * .06, E * .035 * Math.sin(ang), al + E * .64);
+    }
   }
 
   /* ============ la casa ============ */
@@ -1889,6 +1972,7 @@ var Pintores = (function () {
     else if (clave === 'bandada') bandada(cx, E, t, extra.sincro);
     else if (clave === 'circulo') circulo(cx, E, t, extra.hondo, extra.arbol);
     else if (clave === 'faro') faro(cx, E, t, extra.mira, extra.haciaBel);
+    else if (clave === 'puerta') puerta(cx, E, t, extra.abre);
     else if (clave === 'barca') barca(cx, E, t, extra.alPiso,
                                       extra.haciaBel && extra.haciaBel.dx);
     else if (PINTORES[clave]) PINTORES[clave](cx, E, t);
