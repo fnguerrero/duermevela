@@ -390,28 +390,32 @@ var Guion = (function () {
          tiene por que reforzarlo. */
       llegada: 'Escombros. Se cayó algo grande y no hizo ruido, y eso es lo ' +
                'primero que no cierra. El polvo todavía está en el aire, ' +
-               'quieto, sin decidirse a bajar. Me quedo mirándolo: mientras no ' +
-               'baje, esto todavía está pasando.',
-      vuelta: 'Otra vez los escombros. El polvo sigue sin bajar. Hace un rato ' +
-              'larguísimo que sigue sin bajar, y ya me parece que no va a bajar ' +
-              'nunca.',
-      /* El hallazgo es que no hay un momento.
+               'quieto, sin decidirse a bajar.',
+      /* La vuelta ya no dice "me parece que no va a bajar nunca": eso es el
+         hallazgo, y dicho aca se lo regalaba a quien volviera al lugar sin
+         haberse quedado a mirar. Ahora solo constata que nada se movio. */
+      vuelta: 'Otra vez los escombros. Todo igual: hasta el polvo sigue en el ' +
+              'mismo lugar del aire que hace un rato.',
+      /* El hallazgo es el polvo, y no una linea que se busca.
 
-         Uno busca la linea —el instante exacto, el borde entre lo de antes y
-         lo de despues— y no esta en ningun lado. Del otro lado del corte uno
-         estaba haciendo cualquier cosa, sin saber. Eso es lo que de verdad
-         pasa, y es lo que el lugar tenia que decir desde el principio. */
-      /* "Haciendo algo que ni me acuerdo" y no "haciendo cualquier cosa".
+         La version anterior decia que faltaba el corte entre lo de antes y lo
+         de despues. La idea era buena y el dibujo nunca la alcanzo: una linea
+         que NO esta no se puede dibujar sin dibujarla, y cada intento —cinco
+         tramos sueltos, una grieta que barria de un lado al otro— terminaba
+         mostrando justo lo que el texto decia que no habia.
 
-         Aca "hacer cualquier cosa" significa hacer macanas, y asi la frase
-         decia lo contrario de lo que tenia que decir. Nico la leyo como
-         corresponde y no se entendio nada. Lo que hay que decir es que era
-         algo insignificante — y que no se acuerde de que era es justamente lo
-         que hace que duela: eso se borro, y el segundo siguiente no. */
-      esconde: 'Busco por dónde se partió: tiene que haber una línea, algo que ' +
-               'separe lo de antes de lo de después. No está. De un lado yo ' +
-               'estaba haciendo algo que ni me acuerdo, del otro ya era esto, ' +
-               'y en el medio no hay nada. Ni un segundo.',
+         El polvo dice lo mismo y si se puede ver. Que este quieto significa
+         que esto no termino de pasar, o sea que no hay un momento en que
+         paso: es el mismo hallazgo por el lado que el dibujo puede sostener.
+
+         Y la llegada solto su remate —decia "mientras no baje, esto todavia
+         esta pasando"— porque esa frase era el hallazgo dicho antes de tiempo:
+         el lugar se contaba entero al llegar y despues no quedaba nada por
+         encontrar. */
+      esconde: 'Me quedo mirando el polvo y no baja. Ni una mota, ni un ' +
+               'milímetro: siguen todas a mitad de camino. Esto no se cayó, ' +
+               'se está cayendo. Por eso no encuentro el momento en que pasó: ' +
+               'todavía está pasando.',
       // De los escombros, el tiempo: el arbol ya era el destino mas
       // frecuente del juego y el reloj no lo era de casi nadie.
       revela: 'reloj'
@@ -574,7 +578,7 @@ var Guion = (function () {
     reloj: 'Los números corridos de su hora',
     luna: 'La cara que armaban los cráteres',
     puerta: 'La puerta que volví a abrir sabiendo que no',
-    ruina: 'El corte que no estaba en ningún lado',
+    ruina: 'El polvo que se quedó a mitad de camino',
     bandada: 'Los pájaros que se ordenaban cuando los miraba',
     barca: 'La soga que la sostenía desde ningún lado',
     /* La etiqueta va a la cita del cierre, asi que tampoco puede decirlo: si

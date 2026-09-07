@@ -679,89 +679,77 @@ var Anomalias = (function () {
 
     /* Abajo de los pedazos hay más pedazos. Se levanta uno y aparecen los de
        abajo, iguales, sin tierra en el fondo. */
-    /* La grieta que ella busca, de la que solo se ve lo que esta mirando.
+    /* El polvo que no baja.
 
-       Paso por dos versiones antes de esta. La primera dibujaba capas
-       hundiendose —un pedazo levantado y abajo mas pedazos— y quedo vieja
-       cuando el texto cambio. La segunda eran cinco tramos sueltos con huecos
-       entre uno y otro, y fallaba por algo peor que el alineado: esos tramos
-       no ERAN nada. Eran una idea dibujada —el gesto de buscar— y en un juego
-       donde todo lo demas es una barca, una calesita o un faro, una idea
-       suelta no se lee. Nico pregunto que eran, y esa pregunta es la respuesta.
+       Cuarta version de esta anomalia, y las tres anteriores fallaron por lo
+       mismo. Primero eran capas hundiendose, que ilustraban un texto que ya no
+       existe. Despues cinco tramos sueltos, y Nico pregunto que eran: no eran
+       nada, eran una idea dibujada —el gesto de buscar— y en un juego donde
+       todo lo demas es una barca o un faro, una idea suelta no se lee. Despues
+       una grieta unica que barria de un lado al otro, y ahi el problema fue el
+       movimiento: una grieta que se desplaza delata que no es una grieta, es
+       un efecto pasando por encima.
 
-       Ahora es UNA grieta, que si es una cosa. Cruza el monton entero, pero
-       solo se ve el pedazo que ella tiene la vista encima: el foco recorre
-       despacio de un lado al otro y lo demas se pierde. Nunca se la ve
-       completa, que es literalmente lo que dice el texto — tiene que haber una
-       linea que separe lo de antes de lo de despues, y no esta.
+       El polvo no tiene ninguno de esos problemas. Es una cosa, esta en el
+       texto de llegada desde siempre, y sobre todo: es lo unico de esta escena
+       que se puede dibujar QUIETO sin que parezca un error de dibujo. Un polvo
+       inmovil mientras la niebla se desliza y ella respira se lee solo.
 
-       El mismo recurso que las vias de la montaña rusa, que se cortan en el
-       aire: lo que no existe no se dibuja entero. */
+       Y cada mota lleva su estela hacia arriba, que es de donde venia bajando.
+       Sin eso son puntos sueltos —suciedad en la pantalla— y con eso son una
+       caida frenada a mitad de camino, que es todo lo que este lugar dice. */
     ruina: function (cx, fx, fy, E, t, v) {
       var a = entra(v);
+      if (a < .01) return;
+      /* Sembrado fijo: el polvo tiene que estar SIEMPRE en el mismo lugar.
+         Con motas que cambian de sitio entre cuadros lo que se ve es ruido, y
+         el ruido es lo contrario de algo detenido. */
+      var rnd = sembrado(31);
       cx.save();
-      cx.lineCap = 'round';
 
-      var ancho = E * 1.02, y0 = fy + E * .72;
-      /* El foco: donde esta mirando ahora. Va y vuelve despacio —un barrido
-         cada nueve segundos— porque esto es alguien recorriendo algo con la
-         vista, no un escaner. */
-      var foco = Math.sin(t * .35) * .82;
+      /* Sin estelas y sin columnas.
 
-      /* La grieta se dibuja por pedacitos, cada uno con su transparencia segun
-         cuan lejos del foco cae. Partida asi y no con un degrade sobre un solo
-         trazo: la linea no es recta —baja y sube siguiendo el terreno roto— y
-         un degrade lineal sobre una curva se corta donde no debe. */
-      /* UN solo trazo con un degrade, y no pedacitos con su alfa cada uno.
+         La primera version le puso a cada mota un trazo vertical hacia arriba
+         —de donde venia bajando— y apretaba todo hacia el centro con un cubo.
+         Las dos cosas juntas dieron exactamente lo que este lugar no puede
+         ser: una cascada. Trazos verticales alineados son lluvia cayendo, y
+         lluvia cayendo es tiempo pasando.
 
-         Partida en cuarenta y seis pedazos —cada uno con su transparencia y su
-         punta redondeada— la grieta se veia PUNTEADA: donde dos se pisaban el
-         alfa se sumaba y donde no, el reborde oscuro los separaba. Y una linea
-         de puntos vuelve a ser una linea, que es lo contrario de lo que este
-         lugar dice.
+         Lo que se lee como polvo suspendido son puntos sueltos, de tamaños
+         distintos, repartidos parejo y sin ninguna alineacion — como el polvo
+         que se ve en un rayo de sol. Y en una BANDA horizontal, mas denso a
+         media altura: eso es lo que dice que se quedaron todas ahi, a mitad de
+         camino, en vez de seguir bajando. */
+      var banda = fy + E * .34;          // donde se quedo la nube
+      /* Trescientas cuarenta y no doscientas sesenta: con menos, la nube
+         movia 975 pixeles y el minimo de verificarAnomalias es 900. Pasar por
+         setenta y cinco pixeles no es pasar, es tener suerte. */
+      for (var i = 0; i < 340; i++) {
+        var px = fx + E * 1.20 * (rnd() * 2 - 1);
 
-         El degrade es horizontal aunque la curva no lo sea: la grieta baja y
-         sube apenas —cinco centesimos de E— asi que en la practica el eje x
-         alcanza, y a cambio se dibuja de una sola pasada. */
-      var PASOS = 46;
-      function alturaEn(u) {
-        return y0 + Math.sin(u * 3.7) * E * .055 + Math.sin(u * 8.3 + 1.4) * E * .022;
+        /* Dos tiradas sumadas y centradas en la banda: junta las motas en el
+           medio y las va soltando hacia arriba y hacia abajo, sin que el borde
+           de la nube sea una linea. */
+        var d = (rnd() + rnd() - 1);
+        var py = banda + d * E * .62;
+
+        /* Y se ralea hacia los costados, para que la nube tenga forma de nube
+           y no de rectangulo. */
+        var alLado = Math.abs(px - fx) / (E * 1.20);
+        if (rnd() < alLado * alLado * .85) continue;
+
+        var gordo = E * (.0028 + rnd() * rnd() * .0075);
+        var brillo = a * (.17 + rnd() * .52);
+
+        cx.fillStyle = 'rgba(230,224,246,' + brillo.toFixed(3) + ')';
+        cx.beginPath();
+        cx.arc(px, py, Math.max(.7, gordo), 0, 6.2832);
+        cx.fill();
       }
 
-      cx.beginPath();
-      for (var i = 0; i <= PASOS; i++) {
-        var u = -1 + (i / PASOS) * 2;
-        var px = fx + ancho * u, py = alturaEn(u);
-        if (i === 0) cx.moveTo(px, py); else cx.lineTo(px, py);
-      }
-
-      /* Se apaga rapido a los dos lados del foco: con una caida suave se veia
-         de punta a punta y volvia a ser una linea que SI existe. */
-      var xIzq = fx - ancho, xDer = fx + ancho;
-      var xFoco = fx + ancho * foco;
-      var largo = ancho * .5;
-      var g = cx.createLinearGradient(xIzq, 0, xDer, 0);
-      function parada(x, alfa) {
-        var f = Math.max(0, Math.min(1, (x - xIzq) / (xDer - xIzq)));
-        g.addColorStop(f, 'rgba(234,230,250,' + alfa.toFixed(3) + ')');
-      }
-      parada(xIzq, 0);
-      parada(xFoco - largo, 0);
-      parada(xFoco - largo * .45, .34 * a);
-      parada(xFoco, .95 * a);
-      parada(xFoco + largo * .45, .34 * a);
-      parada(xFoco + largo, 0);
-      parada(xDer, 0);
-
-      cx.globalAlpha = 1;
-      cx.strokeStyle = g;
-      cx.lineWidth = Math.max(1.4, E * .021);
-      cx.stroke();
-
-      /* Y donde esta mirando, un poco de luz. Es lo unico que dice que hay
-         alguien recorriendo esto y no una grieta que se prende sola. */
-      var fx2 = fx + ancho * foco, fy2 = alturaEn(foco);
-      halo(cx, fx2, fy2, E * .17, '255,240,210', .34 * a);
+      /* Y un poco de aire alrededor: sin esto los puntos flotan sobre el negro
+         y se leen como estrellas mal puestas. El halo los mete en la escena. */
+      halo(cx, fx, banda + E * .06, E * 1.15, '206,200,232', .062 * a);
 
       cx.restore();
     },
