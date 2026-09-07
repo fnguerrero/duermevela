@@ -698,13 +698,22 @@ var Guion = (function () {
      Cuál de las cuatro toca depende de cuánto llegó a ver. Es la misma figura
      en cuatro grados.
 
-     Las tres que cerraban con "segui, hay gente esperando que le mires las
-     cosas" ahora cierran con "alguien se quedo el segundo de mas mirandote a
-     vos". El remate viejo la mandaba a trabajar: ella se pasa el dia
-     sosteniendo a otros, y el regalo terminaba pidiendole mas de lo mismo. El
-     nuevo le devuelve lo que ella da, ata con el faro —el unico lugar donde
-     algo la busca y la encuentra— y ademas es literalmente cierto: alguien
-     estuvo semanas armando esto. */
+     Tres de las cuatro no tienen cuarta linea, y es a proposito.
+
+     Cerraban con "segui, hay gente esperando que le mires las cosas", que la
+     mandaba a trabajar: ella se pasa el dia sosteniendo a otros y el regalo
+     terminaba pidiendole mas de lo mismo. Se probo cambiarlo por "alguien se
+     quedo el segundo de mas mirandote a vos" y quedaba peor: aparecia un
+     tercero sin nombre que en toda la carta no existia, justo antes de la
+     carta de papel, donde Nico si le habla con nombre. O se pisaban, o la
+     dejaba preguntandose quien. Y el arcano no es una persona: es una carta
+     dando una lectura, y que diga "alguien te mira" mete un narrador que hasta
+     ahi no estaba.
+
+     Sin esa linea cada carta termina en lo mas fuerte que dice —"es tu don",
+     "con una alcanza para saber que estaba ahi"— y la carta de papel entra
+     enseguida, que es la que de verdad viene a hablarle. La Durmiente conserva
+     el suyo, "las cosas siguen ahi", porque no pide nada ni trae a nadie. */
   function cartaDeElla(indicios) {
     var n = indicios.length;
 
@@ -723,8 +732,7 @@ var Guion = (function () {
           'Lo hacés cuando alguien se sienta enfrente tuyo y te pide que le leas ' +
           'algo. Lo hacés cuando escuchás a alguien contar un problema y ves, ' +
           'antes que la persona, dónde está el nudo. No lo aprendiste en ningún ' +
-          'lado. Es tu don.',
-          'Alguien se quedó el segundo de más mirándote a vos.'
+          'lado. Es tu don.'
         ]
       };
     }
@@ -744,8 +752,7 @@ var Guion = (function () {
              y pasa a ser alguien aclarandole que lo suyo tiene explicacion. En
              un regalo, eso se lee como una correccion. */
           'Ese segundo de más es todo el asunto. Es lo que hacés cuando alguien ' +
-          'te cuenta algo y vos ves lo que no dijo.',
-          'Alguien se quedó el segundo de más mirándote a vos.'
+          'te cuenta algo y vos ves lo que no dijo.'
         ]
       };
     }
@@ -762,8 +769,7 @@ var Guion = (function () {
           /* Sin "lo demas es acordarse de frenar, que es lo dificil": eso es
              un consejo, y le explica como hacerlo mejor la proxima vez. La
              carta esta para reconocer lo que hizo, no para corregirla. */
-          'Con una alcanza para saber que estaba ahí.',
-          'Alguien se quedó el segundo de más mirándote a vos.'
+          'Con una alcanza para saber que estaba ahí.'
         ]
       };
     }
