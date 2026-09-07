@@ -696,7 +696,15 @@ var Guion = (function () {
      la carta dirigiéndose a quien acaba de jugar.
 
      Cuál de las cuatro toca depende de cuánto llegó a ver. Es la misma figura
-     en cuatro grados. */
+     en cuatro grados.
+
+     Las tres que cerraban con "segui, hay gente esperando que le mires las
+     cosas" ahora cierran con "alguien se quedo el segundo de mas mirandote a
+     vos". El remate viejo la mandaba a trabajar: ella se pasa el dia
+     sosteniendo a otros, y el regalo terminaba pidiendole mas de lo mismo. El
+     nuevo le devuelve lo que ella da, ata con el faro —el unico lugar donde
+     algo la busca y la encuentra— y ademas es literalmente cierto: alguien
+     estuvo semanas armando esto. */
   function cartaDeElla(indicios) {
     var n = indicios.length;
 
@@ -716,7 +724,7 @@ var Guion = (function () {
           'algo. Lo hacés cuando escuchás a alguien contar un problema y ves, ' +
           'antes que la persona, dónde está el nudo. No lo aprendiste en ningún ' +
           'lado. Es tu don.',
-          'Seguí. Hay gente esperando que le mires las cosas.'
+          'Alguien se quedó el segundo de más mirándote a vos.'
         ]
       };
     }
@@ -731,10 +739,13 @@ var Guion = (function () {
           'Está bien que se pasen. Nadie mira todo, y las que viste no las viste ' +
           'de casualidad: las viste porque te quedaste el segundo de más que la ' +
           'mayoría no se queda.',
+          /* Sin "no es magia y no hace falta que lo sea". Se lo estaba
+             diciendo a una astrologa: en su boca esa frase deja de ser humilde
+             y pasa a ser alguien aclarandole que lo suyo tiene explicacion. En
+             un regalo, eso se lee como una correccion. */
           'Ese segundo de más es todo el asunto. Es lo que hacés cuando alguien ' +
-          'te cuenta algo y vos ves lo que no dijo. No es magia y no hace falta ' +
-          'que lo sea.',
-          'Seguí. Hay gente esperando que le mires las cosas.'
+          'te cuenta algo y vos ves lo que no dijo.',
+          'Alguien se quedó el segundo de más mirándote a vos.'
         ]
       };
     }
@@ -748,9 +759,11 @@ var Guion = (function () {
           '. Se te fue casi todo.',
           'Pasa cuando uno mira sin mirar, que es como andamos la mayor parte del ' +
           'tiempo. Igual algo viste, y esa cosa te la llevás.',
-          'Con una alcanza para saber que se puede. Lo demás es acordarse de ' +
-          'frenar, que es lo difícil.',
-          'Seguí. Hay gente esperando que le mires las cosas.'
+          /* Sin "lo demas es acordarse de frenar, que es lo dificil": eso es
+             un consejo, y le explica como hacerlo mejor la proxima vez. La
+             carta esta para reconocer lo que hizo, no para corregirla. */
+          'Con una alcanza para saber que estaba ahí.',
+          'Alguien se quedó el segundo de más mirándote a vos.'
         ]
       };
     }
