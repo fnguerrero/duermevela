@@ -448,20 +448,22 @@ var Guion = (function () {
                'y la vela está tensa de un viento que no me despeina.',
       vuelta: 'La barca otra vez, en la misma tormenta. Sigue igual de ' +
               'sacudida y sigue en el mismo lugar, que es lo raro de todo esto.',
-      /* El remate cierra en ELLA, y no en la barca.
+      /* Sin remate explicativo.
 
-         Antes terminaba en "eso es lo que la salva", que habla de la barca:
-         para llegar a ella habia que dar el salto solo, y nadie lo daba. El
-         efecto era que este lugar y los escombros se leian como el mismo —una
-         catastrofe y ella al lado, sin que la toque— y Nico pregunto cual era
-         la diferencia. La hay, y es de tiempo: los escombros son el pasado,
-         estan quietos y lo que falta ahi es el instante. Esto es lo que sigue
-         pasando: se sacude ahora, no avanza, y lo que la sostiene no se ve.
-         Dicho en ella, las dos escenas dejan de rimar. */
+         Paso por tres versiones. La primera terminaba en "eso es lo que la
+         salva", que habla de la barca y no de ella: este lugar y los escombros
+         se leian como el mismo. La segunda agregaba "yo estoy igual, y tampoco
+         se que me tiene", que marcaba la diferencia pero explicaba lo que el
+         parrafo ya habia hecho — el remate le decia al que lee como leerlo.
+
+         Ahora no lo dice nadie. La diferencia con los escombros la lleva el
+         TIEMPO del texto y no una comparacion: alla todo esta quieto y lo que
+         falta es un instante que ya paso; aca "sigue aca" y "hace quien sabe
+         cuanto" son presente y no terminan. Eso alcanza. */
       esconde: 'Está atada, y la soga se pierde en el aire: la sigo con la ' +
                'vista y en algún punto deja de existir. Igual la sostiene. La ' +
                'sacude todo y sigue acá, en el mismo lugar, hace quién sabe ' +
-               'cuánto. Yo estoy igual, y tampoco sé qué me tiene.',
+               'cuánto.',
       revela: 'laguna'
     },
     cama: {
