@@ -187,6 +187,7 @@
     lunaCrece: 0,           // el pulso de la luna al recibir una chispa
     seguirPaso: null,       // como sigue el paso cuando termine de leerse
     cerrarPaso: null,       // el cierre corto, cuando la revelacion ya se leyo
+    platilloIdo: 0,         // el platillo que ya se fue no vuelve mientras siga ahi
     guias: {},              // que avisos de la primera partida ya salieron
     siguioDeLargo: 0,       // cuantas veces eligio no quedarse a mirar
     ultimoTic: -1,          // para no repetir el tic del anillo
@@ -631,6 +632,7 @@
     J.jugando = false;
     J.congelado = false;
     J.revelando = 0;
+    J.platilloIdo = 0;
     mirada.activo = false;
 
     /* Bel se queda donde esta, siempre. La figura se transforma delante de
@@ -1402,6 +1404,9 @@
         bel.sonrisa = 1;
       }
 
+      // Y el platillo, una vez que se fue, se quedo ido.
+      if (J.lugar === 'platillo') J.platilloIdo = 1;
+
       /* El mundo se frena y se dice lo que este lugar escondia, con la figura
          vieja todavia delante. */
       if (J.vioAhora) {
@@ -1778,8 +1783,14 @@
                      dibuje encima el tramo que faltaria: lo que no existe no
                      se dibuja. */
                   corte: J.lugar === 'montania' ? J.revelando : 0,
-                  // Y la luz del platillo se apaga de verdad, no se tapa.
-                  apaga: J.lugar === 'platillo' ? J.revelando : 0,
+                  /* Y la luz del platillo se apaga de verdad, no se tapa. Con
+                     `platilloIdo` ademas no vuelve: la revelacion se desvanece
+                     sola a 1,4 por segundo, asi que sin esto el platillo se iba
+                     y reaparecia entero setecientos milisegundos despues —justo
+                     antes de que la carta transformara el lugar— y el texto que
+                     se acababa de leer dice "no vuelve". */
+                  apaga: J.lugar === 'platillo'
+                         ? Math.max(J.revelando, J.platilloIdo) : 0,
                   /* Y la puerta se abre de verdad. Antes la anomalia dibujaba
                      la habitacion encima de la hoja cerrada, y lo que se veia
                      era una puertita adentro de la puerta. */

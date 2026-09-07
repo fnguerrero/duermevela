@@ -40,11 +40,35 @@ var Pintores = (function () {
     /* Y se inclina, muy poco, como algo que se sostiene solo y corrige. Sin
        esto es un disco pegado al aire. */
     var ladeo = Math.sin(t * .43) * .035 + Math.sin(t * .77) * .015;
-    // Si sabemos a que altura esta el suelo, el haz llega hasta ahi y deja un
-    // charco de luz. Cortado en el aire se ve como un recorte pegado.
-    var hastaPiso = (alPiso && alPiso > E * .4) ? alPiso - flota : E * 1.45;
+
+    /* Y despues de apagarse, SE VA.
+
+       El lugar decia lo mismo que la luna —alguien que quiere decir algo y no
+       puede— y las dos escenas se leian como una sola. La diferencia ahora es
+       de permanencia: la luna se queda mirandola, esto se despide. Que se vaya
+       es lo unico que hace falta para que dejen de rimar, y ademas cierra lo
+       que el lugar venia diciendo: vino a que lo vieran, lo vieron, listo.
+
+       Arranca despues de que la luz se apago —el cuadrado hace que los
+       primeros instantes casi no se mueva— y se aleja de tres maneras a la
+       vez: sube, se achica y se desenfoca. Con solo subir se iba de cuadro
+       como un ascensor; alejarse es las tres cosas juntas. */
+    var sube = baja * baja;
+
+    // El haz sigue tocando el piso mientras exista, aunque el platillo suba.
+    var alto = E * 2.4 * sube;
+    var hastaPiso = ((alPiso && alPiso > E * .4) ? alPiso - flota : E * 1.45) + alto;
+
     cx.save();
-    cx.translate(0, flota);
+    if (sube > .003 && typeof cx.filter === 'string') {
+      /* Con `filter` y no con globalAlpha: el pintor se pisa el alpha en sus
+         propios save/restore, y el desenfoque ademas es la mitad de "hasta que
+         no lo distingo del cielo". */
+      cx.filter = 'opacity(' + (1 - sube * .92).toFixed(3) + ') blur(' +
+                  (sube * E * .020).toFixed(1) + 'px)';
+    }
+    cx.translate(0, flota - alto);
+    cx.scale(1 - sube * .52, 1 - sube * .52);
     cx.rotate(ladeo);
 
     // El cono de luz va primero: todo lo demás se apoya encima.

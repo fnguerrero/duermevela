@@ -3375,11 +3375,35 @@ var Pintores = (function () {
     /* Y se inclina, muy poco, como algo que se sostiene solo y corrige. Sin
        esto es un disco pegado al aire. */
     var ladeo = Math.sin(t * .43) * .035 + Math.sin(t * .77) * .015;
-    // Si sabemos a que altura esta el suelo, el haz llega hasta ahi y deja un
-    // charco de luz. Cortado en el aire se ve como un recorte pegado.
-    var hastaPiso = (alPiso && alPiso > E * .4) ? alPiso - flota : E * 1.45;
+
+    /* Y despues de apagarse, SE VA.
+
+       El lugar decia lo mismo que la luna —alguien que quiere decir algo y no
+       puede— y las dos escenas se leian como una sola. La diferencia ahora es
+       de permanencia: la luna se queda mirandola, esto se despide. Que se vaya
+       es lo unico que hace falta para que dejen de rimar, y ademas cierra lo
+       que el lugar venia diciendo: vino a que lo vieran, lo vieron, listo.
+
+       Arranca despues de que la luz se apago —el cuadrado hace que los
+       primeros instantes casi no se mueva— y se aleja de tres maneras a la
+       vez: sube, se achica y se desenfoca. Con solo subir se iba de cuadro
+       como un ascensor; alejarse es las tres cosas juntas. */
+    var sube = baja * baja;
+
+    // El haz sigue tocando el piso mientras exista, aunque el platillo suba.
+    var alto = E * 2.4 * sube;
+    var hastaPiso = ((alPiso && alPiso > E * .4) ? alPiso - flota : E * 1.45) + alto;
+
     cx.save();
-    cx.translate(0, flota);
+    if (sube > .003 && typeof cx.filter === 'string') {
+      /* Con `filter` y no con globalAlpha: el pintor se pisa el alpha en sus
+         propios save/restore, y el desenfoque ademas es la mitad de "hasta que
+         no lo distingo del cielo". */
+      cx.filter = 'opacity(' + (1 - sube * .92).toFixed(3) + ') blur(' +
+                  (sube * E * .020).toFixed(1) + 'px)';
+    }
+    cx.translate(0, flota - alto);
+    cx.scale(1 - sube * .52, 1 - sube * .52);
     cx.rotate(ladeo);
 
     // El cono de luz va primero: todo lo demás se apoya encima.
@@ -8432,9 +8456,18 @@ var Guion = (function () {
                'meterme. Igual ahí está, esperando.',
       vuelta: 'Volvió. Está en el mismo lugar exacto del aire, como si nunca ' +
               'se hubiera ido.',
-      esconde: 'No vino a llevarme. Vino a decirme algo y no sabe cómo, así que ' +
-               'se queda ahí arriba hasta que yo levante la cabeza. Levanto la ' +
-               'cabeza. La luz se apaga despacio, como quien asiente.',
+      /* Este lugar se despide, y la luna se queda: es lo unico que los
+         separa.
+
+         Los dos decian "alguien quiere decirte algo y no puede" —la luna es
+         una cara que se acomoda para hablar, no habla y se queda mirandola; el
+         platillo queria decir algo, no sabia como y asentia— y en pantalla se
+         leian como la misma escena dos veces. Ahora la luna es lo que
+         permanece y esto es lo que se va. */
+      esconde: 'No vino a llevarme. Vino a que yo lo viera, y con eso alcanza: ' +
+               'levanto la cabeza, la luz se apaga despacio y empieza a subir. ' +
+               'Se va sin apurarse y sin despedirse, hasta que no lo distingo ' +
+               'del cielo. No vuelve.',
       revela: 'faro'
     },
     calesita: {
@@ -8821,7 +8854,7 @@ var Guion = (function () {
      pueda nombrar lo que se vio sin repetir el parrafo entero. */
   var ETIQUETA = {
     montania: 'El recorrido al que nadie le imaginó un final',
-    platillo: 'La luz que se apagó como quien asiente',
+    platillo: 'La luz que se apagó, y después se fue subiendo',
     calesita: 'La calesita que giraba sin apoyarse en nada',
     laguna: 'El agua que no me copiaba',
     faro: 'El haz que frenaba cuando me encontraba',
@@ -9263,6 +9296,7 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     lunaCrece: 0,           // el pulso de la luna al recibir una chispa
     seguirPaso: null,       // como sigue el paso cuando termine de leerse
     cerrarPaso: null,       // el cierre corto, cuando la revelacion ya se leyo
+    platilloIdo: 0,         // el platillo que ya se fue no vuelve mientras siga ahi
     guias: {},              // que avisos de la primera partida ya salieron
     siguioDeLargo: 0,       // cuantas veces eligio no quedarse a mirar
     ultimoTic: -1,          // para no repetir el tic del anillo
@@ -9707,6 +9741,7 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     J.jugando = false;
     J.congelado = false;
     J.revelando = 0;
+    J.platilloIdo = 0;
     mirada.activo = false;
 
     /* Bel se queda donde esta, siempre. La figura se transforma delante de
@@ -10478,6 +10513,9 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
         bel.sonrisa = 1;
       }
 
+      // Y el platillo, una vez que se fue, se quedo ido.
+      if (J.lugar === 'platillo') J.platilloIdo = 1;
+
       /* El mundo se frena y se dice lo que este lugar escondia, con la figura
          vieja todavia delante. */
       if (J.vioAhora) {
@@ -10854,8 +10892,14 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
                      dibuje encima el tramo que faltaria: lo que no existe no
                      se dibuja. */
                   corte: J.lugar === 'montania' ? J.revelando : 0,
-                  // Y la luz del platillo se apaga de verdad, no se tapa.
-                  apaga: J.lugar === 'platillo' ? J.revelando : 0,
+                  /* Y la luz del platillo se apaga de verdad, no se tapa. Con
+                     `platilloIdo` ademas no vuelve: la revelacion se desvanece
+                     sola a 1,4 por segundo, asi que sin esto el platillo se iba
+                     y reaparecia entero setecientos milisegundos despues —justo
+                     antes de que la carta transformara el lugar— y el texto que
+                     se acababa de leer dice "no vuelve". */
+                  apaga: J.lugar === 'platillo'
+                         ? Math.max(J.revelando, J.platilloIdo) : 0,
                   /* Y la puerta se abre de verdad. Antes la anomalia dibujaba
                      la habitacion encima de la hoja cerrada, y lo que se veia
                      era una puertita adentro de la puerta. */

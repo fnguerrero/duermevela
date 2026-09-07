@@ -190,9 +190,18 @@ var Guion = (function () {
                'meterme. Igual ahí está, esperando.',
       vuelta: 'Volvió. Está en el mismo lugar exacto del aire, como si nunca ' +
               'se hubiera ido.',
-      esconde: 'No vino a llevarme. Vino a decirme algo y no sabe cómo, así que ' +
-               'se queda ahí arriba hasta que yo levante la cabeza. Levanto la ' +
-               'cabeza. La luz se apaga despacio, como quien asiente.',
+      /* Este lugar se despide, y la luna se queda: es lo unico que los
+         separa.
+
+         Los dos decian "alguien quiere decirte algo y no puede" —la luna es
+         una cara que se acomoda para hablar, no habla y se queda mirandola; el
+         platillo queria decir algo, no sabia como y asentia— y en pantalla se
+         leian como la misma escena dos veces. Ahora la luna es lo que
+         permanece y esto es lo que se va. */
+      esconde: 'No vino a llevarme. Vino a que yo lo viera, y con eso alcanza: ' +
+               'levanto la cabeza, la luz se apaga despacio y empieza a subir. ' +
+               'Se va sin apurarse y sin despedirse, hasta que no lo distingo ' +
+               'del cielo. No vuelve.',
       revela: 'faro'
     },
     calesita: {
@@ -579,7 +588,7 @@ var Guion = (function () {
      pueda nombrar lo que se vio sin repetir el parrafo entero. */
   var ETIQUETA = {
     montania: 'El recorrido al que nadie le imaginó un final',
-    platillo: 'La luz que se apagó como quien asiente',
+    platillo: 'La luz que se apagó, y después se fue subiendo',
     calesita: 'La calesita que giraba sin apoyarse en nada',
     laguna: 'El agua que no me copiaba',
     faro: 'El haz que frenaba cuando me encontraba',
