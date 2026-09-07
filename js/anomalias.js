@@ -679,78 +679,89 @@ var Anomalias = (function () {
 
     /* Abajo de los pedazos hay más pedazos. Se levanta uno y aparecen los de
        abajo, iguales, sin tierra en el fondo. */
-    /* La linea que ella busca, que no llega a ser una linea.
+    /* La grieta que ella busca, de la que solo se ve lo que esta mirando.
 
-       Antes esto dibujaba capas hundiendose —un pedazo levantado y abajo mas
-       pedazos, hasta perderse— porque el texto decia que no habia fondo. El
-       texto cambio: ahora ella busca por donde se partio esto, el borde entre
-       lo de antes y lo de despues, y el hallazgo es que ese borde no esta.
-       Un dibujo que ilustra el parrafo viejo es peor que ninguno: contradice
-       al que se esta leyendo.
+       Paso por dos versiones antes de esta. La primera dibujaba capas
+       hundiendose —un pedazo levantado y abajo mas pedazos— y quedo vieja
+       cuando el texto cambio. La segunda eran cinco tramos sueltos con huecos
+       entre uno y otro, y fallaba por algo peor que el alineado: esos tramos
+       no ERAN nada. Eran una idea dibujada —el gesto de buscar— y en un juego
+       donde todo lo demas es una barca, una calesita o un faro, una idea
+       suelta no se lee. Nico pregunto que eran, y esa pregunta es la respuesta.
 
-       Se dibuja el gesto de buscar. Un trazo fino recorre el monton de un lado
-       al otro y va apareciendo por tramos, con huecos entre uno y otro, y
-       ninguno se junta con el siguiente. Las puntas de cada tramo se encienden
-       —ahi es donde uno cree que encontro algo— y despues no sigue. Barre con
-       el tiempo: no es una figura puesta, es alguien pasando la mano. */
+       Ahora es UNA grieta, que si es una cosa. Cruza el monton entero, pero
+       solo se ve el pedazo que ella tiene la vista encima: el foco recorre
+       despacio de un lado al otro y lo demas se pierde. Nunca se la ve
+       completa, que es literalmente lo que dice el texto — tiene que haber una
+       linea que separe lo de antes de lo de despues, y no esta.
+
+       El mismo recurso que las vias de la montaña rusa, que se cortan en el
+       aire: lo que no existe no se dibuja entero. */
     ruina: function (cx, fx, fy, E, t, v) {
       var a = entra(v);
       cx.save();
       cx.lineCap = 'round';
 
-      /* A la altura del monton y no encima de el: con y0 en el centro de la
-         figura la linea quedaba flotando en el aire arriba de los escombros,
-         que es donde no hay nada que partir. */
       var ancho = E * 1.02, y0 = fy + E * .72;
-      /* Cinco tramos con largos y huecos distintos: parejos se leerian como
-         una linea de puntos, que es justamente una linea. */
-      var TRAMOS = [[-1.00, -.62], [-.44, -.20], [-.02, .18], [.34, .52],
-                    [.70, .96]];
-      /* La mano barre de izquierda a derecha y vuelve. Cada tramo se enciende
-         cuando la barrida lo pasa por encima, asi que el trazo no esta: se va
-         haciendo. */
-      var barrido = Math.sin(t * .55) * 1.15;
+      /* El foco: donde esta mirando ahora. Va y vuelve despacio —un barrido
+         cada nueve segundos— porque esto es alguien recorriendo algo con la
+         vista, no un escaner. */
+      var foco = Math.sin(t * .35) * .82;
 
-      for (var i = 0; i < TRAMOS.length; i++) {
-        var x1 = fx + ancho * TRAMOS[i][0], x2 = fx + ancho * TRAMOS[i][1];
-        var medio = (TRAMOS[i][0] + TRAMOS[i][1]) * .5;
-        /* Cuanto de encendido esta este tramo: maximo cuando la mano esta
-           encima, y se apaga a medida que se aleja. */
-        var cerca = Math.max(0, 1 - Math.abs(barrido - medio) * 1.0);
-        /* Con .16 de base los tramos que la mano no estaba tocando se perdian
-           entre las tablas —que son claras— y en pantalla se veia un solo
-           trazo suelto en vez de una linea cortada. La linea entera tiene que
-           leerse siempre: lo que cambia con la barrida es cual esta encendido,
-           no cuales existen. */
-        var brillo = a * (.38 + cerca * .58);
-        if (brillo < .02) continue;
+      /* La grieta se dibuja por pedacitos, cada uno con su transparencia segun
+         cuan lejos del foco cae. Partida asi y no con un degrade sobre un solo
+         trazo: la linea no es recta —baja y sube siguiendo el terreno roto— y
+         un degrade lineal sobre una curva se corta donde no debe. */
+      /* UN solo trazo con un degrade, y no pedacitos con su alfa cada uno.
 
-        /* La linea baja y sube un poco: sigue el terreno roto en vez de cruzar
-           derecha por encima, que se leeria como una regla apoyada. */
-        var yA = y0 + Math.sin(TRAMOS[i][0] * 4.1) * E * .055;
-        var yB = y0 + Math.sin(TRAMOS[i][1] * 4.1) * E * .055;
-        /* Con un reborde oscuro abajo. Las tablas del monton son claras y un
-           trazo blanco fino encima de ellas se confunde con el borde de una
-           tabla; el reborde lo despega y hace que se lea como una linea que
-           esta POR ENCIMA de todo esto, buscando. */
-        cx.beginPath();
-        cx.moveTo(x1, yA);
-        cx.quadraticCurveTo((x1 + x2) * .5, (yA + yB) * .5 - E * .03, x2, yB);
-        cx.globalAlpha = brillo * .75;
-        cx.strokeStyle = 'rgba(12,10,24,.9)';
-        cx.lineWidth = Math.max(2, E * .030);
-        cx.stroke();
-        cx.globalAlpha = brillo;
-        cx.strokeStyle = 'rgba(232,228,248,.98)';
-        cx.lineWidth = Math.max(1.4, E * .016);
-        cx.stroke();
+         Partida en cuarenta y seis pedazos —cada uno con su transparencia y su
+         punta redondeada— la grieta se veia PUNTEADA: donde dos se pisaban el
+         alfa se sumaba y donde no, el reborde oscuro los separaba. Y una linea
+         de puntos vuelve a ser una linea, que es lo contrario de lo que este
+         lugar dice.
 
-        /* Las dos puntas encendidas: ahi es donde uno cree que encontro el
-           borde. Que sean las PUNTAS y no el medio es lo que hace que se lea
-           que la linea se corta, y no que esta desdibujada. */
-        halo(cx, x1, yA, E * .10, '255,240,210', .48 * brillo);
-        halo(cx, x2, yB, E * .10, '255,240,210', .48 * brillo);
+         El degrade es horizontal aunque la curva no lo sea: la grieta baja y
+         sube apenas —cinco centesimos de E— asi que en la practica el eje x
+         alcanza, y a cambio se dibuja de una sola pasada. */
+      var PASOS = 46;
+      function alturaEn(u) {
+        return y0 + Math.sin(u * 3.7) * E * .055 + Math.sin(u * 8.3 + 1.4) * E * .022;
       }
+
+      cx.beginPath();
+      for (var i = 0; i <= PASOS; i++) {
+        var u = -1 + (i / PASOS) * 2;
+        var px = fx + ancho * u, py = alturaEn(u);
+        if (i === 0) cx.moveTo(px, py); else cx.lineTo(px, py);
+      }
+
+      /* Se apaga rapido a los dos lados del foco: con una caida suave se veia
+         de punta a punta y volvia a ser una linea que SI existe. */
+      var xIzq = fx - ancho, xDer = fx + ancho;
+      var xFoco = fx + ancho * foco;
+      var largo = ancho * .5;
+      var g = cx.createLinearGradient(xIzq, 0, xDer, 0);
+      function parada(x, alfa) {
+        var f = Math.max(0, Math.min(1, (x - xIzq) / (xDer - xIzq)));
+        g.addColorStop(f, 'rgba(234,230,250,' + alfa.toFixed(3) + ')');
+      }
+      parada(xIzq, 0);
+      parada(xFoco - largo, 0);
+      parada(xFoco - largo * .45, .34 * a);
+      parada(xFoco, .95 * a);
+      parada(xFoco + largo * .45, .34 * a);
+      parada(xFoco + largo, 0);
+      parada(xDer, 0);
+
+      cx.globalAlpha = 1;
+      cx.strokeStyle = g;
+      cx.lineWidth = Math.max(1.4, E * .021);
+      cx.stroke();
+
+      /* Y donde esta mirando, un poco de luz. Es lo unico que dice que hay
+         alguien recorriendo esto y no una grieta que se prende sola. */
+      var fx2 = fx + ancho * foco, fy2 = alturaEn(foco);
+      halo(cx, fx2, fy2, E * .17, '255,240,210', .34 * a);
 
       cx.restore();
     },
