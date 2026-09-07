@@ -5590,8 +5590,14 @@ var Anomalias = (function () {
          la reconozca la va a reconocer; el que no, ve una ventana prendida.
 
          Y corrida del centro del vidrio: centrada exacto se leia como un icono
-         puesto ahi a proposito. Descentrada es alguien que esta parado. */
-      silueta(cx, ox - E * .038, fy - E * .455, E * .158, a * a * a, false, .34);
+         puesto ahi a proposito. Descentrada es alguien que esta parado.
+
+         La tinta bajo de .34 a .08, medido y no a ojo: aislando la silueta del
+         resto —el mismo haz frenado en las dos tomas, con anomalia y sin ella—
+         a .34 oscurecia el vidrio hasta 68 puntos por canal, que sobre lo mas
+         brillante de toda la pantalla es una figura recortada. A .08 son 16, y
+         a tamaño real queda una sombra que solo encuentra el que se acerca. */
+      silueta(cx, ox - E * .038, fy - E * .455, E * .158, a * a * a, false, .08);
     },
 
     /* Lo que se llena el aire, y el corazon.
