@@ -637,9 +637,17 @@ var Pintores = (function () {
       cx.rect(-an, vy0, an * 2, vy1 - vy0);
       cx.clip();
 
-      // La pared del fondo.
+      /* La pared del fondo, alumbrada por una luz que no sale de ningun lado.
+
+         El gradiente NO nace en la lampara: nace de arriba y de todos lados a
+         la vez, sin una fuente que se pueda senalar. Es lo que el lugar viene
+         diciendo desde la llegada —"la rodeo entera para entender de donde
+         sale"— y lo que la lampara encendida arruinaba, porque contestaba la
+         pregunta del lugar, y encima la contestaba mal: la respuesta era
+         "habia una lampara". */
       var pared = cx.createLinearGradient(0, vy0, 0, vy1);
-      pared.addColorStop(0, '#3a2a1e');
+      pared.addColorStop(0, '#4b382a');
+      pared.addColorStop(.55, '#33251a');
       pared.addColorStop(1, '#241a12');
       cx.fillStyle = pared;
       cx.fillRect(-an, vy0, an * 2, vy1 - vy0);
@@ -654,17 +662,27 @@ var Pintores = (function () {
       cx.lineTo(-an * .62, vy1 - (vy1 - vy0) * .30);
       cx.closePath(); cx.fill();
 
-      /* Y una lampara colgando, ARRIBA. Antes estaba a media altura, o sea
-         justo donde vive el picaporte: dos luces del mismo tamaño a la misma
-         altura en la misma hoja. Colgada del techo no se confunde con nada, y
-         ademas es lo que tiene una habitacion vacia. */
+      /* Y una lampara colgando, APAGADA.
+
+         Colgada del techo y no a media altura, que es donde vive el picaporte:
+         ahi eran dos luces del mismo tamaño en la misma hoja y el ojo las leia
+         como una cara. Y apagada, que fue idea de Nico y es mejor por dos
+         motivos: deja intacto el misterio de la llegada —de donde sale esa
+         luz— y una lampara sin encender en una habitacion iluminada dice sola
+         que ahi hubo alguien y ya no.
+
+         Se dibuja con un reflejo apenas, para que se lea como vidrio apagado y
+         no como un agujero en la pared. */
       var lx = an * .30, ly = vy0 + (vy1 - vy0) * .17;
-      cx.strokeStyle = 'rgba(30,20,14,.75)';
+      cx.strokeStyle = 'rgba(28,19,13,.85)';
       cx.lineWidth = Math.max(1, E * .006);
       cx.beginPath(); cx.moveTo(lx, vy0); cx.lineTo(lx, ly); cx.stroke();
-      halo(cx, lx, ly, E * .19, '255,222,160', .50);
-      cx.fillStyle = 'rgba(255,236,190,.92)';
-      cx.beginPath(); cx.arc(lx, ly, E * .020, 0, 6.2832); cx.fill();
+      cx.fillStyle = 'rgba(96,80,62,.85)';
+      cx.beginPath(); cx.arc(lx, ly, E * .022, 0, 6.2832); cx.fill();
+      cx.fillStyle = 'rgba(178,160,132,.55)';
+      cx.beginPath();
+      cx.arc(lx - E * .007, ly - E * .007, E * .008, 0, 6.2832);
+      cx.fill();
       cx.restore();
     }
 
