@@ -11,7 +11,10 @@ def construir(entrada, salida):
     html = io.open(ruta, encoding='utf-8').read()
 
     def meter(m):
-        src = m.group(1)
+        # El ?v=N del cache-busting no es parte del nombre del archivo: index.html
+        # los lleva para que ningun navegador se quede con una copia vieja, y el
+        # bundle no lo necesita porque es un archivo solo.
+        src = m.group(1).split('?')[0]
         p = os.path.normpath(os.path.join(os.path.dirname(ruta), src))
         if not os.path.isfile(p):
             raise SystemExit('falta el modulo: ' + src)
