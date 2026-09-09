@@ -189,6 +189,7 @@
     cerrarPaso: null,       // el cierre corto, cuando la revelacion ya se leyo
     platilloIdo: 0,         // el platillo que ya se fue no vuelve mientras siga ahi
     lejosBase: 0,           // a que distancia se planto al llegar, antes de cualquier gesto
+    entrada: 0,             // el velo con que entra un lugar nuevo, de 1 a 0
     guias: {},              // que avisos de la primera partida ya salieron
     siguioDeLargo: 0,       // cuantas veces eligio no quedarse a mirar
     ultimoTic: -1,          // para no repetir el tic del anillo
@@ -709,6 +710,13 @@
        ponia una y el cuadro siguiente la corregia: Bel caminaba hacia un punto,
        la marca se movia, y volvia — el ida y vuelta que se veia en cada carta. */
 
+    /* Y el lugar nuevo entra con un velo que se va, en vez de aparecer.
+
+       La transformacion ya se ve entera —el paso la espera— pero el momento en
+       que el lugar pasa a ser otro sigue siendo seco: cambian el cartel, el
+       texto y el color de golpe. Medio segundo de velo los une. */
+    J.entrada = 1;
+
     ponerRotulo(J.lugar);
     /* El pie se acomoda al llegar y no solo al repartir: entre que se llega a
        un lugar y que aparecen las cartas pasa todo el texto de llegada, y en
@@ -1030,9 +1038,28 @@
        una prueba acelerada corre sesenta veces mas rapido— el paso avanzaba
        DOS veces: el recorrido salia con un lugar repetido, todo lo de atras
        corrido uno, y el final no era la cama. */
-    var yaAvanzo = false;
+    var yaAvanzo = false, esperasDeMutacion = 0;
     J.avanzarPaso = function () {
       if (yaAvanzo) return;
+      /* Primero se deja terminar la transformacion.
+
+         La figura tarda 3,6 segundos en volverse la otra, y menos de la mitad
+         de eso mientras hay un dedo apoyado. Pero al acertar el mundo se
+         congela para leer lo que el lugar escondia, y la mutacion queda parada
+         donde estaba: despues el paso avanzaba igual y `llegar` ponia J.u = 1
+         de una, asi que la figura nueva aparecia de golpe. Nico lo vio como
+         que no habia transicion — y no la habia, porque justamente se la
+         cortaba cuando el jugador hacia lo que el juego le pide.
+
+         Cuanto antes mire, mas a la mitad quedaba: por eso pasaba siempre que
+         jugaba bien. El tope de cuatro segundos es contra un cuelgue: si algo
+         dejara la mutacion trabada, el paso avanza igual en vez de no avanzar
+         nunca. */
+      if (J.u < 1 && esperasDeMutacion < 40) {
+        esperasDeMutacion++;
+        luego(100, J.avanzarPaso);
+        return;
+      }
       yaAvanzo = true;
       /* El texto se va con el lugar que lo dijo.
 
@@ -2201,6 +2228,22 @@
     cx.fillStyle = gAba;
     cx.fillRect(0, H * .84, W, H * .16);
 
+    /* El velo con que entra un lugar nuevo. Va al final de todo —encima del
+       vineteado— porque es el cuadro entero el que aparece, no una parte.
+
+       Medio segundo y no mas: lo que se quiere es que el cambio de cartel,
+       texto y color no sea seco, no hacer esperar. Y no llega a negro: al 52%
+       la escena se adivina desde el primer instante, que es lo que separa un
+       lugar entrando de un corte a negro. */
+    if (J.entrada > 0) {
+      J.entrada = Math.max(0, J.entrada - dt * 2.2 * RITMO);
+      var vel = J.entrada * J.entrada * .52;
+      if (vel > .004) {
+        cx.fillStyle = 'rgba(4,4,12,' + vel.toFixed(3) + ')';
+        cx.fillRect(0, 0, W, H);
+      }
+    }
+
     /* El respaldo no reengancha la cadena: el requestAnimationFrame que ya
        estaba pedido sigue vivo y se dispara cuando la pestana vuelva. Si
        reenganchara, al volver se dispararian todos juntos. */
@@ -2369,6 +2412,7 @@
        estado no sirve para medir ni para mirar. */
     J.climax = opciones.climax || 0;
     J.lunaCrece = 0;
+    J.entrada = opciones.entrada || 0;
     J.tension = J.tensionSuave = opciones.tension || 0;
     bel.empuje = opciones.empuje || 0;
     bel.asombro = opciones.asombro || 0;
