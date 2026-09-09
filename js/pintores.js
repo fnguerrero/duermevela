@@ -430,6 +430,25 @@ var Pintores = (function () {
     var punta = 0;
     var hoja = 0;
 
+    /* El recorrido junta y no dibuja, y despues se dibuja todo de una.
+
+       Nueve niveles con dos hijas cada uno —tres en el tronco— son unas dos
+       mil ramas, y cada una hacia su propio beginPath/stroke. Mas ochenta
+       halos, que son ochenta gradientes radiales, que es lo mas caro que
+       tiene el canvas. En la compu no se notaba; en el celular este lugar
+       corria a SEIS cuadros por segundo con picos de medio segundo, mientras
+       los otros catorce iban a sesenta. Un cuadro de medio segundo traba el
+       hilo, y con el hilo trabado el audio se corta: eso era la interferencia
+       que se escuchaba.
+
+       Agrupar no cambia un pixel del dibujo. Todas las ramas de un mismo nivel
+       tienen el mismo color y el mismo grosor —los dos salen del nivel— asi
+       que entran en un solo path y se pintan con un stroke. De dos mil pasa a
+       menos de quince. */
+    var trazos = {};
+    var puntas = [];
+    var hojas = [];
+
     function rama(x, y, ang, largo, grosor, prof) {
       if (prof <= 0 || largo < E * .014) return;
       /* El viento mece mas cuanto mas fina la rama, pero se mantiene chico:
@@ -437,31 +456,24 @@ var Pintores = (function () {
       var mece = Math.sin(vientoT + prof * 1.4 + x * .02) * (9 - prof) * .008;
       var a = ang + mece;
       var x2 = x + Math.cos(a) * largo, y2 = y + Math.sin(a) * largo;
-      cx.strokeStyle = prof > 5 ? 'rgba(62,48,44,.95)' : 'rgba(96,74,62,.85)';
-      cx.lineWidth = grosor;
-      cx.lineCap = 'round';
-      cx.beginPath(); cx.moveTo(x, y); cx.lineTo(x2, y2); cx.stroke();
-      if (prof <= 1 && (punta++ % 3 === 0)) {
-        halo(cx, x2, y2, E * .028, '190,230,180', .22);
+
+      /* La clave lleva el grosor ademas del nivel: la tercera rama del tronco
+         nace mas fina que sus hermanas y termina mezclada con otro nivel. */
+      var clave = prof + '|' + grosor.toFixed(2);
+      var grupo = trazos[clave];
+      if (!grupo) {
+        grupo = trazos[clave] = { grosor: grosor, prof: prof, seg: [] };
       }
+      grupo.seg.push(x, y, x2, y2);
+
+      if (prof <= 1 && (punta++ % 3 === 0)) puntas.push(x2, y2);
       /* Las hojas van solo en las dos puntas finales y una de cada dos: con
          mas, los doscientos y pico de extremos se juntan en una mancha y se
-         pierde la repeticion, que es lo que este lugar tiene que mostrar.
-         Son oscuras a proposito — de noche una hoja no es verde brillante,
-         y ademas asi no compiten con las puntas encendidas. */
+         pierde la repeticion, que es lo que este lugar tiene que mostrar. */
       if (prof <= 2 && (hoja++ % 2 === 0)) {
-        var hv = (hoja * 37 % 11) / 11;          // variacion estable por hoja
-        cx.save();
-        cx.translate(x2, y2);
-        cx.rotate(a + (hv - .5) * .9);
-        cx.fillStyle = 'rgba(' + Math.round(58 + hv * 26) + ',' +
-                                 Math.round(96 + hv * 34) + ',' +
-                                 Math.round(74 + hv * 20) + ',.55)';
-        cx.beginPath();
-        cx.ellipse(E * .020, 0, E * .022, E * .009, 0, 0, 6.2832);
-        cx.fill();
-        cx.restore();
+        hojas.push(x2, y2, a, (hoja * 37 % 11) / 11);
       }
+
       rama(x2, y2, a - ABRE, largo * RAZON, grosor * .70, prof - 1);
       rama(x2, y2, a + ABRE, largo * RAZON, grosor * .70, prof - 1);
       /* Una tercera rama al centro, solo en el tronco: le saca la simetria
@@ -469,6 +481,69 @@ var Pintores = (function () {
       if (prof > 7) rama(x2, y2, a + .03, largo * .62, grosor * .55, prof - 2);
     }
     rama(0, E, -Math.PI / 2, E * .57, E * .094, 9);
+
+    // Las ramas: un trazo por nivel, de las gruesas a las finas.
+    cx.lineCap = 'round';
+    var claves = Object.keys(trazos).sort(function (p, q) {
+      return trazos[q].prof - trazos[p].prof;
+    });
+    for (var k = 0; k < claves.length; k++) {
+      var g = trazos[claves[k]];
+      cx.strokeStyle = g.prof > 5 ? 'rgba(62,48,44,.95)' : 'rgba(96,74,62,.85)';
+      cx.lineWidth = g.grosor;
+      cx.beginPath();
+      for (var i = 0; i < g.seg.length; i += 4) {
+        cx.moveTo(g.seg[i], g.seg[i + 1]);
+        cx.lineTo(g.seg[i + 2], g.seg[i + 3]);
+      }
+      cx.stroke();
+    }
+
+    /* Las hojas, tambien de una. El tono variaba por hoja y ahora se redondea
+       a cuatro: a veintidos pixeles de largo nadie distingue once verdes, y
+       cuatro fills valen lo que ciento cincuenta. */
+    var TONOS = 4;
+    for (var w = 0; w < TONOS; w++) {
+      var hv = (w + .5) / TONOS;
+      cx.fillStyle = 'rgba(' + Math.round(58 + hv * 26) + ',' +
+                               Math.round(96 + hv * 34) + ',' +
+                               Math.round(74 + hv * 20) + ',.55)';
+      cx.beginPath();
+      for (var h = 0; h < hojas.length; h += 4) {
+        if (Math.floor(hojas[h + 3] * TONOS) !== w) continue;
+        var hx = hojas[h], hy = hojas[h + 1];
+        var ha = hojas[h + 2] + (hojas[h + 3] - .5) * .9;
+        var cxx = hx + Math.cos(ha) * E * .020, cyy = hy + Math.sin(ha) * E * .020;
+        /* Un moveTo antes de cada elipse, al punto donde el arco arranca.
+
+           Sin esto las ciento cincuenta hojas quedan en una sola subruta: el
+           fill las une con la regla non-zero y en vez de hojas sale una masa
+           verde con forma de nube. Se vio de una en la primera captura. */
+        cx.moveTo(cxx + Math.cos(ha) * E * .022, cyy + Math.sin(ha) * E * .022);
+        cx.ellipse(cxx, cyy, E * .022, E * .009, ha, 0, 6.2832);
+      }
+      cx.fill();
+    }
+
+    /* Y las puntas encendidas. Eran un gradiente radial cada una; a esta
+       escala —tres pixeles y medio en un celular— dos circulos planos
+       superpuestos en modo `lighter` dan el mismo resplandor y salen en dos
+       fills en vez de ochenta gradientes. */
+    if (puntas.length) {
+      cx.save();
+      cx.globalCompositeOperation = 'lighter';
+      for (var capa = 0; capa < 2; capa++) {
+        var r = E * .028 * (capa ? .42 : 1);
+        cx.fillStyle = 'rgba(190,230,180,' + (capa ? .13 : .05) + ')';
+        cx.beginPath();
+        for (var q2 = 0; q2 < puntas.length; q2 += 2) {
+          cx.moveTo(puntas[q2] + r, puntas[q2 + 1]);
+          cx.arc(puntas[q2], puntas[q2 + 1], r, 0, 6.2832);
+        }
+        cx.fill();
+      }
+      cx.restore();
+    }
 
     /* Un pajaro lejos, cruzando el cielo. Se ve siempre, aciertes o no, pero
        en silueta y sin color: el secreto de este lugar no es que haya un
