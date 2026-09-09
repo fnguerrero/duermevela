@@ -1699,9 +1699,16 @@ var Pintores = (function () {
        tiene por que ser simetrico, y de hecho queda mejor — la barca deja de
        estar en el centro exacto de su propio charco. */
     var rxLibre = Math.max(1.20, Math.min(2.0, lejos - .26));
-    /* Del lado de ella: hasta donde este parada menos un respiro. El piso de
-       .62 es para que el agua nunca sea mas angosta que el casco. */
-    var rxSuyo = Math.max(.62, Math.min(rxLibre, lejos - .30));
+    /* Del lado de ella: hasta donde este parada menos un respiro.
+
+       El respiro es .58 y no .30 porque el borde del agua no es una linea: la
+       mascara la desvanece desde el 52% del radio, asi que el agua tenue llega
+       bastante mas adentro de donde termina el ovalo. Con .30, en una ventana
+       donde ella queda a 1,25E del centro, el agua alcanzaba a 28 px de su
+       cuerpo — no la tapaba, pero se leia el borde pegado a ella y
+       verificarBarca lo marcaba. El piso de .62 es para que el agua nunca sea
+       mas angosta que el casco. */
+    var rxSuyo = Math.max(.62, Math.min(rxLibre, lejos - .58));
     var rxIzq = dirBel < 0 ? rxSuyo : rxLibre;
     var rxDer = dirBel < 0 ? rxLibre : rxSuyo;
     /* El resto de la funcion trabaja con un semiancho y un corrimiento: asi el

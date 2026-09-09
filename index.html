@@ -345,10 +345,16 @@
     transition:transform 1.1s cubic-bezier(.4,0,.2,1),opacity 1.1s .15s}
 
   /* 44: lo que queda del mazo, insinuado al costado de la mano. */
+  /* El mazo vive arriba de las cartas mientras estan, y se va al pie cuando no
+     estan: ahi ese espacio es de la escena. Antes no se movia nunca y quedaba
+     en el medio del cuadro, a la altura de la figura. La transicion es la
+     misma que la de las cartas, para que bajen juntos. */
   #resto{position:fixed;right:clamp(14px,2.4vw,26px);bottom:clamp(60px,12vh,120px);
+    transition:opacity .6s, bottom .5s ease;
     z-index:5;opacity:0;transition:opacity .8s;pointer-events:none;
     display:flex;flex-direction:column;align-items:center;gap:6px}
   #resto.ver{opacity:.75}
+  #resto.abajo{bottom:clamp(12px,3vh,26px)}
   #resto .pila{position:relative;width:26px;height:39px}
   #resto .pila i{position:absolute;inset:0;border-radius:2px;
     background:linear-gradient(160deg,#2f5a90,#26497a);
@@ -666,7 +672,15 @@
     /* Tres cartas mas los huecos tienen que entrar en el ancho: la altura de
        la mano es lo que fija ese ancho, asi que se recorta aca. */
     #mano{--hueco:10px;--orilla:8px;padding-bottom:12px}
-    :root{--alto-mano:min(26vh,204px)}
+    /* El alto de la mano sale del ANCHO, que es quien manda de verdad.
+
+       Con `min(26vh,204px)` la mano reservaba 204 px pero las cartas, topeadas
+       por el ancho de la pantalla, ocupaban 181: veintitres pixeles de aire que
+       le comian a la escena. Ahora se calcula lo mismo que calcula la carta
+       —el ancho disponible dividido tres, por la proporcion 2:3— mas el
+       padding. El tope por alto se queda para pantallas angostas y bajas. */
+    :root{--alto-mano:min(26vh,
+      calc((100vw - 2 * 10px - 2 * 8px) / 3 * 1.5 + 12px))}
     /* Sin abanico: en una pantalla angosta el giro hace que las de los
        costados se salgan por las esquinas, aunque el naipe entre. */
     .carta{--giro:0deg!important}

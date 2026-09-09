@@ -377,16 +377,26 @@
   /* Donde empieza la mano de cartas, en pixeles desde arriba. Se cachea porque
      leer el layout en cada cuadro fuerza un reflow; se invalida cuando cambia
      el tamano o cuando se reparte. */
-  var _techoMano = 0;
+  var _techoMano = 0, _techoVisto = 0;
   function medirMano() {
     var r = elMano.getBoundingClientRect();
-    /* Una mano sin cartas igual mide alto: el alto sale del CSS, no del
-       contenido. Preguntar solo por la altura daba por buena una mano que no
-       existia y el piso se subia media pantalla — se veia mientras el relato
-       espera, que es justo cuando todavia no se reparte nada. Lo que decide es
-       si hay cartas y si no se fueron. */
-    var hay = elMano.children.length > 0 && !elMano.classList.contains('fuera');
-    _techoMano = (hay && r.height > 4) ? r.top : H * .78;
+    /* Lo que se mide es DONDE ESTA la mano, no si tiene cartas adentro.
+
+       El alto de la mano sale del CSS y no del contenido, asi que vacia o
+       llena arranca en el mismo sitio: en un celular de 812, en 608 los dos
+       casos. Pero el codigo, cuando no habia cartas, tiraba esa medida y usaba
+       un respaldo teorico —H * .78, o sea 633— y esos 25 px de diferencia
+       movian el piso, y con el piso el tamaño de la figura. Nico lo vio
+       jugando: la escena SUBIA al aparecer las cartas y bajaba al elegir una.
+
+       Ahora el ultimo techo real se guarda y se sigue usando mientras la mano
+       esta afuera de cuadro, que es el unico momento en que su rectangulo
+       miente. Asi la escena no se mueve nunca. El respaldo queda para el
+       primer cuadro, antes de que exista layout. */
+    if (!elMano.classList.contains('fuera') && r.height > 4 && r.top > 0) {
+      _techoVisto = r.top;
+    }
+    _techoMano = _techoVisto || H * .78;
     return _techoMano;
   }
   function techoMano() {
@@ -698,6 +708,11 @@
        la marca se movia, y volvia — el ida y vuelta que se veia en cada carta. */
 
     ponerRotulo(J.lugar);
+    /* El pie se acomoda al llegar y no solo al repartir: entre que se llega a
+       un lugar y que aparecen las cartas pasa todo el texto de llegada, y en
+       ese rato —que es largo, porque espera al jugador— el mazo se quedaba
+       arriba tapando la escena. */
+    acomodarPie();
     elMarcador.classList.add('ver');
     actualizarRestan();
     Audio2.entrada();
@@ -804,13 +819,28 @@
      un tutorial aparte: son tres frases sobre el juego andando, en el momento
      exacto en que hacen falta. Alguien que ya sabe jugar no las lee porque
      para cuando aparecen ya hizo la accion. */
+  /* La guia y el mazo se van al pie cuando las cartas no estan.
+
+     Antes la guia solo miraba si habia cartas EN EL DOM, y al jugar una las
+     tres siguen ahi —invisibles, con la clase `fuera`— asi que se quedaba a
+     media altura tapando la escena justo durante la revelacion, que es el
+     unico momento del juego en que hay algo que mirar. El mazo directamente no
+     se movia nunca: vivia a 220 px del pie, en el medio del cuadro.
+
+     Los dos bajan juntos y por la misma razon: mientras las cartas estan hay
+     que esquivarlas, y cuando no estan ese espacio es de la escena. */
+  function acomodarPie() {
+    var conCartas = !!elMano.querySelector('.carta') &&
+                    !elMano.classList.contains('fuera');
+    elGuia.classList.toggle('abajo', !conCartas);
+    if (elResto) elResto.classList.toggle('abajo', !conCartas);
+  }
+
   function guiar(clave, texto, duracion) {
     if (J.guias[clave]) return;
     J.guias[clave] = true;
     elGuia.textContent = texto;
-    /* Si no hay cartas repartidas, la guia se va al pie. Con cartas tiene que
-       quedar arriba de ellas o queda tapada. */
-    elGuia.classList.toggle('abajo', !elMano.querySelector('.carta'));
+    acomodarPie();
     elGuia.classList.add('ver');
     luego(duracion || 4600, function () {
       // Solo se apaga si sigue siendo la suya: otra guia pudo tomar el cartel.
@@ -825,6 +855,7 @@
     dorsos = [];
     elMano.classList.remove('fuera');
     medirMano();
+    acomodarPie();
 
     /* El tramo sin eleccion reparte una sola carta. Dibujarla sola se lee como
        que el reparto fallo, asi que se ocupan las tres posiciones: las dos de
@@ -930,6 +961,7 @@
     if (elCarta) elCarta.classList.add('elegida');
     elMano.classList.add('fuera');
     medirMano();
+    acomodarPie();
     actualizarRestan();
 
     /* Lo que hizo la carta se dice AHORA, mientras el lugar se esta
@@ -1119,6 +1151,7 @@
     elMarcador.classList.remove('ver');
     elMano.classList.add('fuera');
     medirMano();
+    acomodarPie();
     ocultarAviso();
 
     var f = Guion.final(J.indicios, J.recorrido);
@@ -2090,6 +2123,7 @@
        medirlas por pixeles no se puede —el fondo tiene degrade y la sombra
        tine el piso— y sin esto no hay forma de saber si alguien se sale del
        cuadro o si se pisan entre ellos. */
+    J.belAlto = altoBel;
     J.belCaja = { izq: belPantalla - altoBel * .15, der: belPantalla + altoBel * .15,
                   techo: piso - altoBel, piso: piso };
     J.figCaja = { izq: fx - E, der: fx + E, techo: fy - E, piso: piso };
@@ -2302,12 +2336,31 @@
     if (!opciones.conInstante) {
       mirada.activo = false; mirada.destello = 0; mirada.fallo = 0;
     }
+    /* Y lo mismo con el resplandor de la carta jugada y el destello del final
+       de la mutacion, por la misma razon: son cosas que se apagan con el
+       tiempo, y aca el tiempo no corre. Quedaban de la partida anterior y
+       teñian la lamina entera de violeta —Nico lo hubiera visto en una captura
+       y yo no lo veia porque cada llamada suelta salia limpia.
+
+       No es solo cosmetico: verificarBarca mide BRILLO junto a ella, y con el
+       fondo encendido daba agua donde solo habia resplandor. La prueba pasaba
+       sola y fallaba dentro de la auditoria, que corre despues de una partida.
+       Una herramienta de captura que arrastra estado no sirve para medir. */
+    J.fogonazo = opciones.fogonazo || 0;
+    J.destello = opciones.destello || 0;
+    /* Y todo lo demas que se apaga con el tiempo, por la misma razon. El
+       climax es el peor de todos: hace un zoom sobre la escena, asi que una
+       captura pedida despues de una partida que llego al final salia con la
+       figura agrandada y corrida, y nadie lo notaba porque cada llamada suelta
+       —sin partida antes— salia bien. Una herramienta de captura que arrastra
+       estado no sirve para medir ni para mirar. */
+    J.climax = opciones.climax || 0;
+    J.lunaCrece = 0;
+    J.tension = J.tensionSuave = opciones.tension || 0;
+    bel.empuje = opciones.empuje || 0;
+    bel.asombro = opciones.asombro || 0;
     J.belX = (opciones.belX !== undefined) ? opciones.belX : J.belMeta;
     if (opciones.t !== undefined) t = opciones.t;
-    if (opciones.tension !== undefined) {
-      J.tension = J.tensionSuave = opciones.tension;
-    }
-    if (opciones.climax !== undefined) J.climax = opciones.climax;
     /* Cuantos indicios dar por encontrados. Es lo unico que mueve la fase
        de la luna, asi que sin esto no hay forma de capturarla en otra cosa
        que no sea luna nueva. */
@@ -2320,8 +2373,6 @@
        que hace —el color, la deformacion, el arbol, el corazon— cuelga de
        este numero, y el unico modo de llegar era jugando hasta ahi. */
     if (opciones.revelando !== undefined) J.revelando = opciones.revelando;
-    if (opciones.empuje !== undefined) bel.empuje = opciones.empuje;
-    if (opciones.asombro !== undefined) bel.asombro = opciones.asombro;
     // El modo captura tambien reajusta: si no, una captura tras un resize sale
     // con el tamano viejo y parece un bug del dibujo.
     if (revisarTamanio()) pintarNaipes();
@@ -2682,10 +2733,19 @@
         if (v > agua) agua = v;
       }
       /* A los dos lados: que no la alcance por la derecha no dice nada de la
-         izquierda, y el agua es una mancha que crece para los dos lados. Se
-         mide a cuarenta pixeles, afuera de su cuerpo —que mide unos treinta de
-         medio ancho— para no estar midiendola a ella. */
-      var cerca = Math.max(brilloEn(bx + 40), brilloEn(bx - 40));
+         izquierda, y el agua es una mancha que crece para los dos lados.
+
+         Y se mide contra el borde de SU CUERPO y no a cuarenta pixeles fijos.
+         Cuarenta estaba pensado para pantalla grande, donde ella tiene unos
+         treinta de medio ancho; en vertical mide dieciocho, asi que ese punto
+         caia al doble de su ancho, ya adentro del desvanecido del agua, y la
+         prueba daba rojo con el agua a veinte pixeles de distancia. Lo que hay
+         que preguntar es si el agua le llega A ELLA, y eso se mide donde
+         termina ella: el diez por ciento de su alto de margen alcanza para no
+         estar midiendo su propio abrigo. */
+      var caja = J.belCaja || { izq: bx - 20, der: bx + 20 };
+      var margen = (J.belAlto || 40) * .10;
+      var cerca = Math.max(brilloEn(caja.der + margen), brilloEn(caja.izq - margen));
       var parte = cerca / agua;
       medidas.push({ indicios: n, agua: agua, junto: cerca,
                      parte: +parte.toFixed(3) });
@@ -3403,6 +3463,7 @@
     mirada.resuelto = false;
     if (J.recorrido[J.recorrido.length - 1] !== clave) J.recorrido.push(clave);
     elMano.classList.remove('fuera');
+    acomodarPie();
     elMarcador.classList.add('ver');
     ponerRotulo(clave);
     decir(J.visitados[clave] ? l.vuelta : l.llegada, mostrarMano);
