@@ -549,6 +549,54 @@
     });
   }
 
+  /* Las medidas de la escena, en un solo lugar y sin tocar el DOM.
+
+     Estaban repartidas por el bucle de dibujo, y por eso convivieron mucho
+     tiempo dos proporciones distintas sin que nadie se enterara: en la compu
+     la figura medía 2,12 veces el alto de Bel y en el celular 1,39. La causa
+     es que en vertical el tamaño de la figura lo topea el ANCHO —que en un
+     telefono es poco— mientras que ella escala con el ALTO, que ahi sobra. La
+     escena terminaba contada con dos escalas segun el aparato.
+
+     Los dos numeros de vertical salen de ahi: la figura sube a .34 del ancho
+     —con .30 quedaba en 113 px cuando el hueco daba para 215, la mitad de lo
+     que entraba— y ella baja a .155 del alto. En una pantalla angosta una
+     figura humana de .20 domina el cuadro y achica todo lo demas por
+     comparacion; mas chica, ademas, se lee como que esta mas lejos, que es lo
+     otro que se veia mal: parecia pegada a las cosas.
+
+     Juntas en una funcion pura, verificarProporcion() puede pedirlas para
+     cualquier tamaño y medir lo que el juego dibuja de verdad, en vez de
+     repetir las cuentas al lado y no enterarse cuando cambian. */
+  function medidasEscena(W, H, techoMano) {
+    var vertical = H > W * 1.25;
+    var piso = Math.min(H * (vertical ? .80 : .84), techoMano + H * .05);
+    /* El tamaño no sale solo de la pantalla: sale del hueco que queda entre el
+       texto y el piso. Midiendo contra la altura total, una pantalla ancha y
+       baja hace crecer la figura hasta meterse atras del relato. Una figura
+       terrestre ocupa 2E de alto, asi que E no puede pasar de la mitad. */
+    var cabe = (piso - H * (vertical ? .27 : .29)) / 2;
+    /* El minimo no es cosmetico: si la mano se mide antes de que el layout
+       asiente, el hueco da negativo, E se va abajo de cero y el primer
+       createRadialGradient tira IndexSizeError y no se dibuja nada. */
+    var E = Math.max(W * .08, Math.min(vertical ? W * .34 : W * .27, cabe));
+    /* Ella se mide contra la FIGURA y no contra la pantalla, y eso es lo que
+       de verdad arregla el problema.
+
+       Mientras la figura escalaba con el ancho y ella con el alto, cualquier
+       aparato con otra relacion entre los dos daba otra proporcion: 2,12 en la
+       compu, 1,39 en el celular. Subir la figura en vertical y bajarla a ella
+       tapaba el caso del telefono y rompia el de la tablet, que se iba a 3,29
+       —eso lo encontro verificarProporcion, no yo. Atada a E, la proporcion es
+       la misma en todos lados por construccion y no por ajuste.
+
+       El .945 sale de lo que ya habia en la compu: alli E daba 205 y ella 194.
+       O sea que en pantalla grande no cambia nada. */
+    var altoBel = E * .945;
+    return { vertical: vertical, piso: piso, E: E, altoBel: altoBel,
+             proporcion: (2 * E) / altoBel, anchoPct: (2 * E) / W };
+  }
+
   /* El cartel dice lo que se esta viendo, no en que paso va la partida.
 
      La figura pasa a ser la nueva apenas termina la transformacion, pero el
@@ -1730,8 +1778,9 @@
        elija deja casos afuera. Midiendo la mano, la escena siempre vive arriba
        de ella y las cartas ocupan la franja del suelo, que es donde tiene
        sentido que esten: apoyadas adelante. */
-    var vertical = H > W * 1.25;
-    var piso = Math.min(H * (vertical ? .80 : .84), techoMano() + H * .05);
+    var med = medidasEscena(W, H, techoMano());
+    var vertical = med.vertical;
+    var piso = med.piso;
 
     // --- resplandor de la carta jugada ---
     if (J.fogonazo > 0) {
@@ -1751,12 +1800,7 @@
        baja hace crecer la figura hasta meterse atras del relato — que es
        exactamente lo que pasaba. Una figura terrestre ocupa 2E de alto, asi
        que E no puede pasar de la mitad de ese hueco. */
-    var techoEscena = H * (vertical ? .27 : .29);
-    var cabe = (piso - techoEscena) / 2;
-    /* El minimo no es cosmetico: si la mano se mide antes de que el layout
-       asiente, el hueco da negativo, E se va abajo de cero y el primer
-       createRadialGradient tira IndexSizeError y no se dibuja nada. */
-    var E = Math.max(W * .08, Math.min(vertical ? W * .30 : W * .27, cabe));
+    var E = med.E;
     var fy = alturaDe(J.lugar, J.destino, J.u, piso, E);
     /* La calesita se despega del piso mientras la mirás, y apoya cuando
        soltás. Va acá y no en la anomalía porque hay que MOVER la figura: las
@@ -1925,8 +1969,7 @@
          era peor que no tener reflejo: se veia una mancha en el medio del
          suelo, sin nada de este lado que la explicara, y quien mira supone
          que el reflejo es de la persona porque es lo unico vivo en cuadro. */
-      Bel.dibujar(cx, bel, W * J.belX, piso,
-                  (H * (vertical ? .20 : .255)) / 176, 1);
+      Bel.dibujar(cx, bel, W * J.belX, piso, med.altoBel / 176, 1);
       cx.filter = 'none';
       cx.restore();
     }
@@ -1987,7 +2030,7 @@
        quedaba afuera. Se la veia cortada por el borde justo en la cama, que es
        la escena del final. El .15 sale del dibujo: el cuerpo mas la melena no
        pasan de esa fraccion del alto (la sombra del piso mide .12). */
-    var altoBelAqui = H * (vertical ? .20 : .255);
+    var altoBelAqui = med.altoBel;
     var medioBel = altoBelAqui * .15;
     /* Y se va acercando. Cada cosa que llega a ver la deja un poco mas cerca
        de lo que esta mirando: al final del recorrido esta bastante mas
@@ -2042,7 +2085,7 @@
     bel.alza = Math.max(0, Math.min(1, bel.alza));
 
     // Sombra bajo Bel: sin esto flota sobre la linea del piso.
-    var altoBel = H * (vertical ? .20 : .255);
+    var altoBel = med.altoBel;
     /* Las dos cajas quedan anotadas para que se puedan verificar desde afuera:
        medirlas por pixeles no se puede —el fondo tiene degrade y la sombra
        tine el piso— y sin esto no hay forma de saber si alguien se sale del
@@ -2074,7 +2117,7 @@
 
     Bel.actualizar(bel, dt, J.andando);
     var luzEncima = 1 + J.fogonazo * .34;
-    var escalaBel = (H * (vertical ? .20 : .255)) / 176;
+    var escalaBel = med.altoBel / 176;
     Bel.dibujar(cx, bel, belPantalla, piso, escalaBel, luzEncima);
 
     if (J.climax > 0) cx.restore();
@@ -2341,7 +2384,7 @@
   window.verificarBases = function () {
     var vertical = H > W * 1.25;
     var piso = Math.min(H * (vertical ? .80 : .84), techoMano() + H * .05);
-    var E = Math.max(W * .08, Math.min(vertical ? W * .30 : W * .27,
+    var E = Math.max(W * .08, Math.min(vertical ? W * .34 : W * .27,
                      (piso - H * (vertical ? .27 : .29)) / 2));
     var mal = [];
     Object.keys(Figuras.CATALOGO).forEach(function (k) {
@@ -2652,6 +2695,60 @@
     }
     return { escenas: medidas, mojada: malos.length, muestra: malos.slice(0, 3),
              ok: malos.length === 0 };
+  };
+
+  /* Que la escena se vea igual de grande en el celular y en la compu.
+
+     Este defecto vivio meses sin que ninguna prueba lo tocara, porque no rompe
+     nada: el juego anda, las figuras estan bien dibujadas y no hay un solo
+     error en consola. Simplemente en el telefono las cosas se veian chiquitas
+     al lado de Bel y pegadas a ella, y en la compu no. Nico lo vio jugando.
+
+     Lo que se mide es la PROPORCION —cuantas veces entra el alto de ella en la
+     figura— y no los tamaños sueltos: que la figura mida 255 px en un celular
+     y 411 en una compu esta perfecto, lo que no puede pasar es que en un lado
+     sea el doble que ella y en el otro apenas mas grande. Con .30 y .20 daba
+     1,39 contra 2,12, o sea la misma escena contada con dos escalas.
+
+     Y de paso, que no se salga de la pantalla: en vertical la figura crecio
+     hasta el 68% del ancho y ahi hay poco lugar. Las figuras mas anchas del
+     juego llegan a 2,2E, asi que el tope se mide con ese margen. */
+  window.verificarProporcion = function () {
+    var CASOS = [
+      { nombre: 'celular', W: 375, H: 812 },
+      { nombre: 'celular chico', W: 360, H: 640 },
+      { nombre: 'celular largo', W: 412, H: 915 },
+      { nombre: 'tablet', W: 768, H: 1024 },
+      { nombre: 'compu', W: 1280, H: 760 },
+      { nombre: 'compu ancha', W: 1920, H: 900 },
+      { nombre: 'ventanita', W: 900, H: 500 }
+    ];
+    var tabla = CASOS.map(function (c) {
+      /* El techo de la mano se estima igual que el respaldo del juego cuando
+         todavia no hay layout: lo que se compara es la formula, no un DOM. */
+      var m = medidasEscena(c.W, c.H, c.H * .78);
+      return { nombre: c.nombre, vertical: m.vertical,
+               figura: Math.round(2 * m.E), bel: Math.round(m.altoBel),
+               proporcion: +m.proporcion.toFixed(2),
+               anchoPct: Math.round(m.anchoPct * 100) };
+    });
+
+    var props = tabla.map(function (x) { return x.proporcion; });
+    var min = Math.min.apply(null, props), max = Math.max.apply(null, props);
+    /* Ahora la proporcion es la misma en todos los formatos por construccion
+       —ella se mide contra la figura, no contra la pantalla— asi que el margen
+       puede ser estrecho de verdad. Un 3% cubre el redondeo y nada mas: si
+       alguna vez se despega, es porque alguien volvio a atar los dos tamaños a
+       ejes distintos, que es exactamente el error que esta prueba cuida. */
+    var separadas = (max / min) > 1.03;
+
+    // Y que la figura entre a lo ancho, contando las mas anchas del juego.
+    var desbordan = tabla.filter(function (x) { return x.anchoPct * 1.1 > 92; });
+
+    return { tabla: tabla, minima: min, maxima: max,
+             diferencia: +((max / min - 1) * 100).toFixed(0) + '%',
+             desbordan: desbordan,
+             ok: !separadas && !desbordan.length };
   };
 
   /* Corre varias partidas y comprueba que el arco se cumpla siempre: que los
@@ -3561,6 +3658,7 @@
     }).then(function () { return window.verificarRotulo(); }).then(function (r) { out.rotulo = r.desajustes === 0;
     }).then(function () { return window.verificarPanel(2); }).then(function (r) { out.panel = r.mezclas === 0;
     }).then(function () { return Promise.resolve(window.verificarBarca()); }).then(function (r) { out.barca = r.ok;
+    }).then(function () { return Promise.resolve(window.verificarProporcion()); }).then(function (r) { out.proporcion = r.ok;
     }).then(function () { return window.verificarTramos(2); }).then(function (r) { out.tramos = r.fallos === 0;
     /* El reparto y las frecuencias entran a la auditoria y las partidas
        simuladas no: estas dos miden lo mismo mil veces mejor y en un segundo,

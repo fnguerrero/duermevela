@@ -1684,7 +1684,30 @@ var Pintores = (function () {
        hubiera alcanzado en la segunda mitad de la partida. */
     var lejos = (haciaBel === undefined || haciaBel === null)
                 ? 2.2 : Math.abs(haciaBel);
-    var rx = Math.max(1.20, Math.min(2.0, lejos - .26));
+    var dirBel = (haciaBel || -1) < 0 ? -1 : 1;
+
+    /* Y se corta SOLO del lado donde ella esta.
+
+       Antes era simetrico con un minimo de 1,20E, y ese minimo la alcanzaba en
+       pantalla angosta: al arreglar la proporcion del celular la figura crecio,
+       el temporal crecio con ella —1,20E paso de 136 px a 154— y Bel esta a 147
+       del centro. O sea que el agua la pisaba. Lo caza verificarBarca.
+
+       Achicar el temporal entero para que no le llegue lo dejaba mas angosto
+       que la propia barca. Cortarlo de un lado no: del lado libre sigue tan
+       ancho como siempre y del lado de ella termina antes. Un pedazo de mar no
+       tiene por que ser simetrico, y de hecho queda mejor — la barca deja de
+       estar en el centro exacto de su propio charco. */
+    var rxLibre = Math.max(1.20, Math.min(2.0, lejos - .26));
+    /* Del lado de ella: hasta donde este parada menos un respiro. El piso de
+       .62 es para que el agua nunca sea mas angosta que el casco. */
+    var rxSuyo = Math.max(.62, Math.min(rxLibre, lejos - .30));
+    var rxIzq = dirBel < 0 ? rxSuyo : rxLibre;
+    var rxDer = dirBel < 0 ? rxLibre : rxSuyo;
+    /* El resto de la funcion trabaja con un semiancho y un corrimiento: asi el
+       recorte, la lluvia y las olas siguen siendo el mismo codigo. */
+    var rx = (rxIzq + rxDer) / 2;
+    var corre = (rxDer - rxIzq) / 2 * E;
 
     /* Un margen transparente alrededor del contenido. Sin el, el ultimo pixel
        del lienzo lleva algo de agua y el navegador lo estira al escalar el
@@ -1697,7 +1720,7 @@ var Pintores = (function () {
     var esc = m ? Math.max(.5, Math.abs(m.a)) : 1;
     var q = lienzoDelMar(anchoL, altoL, esc);
     // El lienzo trabaja en las mismas coordenadas que el pintor.
-    q.setTransform(esc, 0, 0, esc, (rx * E + mrg) * esc, (-techo + mrg) * esc);
+    q.setTransform(esc, 0, 0, esc, (rx * E + mrg - corre) * esc, (-techo + mrg) * esc);
 
     /* Cuatro relampagos con periodos que no son multiplos entre si: asi caen
        seguido pero nunca a intervalos parejos, que es lo que separa una
@@ -1712,7 +1735,7 @@ var Pintores = (function () {
     ag.addColorStop(.35, 'rgba(28,36,72,.95)');
     ag.addColorStop(1, 'rgba(14,18,40,.97)');
     q.fillStyle = ag;
-    q.fillRect(-rx * E, y0 - E * .06, rx * 2 * E, hondo + E * .06);
+    q.fillRect(corre - rx * E, y0 - E * .06, rx * 2 * E, hondo + E * .06);
 
     /* Las olas: siete filas con CUERPO y no lineas sueltas. Dibujadas como
        trazos quedaban curvas de nivel de un mapa. Se reparten entre el
@@ -1728,14 +1751,14 @@ var Pintores = (function () {
       q.fillStyle = 'rgba(' + Math.round(96 + f * 16) + ',' +
                     Math.round(126 + f * 20) + ',200,' + claro.toFixed(3) + ')';
       q.beginPath();
-      q.moveTo(-rx * E, pie);
-      for (var x = -rx * E; x < rx * E; x += largo) {
+      q.moveTo(corre - rx * E, pie);
+      for (var x = corre - rx * E; x < corre + rx * E; x += largo) {
         var fase = t * vel + x / largo;
         q.lineTo(x, yf + Math.sin(fase) * alto);
         q.quadraticCurveTo(x + largo * .5, yf + Math.cos(fase) * alto * 2.4,
                            x + largo, yf + Math.sin(fase + 1) * alto);
       }
-      q.lineTo(rx * E, pie);
+      q.lineTo(corre + rx * E, pie);
       q.closePath();
       q.fill();
 
@@ -1745,7 +1768,7 @@ var Pintores = (function () {
                       (.26 + f * .05 + rayo * .45).toFixed(3) + ')';
       q.lineWidth = Math.max(1, E * (.010 + f * .004));
       q.beginPath();
-      for (var x2 = -rx * E; x2 < rx * E; x2 += largo) {
+      for (var x2 = corre - rx * E; x2 < corre + rx * E; x2 += largo) {
         var fa2 = t * vel + x2 / largo;
         q.moveTo(x2, yf + Math.sin(fa2) * alto);
         q.quadraticCurveTo(x2 + largo * .5, yf + Math.cos(fa2) * alto * 2.4,
@@ -1763,7 +1786,7 @@ var Pintores = (function () {
        nunca a un canto. */
     q.globalCompositeOperation = 'destination-out';
     q.save();
-    q.translate(0, y0 + hondo * .46);
+    q.translate(corre, y0 + hondo * .46);
     q.scale(rx * E, hondo * .82);
     var mR = q.createRadialGradient(0, 0, 0, 0, 0, 1);
     mR.addColorStop(0, 'rgba(0,0,0,0)');
@@ -1775,7 +1798,7 @@ var Pintores = (function () {
     q.globalCompositeOperation = 'source-over';
 
     cx.save();
-    cx.drawImage(lienzoMar, -rx * E - mrg, techo - mrg, anchoL, altoL);
+    cx.drawImage(lienzoMar, corre - rx * E - mrg, techo - mrg, anchoL, altoL);
 
     /* La lluvia va derecho sobre la escena y no por el lienzo: cada gota lleva
        su propia transparencia segun cuan lejos del temporal cae, y asi se
@@ -1786,11 +1809,11 @@ var Pintores = (function () {
     var rlluvia = rx * 1.05;
     cx.lineWidth = Math.max(1, E * .0055);
     for (var g = 0; g < 90; g++) {
-      var bx = (rnd() * 2 - 1) * rlluvia * E;
+      var bx = corre + (rnd() * 2 - 1) * rlluvia * E;
       var caida = ((t * (1.5 + rnd() * .9) + rnd() * 3) % 1);
       var gy = y0 - E * 2.3 + caida * E * 2.5;
       if (gy > y0 + E * .04) continue;
-      var lejosG = Math.abs(bx) / (rlluvia * E);
+      var lejosG = Math.abs(bx - corre) / (rlluvia * E);
       var aG = (1 - lejosG * lejosG * lejosG) * .32;
       if (aG <= .012) continue;
       cx.strokeStyle = 'rgba(180,200,245,' + aG.toFixed(3) + ')';
