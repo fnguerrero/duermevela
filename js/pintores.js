@@ -1554,7 +1554,27 @@ var Pintores = (function () {
   }
 
   /* ============ la laguna ============ */
-  function laguna(cx, E, t) {
+  function laguna(cx, E, t, haciaBel) {
+    /* La orilla de adelante no llega hasta ella.
+
+       El agua es un trapecio que se abre hacia el frente hasta 1,7E y termina
+       justo en la linea del piso, que es donde Bel esta parada: en una pantalla
+       angosta eso le tapaba los pies y se leia como que estaba metida adentro
+       del agua. Y el texto dice lo contrario — ella se asoma DESDE la orilla, y
+       lo que encuentra es que el reflejo no la copia.
+
+       Asi que del lado donde ella esta, el agua termina antes. Del otro sigue
+       abriendose igual: una laguna no tiene por que ser simetrica, y una orilla
+       que se acerca de un lado es lo que hace cualquier laguna de verdad. */
+    var lejos = (haciaBel && haciaBel.base) ? haciaBel.base : 2.2;
+    var dirBel = (haciaBel && haciaBel.dx < 0) ? -1 : 1;
+    var anchoLibre = 1.7;
+    /* Menos el sitio de ella y un respiro. El piso de .55 evita que en una
+       ventana muy angosta la laguna se vuelva un hilo. */
+    var anchoSuyo = Math.max(.55, Math.min(anchoLibre, lejos - .42));
+    var izq = dirBel < 0 ? anchoSuyo : anchoLibre;
+    var der = dirBel < 0 ? anchoLibre : anchoSuyo;
+
     // El agua: una banda que se abre hacia el frente.
     var ag = cx.createLinearGradient(0, E * .28, 0, E);
     ag.addColorStop(0, '#151a34');
@@ -1563,7 +1583,7 @@ var Pintores = (function () {
     cx.fillStyle = ag;
     cx.beginPath();
     cx.moveTo(-E * .32, E * .28); cx.lineTo(E * .32, E * .28);
-    cx.lineTo(E * 1.7, E); cx.lineTo(-E * 1.7, E);
+    cx.lineTo(E * der, E); cx.lineTo(-E * izq, E);
     cx.closePath(); cx.fill();
 
     // La orilla del fondo.
@@ -2047,6 +2067,7 @@ var Pintores = (function () {
     else if (clave === 'puerta') puerta(cx, E, t, extra.abre);
     else if (clave === 'barca') barca(cx, E, t, extra.alPiso,
                                       extra.haciaBel && extra.haciaBel.dx);
+    else if (clave === 'laguna') laguna(cx, E, t, extra.haciaBel);
     else if (PINTORES[clave]) PINTORES[clave](cx, E, t);
     cx.restore();
   }

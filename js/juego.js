@@ -188,6 +188,7 @@
     seguirPaso: null,       // como sigue el paso cuando termine de leerse
     cerrarPaso: null,       // el cierre corto, cuando la revelacion ya se leyo
     platilloIdo: 0,         // el platillo que ya se fue no vuelve mientras siga ahi
+    lejosBase: 0,           // a que distancia se planto al llegar, antes de cualquier gesto
     guias: {},              // que avisos de la primera partida ya salieron
     siguioDeLargo: 0,       // cuantas veces eligio no quedarse a mirar
     ultimoTic: -1,          // para no repetir el tic del anillo
@@ -691,6 +692,7 @@
     J.congelado = false;
     J.revelando = 0;
     J.platilloIdo = 0;
+    J.lejosBase = 0;
     mirada.activo = false;
 
     /* Bel se queda donde esta, siempre. La figura se transforma delante de
@@ -1893,6 +1895,17 @@
                      solo, baja porque ella encuentra algo y respira con el. */
                   arbol: J.lugar === 'circulo' ? arbolCirculo(J.revelando) : 0,
                   haciaBel: { dx: (W * J.belX - fx) / E,
+                              /* Cuan lejos se planto al llegar, antes de que
+                                 ningun gesto la mueva. La laguna se recorta
+                                 contra esto y no contra donde esta ahora: si
+                                 usara la distancia del momento, el agua se
+                                 correria mientras ella se asoma —o sea que el
+                                 agua huye justo cuando se acerca a mirarla— y
+                                 eso se ve. Ella solo se acerca dentro de un
+                                 lugar, nunca se aleja, asi que el maximo desde
+                                 que llego ES la posicion de reposo. */
+                              base: (J.lejosBase = Math.max(
+                                J.lejosBase, Math.abs((W * J.belX - fx) / E))),
                               dy: ((piso - E * .5) - (fy - E * .57)) / E } };
     var u = J.u;
 
