@@ -6317,25 +6317,181 @@ var Anomalias = (function () {
 
     /* Ella, adentro, durmiendo. Es la revelación del juego entero: se dibuja
        apenas, porque lo que importa es entender, no mirar. */
+    /* Ella, adentro de su propia cama.
+
+       Era un bulto gris con un circulo marron flotando AL LADO de la almohada
+       —ni siquiera encima— y el texto de este lugar dice "estoy yo adentro,
+       con la cara para el lado de la ventana". Es el remate del juego entero:
+       toda la noche estuvo mirando cosas raras sin saber donde estaba, y el
+       ultimo lugar es su cama con ella durmiendo. Si eso no se lee, la frase
+       se queda sin dibujo.
+
+       Cuatro cosas hacen que se lea, y las cuatro salieron de mirarlo con Nico
+       una por una:
+
+       LA SABANA ES BLANCA, y no un blanco cualquiera: los mismos tonos que ya
+       usa la cama. En gris violeta parecia una manta ajena apoyada sobre una
+       cama que no era la suya.
+
+       EL RELIEVE VA DENTRO DE LA TELA. Habia un cuerpo dibujado debajo que
+       asomaba por encima del borde de la sabana, y en pantalla era una mancha
+       oscura flotando. Un cuerpo tapado no es una silueta abajo de otra: es la
+       misma tela con la forma del cuerpo.
+
+       LA CARA Y EL CUELLO SON UN SOLO TRAZO. Eran piezas pegadas y se veian
+       los empalmes. Y el cuello tiene dos lados —baja por delante desde el
+       menton y vuelve por detras hacia la nuca— porque cerrar el contorno con
+       una linea recta no daba un cuello sino un rectangulo de piel del ancho
+       de la cabeza.
+
+       Y NO HAY NARIZ NI MANO. La nariz, a doce pixeles de cabeza, sale como
+       una aguja clavada de costado. La mano que el texto nombra no parecia una
+       mano: valia menos que el lugar que ocupaba. */
     cama: function (cx, fx, fy, E, t, v) {
       var a = entra(v);
+      if (a < .01) return;
+
+      /* Las medidas salen del pintor de la cama y no se inventan: an = E*.89,
+         y la almohada en (-an*.68, E*.10) con radios (an*.22, E*.075). */
+      var an = E * .89;
+      var almX = fx - an * .68, almY = fy + E * .10;
+      var respira = Math.sin(t * 1.1) * .5 + .5;
+      var borde = fx + an * .90;
+
       cx.save();
-      cx.globalAlpha = a * .9;
-      // Un bulto bajo las sabanas y la cabeza sobre la almohada.
-      cx.fillStyle = 'rgba(228,226,238,.85)';
+      cx.globalAlpha = a;
+
+      /* --- la sabana, con la forma del cuerpo adentro --- */
+      var tela = cx.createLinearGradient(0, fy - E * .02, 0, fy + E * .19);
+      tela.addColorStop(0, '#f4efe6');
+      tela.addColorStop(.55, '#e2dbd0');
+      tela.addColorStop(1, '#bdb5ab');
+      cx.fillStyle = tela;
       cx.beginPath();
-      cx.moveTo(fx - E * .34, fy + E * .10);
-      cx.quadraticCurveTo(fx - E * .05, fy - E * .12, fx + E * .30, fy + E * .06);
-      cx.lineTo(fx + E * .30, fy + E * .12);
-      cx.lineTo(fx - E * .34, fy + E * .12);
+      cx.moveTo(fx - E * .52, fy + E * .19);
+      /* La tela sube hasta el menton: alguien durmiendo esta tapado HASTA el
+         cuello, y ademas el canto donde cierra la silueta de piel tiene que
+         quedar debajo de la tela — si no, en pantalla parece una cabeza
+         cortada. */
+      cx.quadraticCurveTo(fx - E * .49, fy + E * (.088 - respira * .008),
+                          fx - E * .445, fy + E * (.074 - respira * .010));
+      cx.quadraticCurveTo(fx - E * .40, fy + E * (.058 - respira * .012),
+                          fx - E * .34, fy + E * (.050 - respira * .012));
+      cx.quadraticCurveTo(fx - E * .26, fy + E * (.040 - respira * .012),
+                          fx - E * .20, fy + E * (.044 - respira * .012));
+      cx.quadraticCurveTo(fx - E * .06, fy + E * .036, fx + E * .02, fy + E * .086);
+      cx.quadraticCurveTo(fx + E * .14, fy + E * .112, fx + E * .26, fy + E * .056);
+      cx.quadraticCurveTo(fx + an * .55, fy + E * .056, borde, fy + E * .128);
+      cx.quadraticCurveTo(fx + an * .40, fy + E * .228, fx - E * .52, fy + E * .19);
       cx.closePath(); cx.fill();
-      cx.fillStyle = 'rgba(58,36,24,.9)';
+
+      /* El embozo: la misma tela doblada sobre si misma. El par claro arriba /
+         sombra fina justo abajo del doblez es todo lo que hace falta para que
+         se vea el grosor de la tela; sin el, es una lona. */
+      cx.fillStyle = '#fbf7ef';
       cx.beginPath();
-      cx.arc(fx - E * .40, fy + E * .02, E * .075, 0, 6.2832);
+      cx.moveTo(fx - E * .48, fy + E * .155);
+      cx.quadraticCurveTo(fx - E * .18, fy + E * .066, fx + E * .03, fy + E * .104);
+      cx.lineTo(fx + E * .025, fy + E * .130);
+      cx.quadraticCurveTo(fx - E * .18, fy + E * .094, fx - E * .475, fy + E * .178);
+      cx.closePath(); cx.fill();
+
+      cx.strokeStyle = 'rgba(120,110,100,.30)';
+      cx.lineWidth = E * .005;
+      cx.beginPath();
+      cx.moveTo(fx - E * .475, fy + E * .178);
+      cx.quadraticCurveTo(fx - E * .18, fy + E * .094, fx + E * .025, fy + E * .130);
+      cx.stroke();
+
+      /* Los pliegues caen desde donde la tela se apoya hacia el hueco de la
+         cintura. No son paralelos: una sabana con lineas paralelas es una
+         persiana. */
+      cx.lineWidth = E * .0045;
+      var PL = [[-.18, .095, -.14, .188], [-.04, .112, .00, .190],
+                [.12, .092, .15, .192], [.28, .072, .31, .193],
+                [.46, .086, .48, .193], [.64, .080, .66, .190]];
+      for (var i = 0; i < PL.length; i++) {
+        cx.beginPath();
+        cx.moveTo(fx + E * PL[i][0], fy + E * PL[i][1]);
+        cx.quadraticCurveTo(fx + E * (PL[i][0] + PL[i][2]) / 2, fy + E * .155,
+                            fx + E * PL[i][2], fy + E * PL[i][3]);
+        cx.stroke();
+      }
+
+      /* La sombra del cuerpo dentro de la tela: la tela se aleja de la luz a
+         medida que baja del hombro y de la cadera. Es lo que hace bulto sin
+         dibujar un bulto. */
+      var hueco = cx.createLinearGradient(0, fy + E * .06, 0, fy + E * .17);
+      hueco.addColorStop(0, 'rgba(120,110,100,0)');
+      hueco.addColorStop(1, 'rgba(120,110,100,.26)');
+      cx.fillStyle = hueco;
+      cx.beginPath();
+      cx.moveTo(fx + E * .02, fy + E * .086);
+      cx.quadraticCurveTo(fx + E * .14, fy + E * .112, fx + E * .26, fy + E * .056);
+      cx.quadraticCurveTo(fx + an * .55, fy + E * .056, borde, fy + E * .128);
+      cx.lineTo(borde, fy + E * .17);
+      cx.lineTo(fx + E * .02, fy + E * .17);
+      cx.closePath(); cx.fill();
+
+      // Y donde la tela toca el colchon.
+      var som = cx.createLinearGradient(0, fy + E * .155, 0, fy + E * .195);
+      som.addColorStop(0, 'rgba(48,40,34,0)');
+      som.addColorStop(1, 'rgba(48,40,34,.32)');
+      cx.fillStyle = som;
+      cx.fillRect(fx - E * .50, fy + E * .155, borde - (fx - E * .50), E * .04);
+
+      /* --- ella: el pelo, la cara y el cuello --- */
+      var r = E * .066;
+      var cxh = almX + an * .06, cyh = almY - E * .052;
+
+      // El pelo de atras, derramado sobre la almohada.
+      cx.fillStyle = '#3a2318';
+      cx.beginPath();
+      cx.ellipse(cxh - r * 1.05, cyh + r * .58, r * 2.05, r * 1.12, -.16, 0, 6.2832);
       cx.fill();
+      /* Y un mechon por delante del hombro: es lo que hace que el pelo se lea
+         largo y no como un casco. */
+      cx.beginPath();
+      cx.moveTo(cxh - r * .30, cyh + r * .30);
+      cx.quadraticCurveTo(cxh + r * .30, cyh + r * .92, cxh + r * .34, cyh + r * 1.55);
+      cx.quadraticCurveTo(cxh - r * .20, cyh + r * 1.20, cxh - r * .74, cyh + r * 1.05);
+      cx.closePath(); cx.fill();
+
+      /* La silueta de piel, de la coronilla al hombro, sin levantar el lapiz.
+         El craneo va en cuatro tramos: con dos, las curvas se cruzan en un
+         angulo y la cara sale como un triangulo con punta. */
+      cx.fillStyle = '#e0bfa0';
+      cx.beginPath();
+      cx.moveTo(cxh - r * .95, cyh + r * .30);
+      cx.quadraticCurveTo(cxh - r * 1.02, cyh - r * .52, cxh - r * .62, cyh - r * .86);
+      cx.quadraticCurveTo(cxh - r * .22, cyh - r * 1.06, cxh + r * .20, cyh - r * .92);
+      cx.quadraticCurveTo(cxh + r * .62, cyh - r * .78, cxh + r * .76, cyh - r * .34);
+      cx.quadraticCurveTo(cxh + r * .84, cyh + r * .04, cxh + r * .74, cyh + r * .40);
+      // el cuello, con sus dos lados
+      cx.quadraticCurveTo(cxh + r * .80, cyh + r * .74, cxh + r * .96, cyh + r * 1.02);
+      cx.quadraticCurveTo(cxh + r * 1.12, cyh + r * 1.26, cxh + r * 1.30, cyh + r * 1.44);
+      cx.lineTo(cxh + r * .40, cyh + r * 1.44);
+      cx.quadraticCurveTo(cxh - r * .10, cyh + r * 1.16, cxh - r * .48, cyh + r * .78);
+      cx.quadraticCurveTo(cxh - r * .82, cyh + r * .58, cxh - r * .95, cyh + r * .30);
+      cx.closePath(); cx.fill();
+
+      /* El pelo de arriba envuelve el craneo y baja hasta la sien: queda a la
+         vista la mejilla y el menton, que es lo unico que se le ve a alguien
+         acostado de costado con el pelo suelto. Va DESPUES de la piel, asi el
+         nacimiento del pelo es un borde de pelo y no una costura. */
+      cx.fillStyle = '#3a2318';
+      cx.beginPath();
+      cx.moveTo(cxh - r * .98, cyh + r * .34);
+      cx.quadraticCurveTo(cxh - r * 1.06, cyh - r * .54, cxh - r * .64, cyh - r * .90);
+      cx.quadraticCurveTo(cxh - r * .22, cyh - r * 1.10, cxh + r * .22, cyh - r * .96);
+      cx.quadraticCurveTo(cxh + r * .56, cyh - r * .84, cxh + r * .64, cyh - r * .48);
+      cx.quadraticCurveTo(cxh + r * .24, cyh - r * .42, cxh - r * .16, cyh - r * .18);
+      cx.quadraticCurveTo(cxh - r * .54, cyh + r * .10, cxh - r * .66, cyh + r * .60);
+      cx.closePath(); cx.fill();
+
       // La respiracion, que es lo unico que se mueve.
-      halo(cx, fx - E * .05, fy + E * .02,
-           E * (.34 + .03 * Math.sin(t * 1.1)), '210,220,255', .10 * a);
+      halo(cx, fx - E * .08, fy + E * .04,
+           E * (.34 + respira * .03), '210,220,255', .09 * a);
       cx.restore();
     }
   };
@@ -12071,23 +12227,49 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
       var bx = J.belX * W;
       /* La altura de medicion es el medio del agua: arriba esta el cielo y
          abajo el piso, y los dos darian verde sin probar nada. */
-      var fy = J.ultimaFy || H * .44;
-      var yAgua = fy + (H * .84 - fy) * .5;
+      /* La altura se mide contra el piso REAL de la escena y no contra H*.84.
 
-      /* La fila entera de una sola lectura. Pidiendo pixel por pixel eran mil
-         cuatrocientos getImageData por corrida y cada uno sincroniza contra la
-         GPU: la auditoria se colgaba minutos en este solo paso. */
-      var fila = cx.getImageData(0, Math.round(yAgua * d), cv.width, 1).data;
+         El piso sale de `min(H*.84, techoMano + H*.05)`, asi que en una ventana
+         baja queda bastante mas arriba que H*.84 — y la fila que esta prueba
+         miraba caia DEBAJO del agua. Ahi no hay agua, el maximo de la fila es
+         el fondo pelado, y entonces cualquier resplandor junto a ella daba una
+         razon alta: la prueba acusaba a Bel de estar mojada mientras el agua
+         real, dos filas mas arriba, daba 0,126. Un falso positivo es peor que
+         una prueba que falta: manda a arreglar lo que no esta roto, y yo empece
+         a corregir el dibujo por eso. */
+      var fy = J.ultimaFy || H * .44;
+      var pisoReal = (J.belCaja && J.belCaja.piso) || H * .84;
+
+      /* Se busca la fila donde el agua es MAS brillante, y ahi se compara.
+
+         Con una sola altura fija el denominador era inestable: si esa fila
+         agarraba poca agua, el maximo bajaba a casi el fondo y cualquier
+         resplandor junto a ella daba razon alta. Asi la prueba llego a acusar
+         de mojada una escena donde junto a Bel habia 114 y en el borde opuesto
+         —donde no hay agua ninguna— habia 145.
+
+         Recorriendo cinco alturas y quedandose con la mejor, el denominador es
+         siempre agua de verdad, y la razon significa lo que dice: cuanto de lo
+         que hay junto a ella se parece al agua. */
+      var fila = null;
       function brilloEn(px) {
         var i = Math.max(0, Math.min(cv.width - 1, Math.round(px * d))) * 4;
         return fila[i] + fila[i + 1] + fila[i + 2];
       }
 
-      var agua = 1;
-      for (var px = W * .02; px < W * .98; px += 8) {
-        var v = brilloEn(px);
-        if (v > agua) agua = v;
+      var agua = 1, yAgua = fy;
+      for (var f = 1; f <= 5; f++) {
+        var yy = fy + (pisoReal - fy) * (f / 6);
+        var candidata = cx.getImageData(0, Math.round(yy * d), cv.width, 1).data;
+        fila = candidata;
+        var pico = 1;
+        for (var px = W * .02; px < W * .98; px += 8) {
+          var v = brilloEn(px);
+          if (v > pico) pico = v;
+        }
+        if (pico > agua) { agua = pico; yAgua = yy; }
       }
+      fila = cx.getImageData(0, Math.round(yAgua * d), cv.width, 1).data;
       /* A los dos lados: que no la alcance por la derecha no dice nada de la
          izquierda, y el agua es una mancha que crece para los dos lados.
 
@@ -12099,9 +12281,18 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
          que preguntar es si el agua le llega A ELLA, y eso se mide donde
          termina ella: el diez por ciento de su alto de margen alcanza para no
          estar midiendo su propio abrigo. */
-      var caja = J.belCaja || { izq: bx - 20, der: bx + 20 };
+      /* La caja se calcula ACA y no se toma de J.belCaja.
+
+         J.belCaja la escribe el bucle de dibujo, y en una tanda de nueve
+         llamadas puede quedar la del cuadro anterior: la prueba terminaba
+         midiendo a noventa pixeles de donde Bel estaba de verdad, daba rojo, y
+         el perfil de brillos mostraba que junto a ella habia 67 sobre un fondo
+         de 57 — o sea nada de agua. Una prueba que mide en el lugar equivocado
+         es peor que no tenerla, porque manda a arreglar lo que no esta roto. */
+      var medio = (J.belAlto || 40) * .15;
       var margen = (J.belAlto || 40) * .10;
-      var cerca = Math.max(brilloEn(caja.der + margen), brilloEn(caja.izq - margen));
+      var cerca = Math.max(brilloEn(bx + medio + margen),
+                           brilloEn(bx - medio - margen));
       var parte = cerca / agua;
       medidas.push({ indicios: n, agua: agua, junto: cerca,
                      parte: +parte.toFixed(3) });

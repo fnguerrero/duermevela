@@ -2772,23 +2772,49 @@
       var bx = J.belX * W;
       /* La altura de medicion es el medio del agua: arriba esta el cielo y
          abajo el piso, y los dos darian verde sin probar nada. */
-      var fy = J.ultimaFy || H * .44;
-      var yAgua = fy + (H * .84 - fy) * .5;
+      /* La altura se mide contra el piso REAL de la escena y no contra H*.84.
 
-      /* La fila entera de una sola lectura. Pidiendo pixel por pixel eran mil
-         cuatrocientos getImageData por corrida y cada uno sincroniza contra la
-         GPU: la auditoria se colgaba minutos en este solo paso. */
-      var fila = cx.getImageData(0, Math.round(yAgua * d), cv.width, 1).data;
+         El piso sale de `min(H*.84, techoMano + H*.05)`, asi que en una ventana
+         baja queda bastante mas arriba que H*.84 — y la fila que esta prueba
+         miraba caia DEBAJO del agua. Ahi no hay agua, el maximo de la fila es
+         el fondo pelado, y entonces cualquier resplandor junto a ella daba una
+         razon alta: la prueba acusaba a Bel de estar mojada mientras el agua
+         real, dos filas mas arriba, daba 0,126. Un falso positivo es peor que
+         una prueba que falta: manda a arreglar lo que no esta roto, y yo empece
+         a corregir el dibujo por eso. */
+      var fy = J.ultimaFy || H * .44;
+      var pisoReal = (J.belCaja && J.belCaja.piso) || H * .84;
+
+      /* Se busca la fila donde el agua es MAS brillante, y ahi se compara.
+
+         Con una sola altura fija el denominador era inestable: si esa fila
+         agarraba poca agua, el maximo bajaba a casi el fondo y cualquier
+         resplandor junto a ella daba razon alta. Asi la prueba llego a acusar
+         de mojada una escena donde junto a Bel habia 114 y en el borde opuesto
+         —donde no hay agua ninguna— habia 145.
+
+         Recorriendo cinco alturas y quedandose con la mejor, el denominador es
+         siempre agua de verdad, y la razon significa lo que dice: cuanto de lo
+         que hay junto a ella se parece al agua. */
+      var fila = null;
       function brilloEn(px) {
         var i = Math.max(0, Math.min(cv.width - 1, Math.round(px * d))) * 4;
         return fila[i] + fila[i + 1] + fila[i + 2];
       }
 
-      var agua = 1;
-      for (var px = W * .02; px < W * .98; px += 8) {
-        var v = brilloEn(px);
-        if (v > agua) agua = v;
+      var agua = 1, yAgua = fy;
+      for (var f = 1; f <= 5; f++) {
+        var yy = fy + (pisoReal - fy) * (f / 6);
+        var candidata = cx.getImageData(0, Math.round(yy * d), cv.width, 1).data;
+        fila = candidata;
+        var pico = 1;
+        for (var px = W * .02; px < W * .98; px += 8) {
+          var v = brilloEn(px);
+          if (v > pico) pico = v;
+        }
+        if (pico > agua) { agua = pico; yAgua = yy; }
       }
+      fila = cx.getImageData(0, Math.round(yAgua * d), cv.width, 1).data;
       /* A los dos lados: que no la alcance por la derecha no dice nada de la
          izquierda, y el agua es una mancha que crece para los dos lados.
 
@@ -2800,9 +2826,18 @@
          que preguntar es si el agua le llega A ELLA, y eso se mide donde
          termina ella: el diez por ciento de su alto de margen alcanza para no
          estar midiendo su propio abrigo. */
-      var caja = J.belCaja || { izq: bx - 20, der: bx + 20 };
+      /* La caja se calcula ACA y no se toma de J.belCaja.
+
+         J.belCaja la escribe el bucle de dibujo, y en una tanda de nueve
+         llamadas puede quedar la del cuadro anterior: la prueba terminaba
+         midiendo a noventa pixeles de donde Bel estaba de verdad, daba rojo, y
+         el perfil de brillos mostraba que junto a ella habia 67 sobre un fondo
+         de 57 — o sea nada de agua. Una prueba que mide en el lugar equivocado
+         es peor que no tenerla, porque manda a arreglar lo que no esta roto. */
+      var medio = (J.belAlto || 40) * .15;
       var margen = (J.belAlto || 40) * .10;
-      var cerca = Math.max(brilloEn(caja.der + margen), brilloEn(caja.izq - margen));
+      var cerca = Math.max(brilloEn(bx + medio + margen),
+                           brilloEn(bx - medio - margen));
       var parte = cerca / agua;
       medidas.push({ indicios: n, agua: agua, junto: cerca,
                      parte: +parte.toFixed(3) });

@@ -1,0 +1,336 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8">
+<title>Bel durmiendo — blanca y continua</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap">
+<style>
+  html,body{margin:0;background:#07060e;color:#ece6d8;
+    font-family:'Cormorant Garamond',Georgia,serif}
+  h1{font-size:19px;font-weight:400;letter-spacing:.16em;text-transform:uppercase;
+    color:rgba(220,178,108,.9);margin:18px 0 2px;text-align:center}
+  .sub{text-align:center;color:rgba(236,230,216,.5);font-size:15px;margin:0 0 14px}
+  .fila{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;padding:0 16px 24px}
+  .caso{width:min(620px,46vw)}
+  canvas{width:100%;display:block;border:1px solid rgba(220,178,108,.18);border-radius:3px}
+  .rotu{font-size:14px;letter-spacing:.12em;text-transform:uppercase;
+    color:rgba(236,196,132,.9);margin:8px 0 2px;text-align:center}
+  .dice{font-size:14.5px;color:rgba(236,230,216,.55);line-height:1.45;margin:0;
+    text-align:center}
+</style>
+</head><body>
+
+<h1>Bel durmiendo · blanca y continua</h1>
+<p class="sub">Sábana en los blancos de la cama, y cara, cuello y hombro en una sola silueta.</p>
+
+<div class="fila" id="fila"></div>
+
+<script src="../js/dibujo.js"></script>
+<script src="../js/figuras.js"></script>
+<script src="../js/pintores.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var W = 1100, H = 700;
+  var piso = H * .83;
+  var E = Math.max(W * .08, Math.min(W * .27, (piso - H * .29) / 2));
+  var fx = W * .5, fy = piso - E * .62;
+
+  /* Las medidas salen del pintor de la cama: an = E*.89, la almohada en
+     (-an*.68, E*.10) con radios (an*.22, E*.075). */
+  var an = E * .89;
+  var almX = fx - an * .68, almY = fy + E * .10;
+
+  /* Los blancos son los MISMOS de la cama. La sabana de abajo va de #e8e2d8 a
+     #b3aca6 y la almohada es #f0ebe0: una sabana de encima en gris violeta
+     —que es lo que habia— no pertenece a esa cama, se ve como una manta ajena
+     apoyada. Con los mismos tonos, un poco mas claros, se lee como la misma
+     ropa de cama. */
+  var BLANCO_ALTO = '#f4efe6';
+  var BLANCO_MEDIO = '#e2dbd0';
+  var BLANCO_BAJO = '#bdb5ab';
+  var SOMBRA_TELA = 'rgba(120,110,100,.30)';
+  var PIEL = '#e0bfa0';
+  var PELO = '#3a2318';
+
+  var CASOS = [
+    { id: 'h', rotu: 'H · perfil suave',
+      dice: 'La cara apenas asoma del pelo. Lo más sobrio.' },
+    { id: 'i', rotu: 'I · perfil marcado',
+      dice: 'Se le distingue la frente, la nariz y el mentón.' },
+    { id: 'j', rotu: 'J · más hundida en la almohada',
+      dice: 'La cabeza se hunde y el pelo la tapa más. La más dormida.' }
+  ];
+
+  var fila = document.getElementById('fila');
+  var casos = CASOS.map(function (c) {
+    var caja = document.createElement('div'); caja.className = 'caso';
+    var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    caja.appendChild(cv);
+    var r = document.createElement('p'); r.className = 'rotu'; r.textContent = c.rotu;
+    var d = document.createElement('p'); d.className = 'dice'; d.textContent = c.dice;
+    caja.appendChild(r); caja.appendChild(d);
+    fila.appendChild(caja);
+    return { cfg: c, cx: cv.getContext('2d') };
+  });
+
+  function halo(cx, x, y, r, col, alfa) {
+    var g = cx.createRadialGradient(x, y, 0, x, y, Math.max(1, r));
+    g.addColorStop(0, 'rgba(' + col + ',' + alfa.toFixed(3) + ')');
+    g.addColorStop(1, 'rgba(' + col + ',0)');
+    cx.fillStyle = g;
+    cx.beginPath(); cx.arc(x, y, Math.max(1, r), 0, 6.2832); cx.fill();
+  }
+
+  /* CARA, CUELLO Y HOMBRO EN UN SOLO TRAZO.
+
+     Antes eran tres piezas pegadas —un circulo, una linea gruesa y un ovalo—
+     y se notaban los empalmes: la cabeza parecia apoyada al lado del cuerpo y
+     no unida a el. Dibujados como una sola silueta continua no hay empalme que
+     disimular, porque no hay empalme.
+
+     El recorrido es el de una persona acostada de costado: se entra por la
+     nuca, se sube a la coronilla, se baja por la frente y la nariz, se dobla en
+     el menton, se sigue por el cuello y ahi el trazo se abre en el hombro y se
+     va debajo de la sabana. */
+  function retrato(cx, perfil, hundida) {
+    var r = E * .066;
+    var cxh = almX + an * .06;
+    var cyh = almY - E * (hundida ? .034 : .052);
+    /* Sin nariz. Un perfil necesita frente, nariz y menton, y a este tamaño
+       —doce pixeles de cabeza en el juego real— la nariz sale como una aguja
+       clavada de costado. Se vio de una en la primera lamina. La cara mirando
+       para afuera se sugiere con la forma del ovalo y con el pelo que la deja
+       libre, que es todo lo que entra. */
+    var alarga = perfil ? .10 : 0;
+
+    // El pelo de atras, derramado sobre la almohada. Va primero, detras de todo.
+    cx.fillStyle = PELO;
+    cx.beginPath();
+    cx.ellipse(cxh - r * 1.05, cyh + r * .58, r * 2.05, r * 1.12, -.16, 0, 6.2832);
+    cx.fill();
+    /* Y un mechon que se derrama por delante del hombro, que es lo que hace
+       que el pelo se lea largo y no como un casco. Cae sobre la almohada y
+       se afina en la punta. */
+    cx.beginPath();
+    cx.moveTo(cxh - r * .30, cyh + r * .30);
+    cx.quadraticCurveTo(cxh + r * .30, cyh + r * .92, cxh + r * .34, cyh + r * 1.55);
+    cx.quadraticCurveTo(cxh - r * .20, cyh + r * 1.20, cxh - r * .74, cyh + r * 1.05);
+    cx.closePath();
+    cx.fill();
+
+    // La silueta: piel, de la coronilla al hombro, sin levantar el lapiz.
+    cx.fillStyle = PIEL;
+    cx.beginPath();
+    /* La cabeza va en cuatro tramos y no en dos: con dos, las curvas se cruzan
+       en un angulo y la cara sale como un triangulo con punta. Un craneo es
+       redondo y la unica manera de que se lea redondo es darle los cuatro
+       cuartos. */
+    cx.moveTo(cxh - r * .95, cyh + r * .30);                        // nuca
+    cx.quadraticCurveTo(cxh - r * 1.02, cyh - r * .52,
+                        cxh - r * .62, cyh - r * .86);              // occipital
+    cx.quadraticCurveTo(cxh - r * .22, cyh - r * 1.06,
+                        cxh + r * (.20 + alarga), cyh - r * .92);   // coronilla
+    cx.quadraticCurveTo(cxh + r * (.62 + alarga), cyh - r * .78,
+                        cxh + r * (.76 + alarga), cyh - r * .34);   // frente y sien
+    cx.quadraticCurveTo(cxh + r * (.84 + alarga), cyh + r * .04,
+                        cxh + r * .74, cyh + r * .40);              // mejilla y menton
+    /* EL CUELLO TIENE DOS LADOS.
+
+       Antes el trazo bajaba del menton y cerraba el path con una linea recta
+       hasta la nuca: eso no es un cuello, es un rectangulo de piel del ancho
+       de la cabeza pegado abajo. Nico lo dijo enseguida — "muy raro el cogote,
+       muy rectangular toda esa parte".
+
+       Un cuello se dibuja como lo que es: baja por delante desde el menton,
+       llega al hombro, y vuelve por detras hacia la nuca. Es angosto —dos
+       tercios del ancho de la cabeza— y por eso se lee como cuello y no como
+       base. El borde de atras queda tapado por el pelo, que es donde tiene que
+       estar el pelo de alguien acostado. */
+    cx.quadraticCurveTo(cxh + r * .80, cyh + r * .74,
+                        cxh + r * .96, cyh + r * 1.02);             // cuello, adelante
+    cx.quadraticCurveTo(cxh + r * 1.12, cyh + r * 1.26,
+                        cxh + r * 1.30, cyh + r * 1.44);            // entra en el hombro
+    cx.lineTo(cxh + r * .40, cyh + r * 1.44);                       // bajo la sabana
+    cx.quadraticCurveTo(cxh - r * .10, cyh + r * 1.16,
+                        cxh - r * .48, cyh + r * .78);              // cuello, atras
+    cx.quadraticCurveTo(cxh - r * .82, cyh + r * .58,
+                        cxh - r * .95, cyh + r * .30);              // vuelve a la nuca
+    cx.closePath();
+    cx.fill();
+
+    /* El pelo de arriba: envuelve el craneo y baja por la nuca, dejando libre
+       la cara. Se dibuja DESPUES de la piel y encima, asi el nacimiento del
+       pelo es un borde de pelo y no una costura entre dos formas. */
+    cx.fillStyle = PELO;
+    cx.beginPath();
+    cx.moveTo(cxh - r * .98, cyh + r * .34);
+    cx.quadraticCurveTo(cxh - r * 1.06, cyh - r * .54, cxh - r * .64, cyh - r * .90);
+    cx.quadraticCurveTo(cxh - r * .22, cyh - r * 1.10, cxh + r * .22, cyh - r * .96);
+    cx.quadraticCurveTo(cxh + r * .56, cyh - r * .84, cxh + r * .64, cyh - r * .48);
+    /* El nacimiento del pelo baja hasta la sien y de ahi vuelve por la nuca:
+       queda a la vista la mejilla y el menton, que es lo unico que se le ve a
+       alguien acostado de costado con el pelo suelto. */
+    cx.quadraticCurveTo(cxh + r * (hundida ? .34 : .24), cyh - r * .42,
+                        cxh - r * .16, cyh - r * .18);
+    cx.quadraticCurveTo(cxh - r * .54, cyh + r * .10, cxh - r * .66, cyh + r * .60);
+    cx.closePath();
+    cx.fill();
+
+    // Y una sombra apenas bajo el menton, que es lo que separa la cara del cuello.
+    cx.strokeStyle = 'rgba(120,86,62,.40)';
+    cx.lineWidth = r * .09;
+    cx.beginPath();
+    cx.moveTo(cxh + r * .74, cyh + r * .44);
+    cx.quadraticCurveTo(cxh + r * .90, cyh + r * .66, cxh + r * 1.08, cyh + r * .82);
+    cx.stroke();
+  }
+
+  /* El cuerpo debajo: no se ve, se nota porque la sabana se apoya en el. */
+  function cuerpo(cx, alto) {
+    cx.fillStyle = 'rgba(150,142,132,.50)';
+    cx.beginPath();
+    cx.moveTo(almX + an * .12, fy + E * .185);
+    cx.quadraticCurveTo(almX + an * .28, fy + E * (.030 - alto * .018),
+                        fx - E * .12, fy + E * (.062 - alto * .010));
+    cx.quadraticCurveTo(fx + E * .02, fy + E * .112, fx + E * .16, fy + E * .086);
+    cx.quadraticCurveTo(fx + E * .28, fy + E * .042, fx + E * .44, fy + E * .102);
+    cx.lineTo(fx + E * .44, fy + E * .185);
+    cx.closePath(); cx.fill();
+  }
+
+  /* El relieve va DENTRO de la sabana y no en una forma aparte debajo.
+
+     Habia un cuerpo gris dibujado antes que la tela, y asomaba por encima del
+     borde de la sabana: en pantalla se veia una mancha oscura flotando sobre
+     la cama. Un cuerpo tapado no es una silueta abajo de otra, es la misma
+     tela con la forma del cuerpo. */
+  function sabana(cx, alto) {
+    var borde = fx + an * .90;
+    var tela = cx.createLinearGradient(0, fy - E * .02, 0, fy + E * .19);
+    tela.addColorStop(0, BLANCO_ALTO);
+    tela.addColorStop(.55, BLANCO_MEDIO);
+    tela.addColorStop(1, BLANCO_BAJO);
+    cx.fillStyle = tela;
+    cx.beginPath();
+    cx.moveTo(fx - E * .52, fy + E * .19);
+    /* El borde de arriba nace DEBAJO de la cabeza y no al lado del hombro.
+
+       La silueta de piel termina en un canto recto —hay que cerrar el path en
+       algun lado— y ese canto tiene que quedar tapado por la tela. Con la
+       sabana arrancando cinco centesimos mas a la derecha quedaba un pedacito
+       de cuello al aire terminado en linea recta: en el zoom parecia una
+       cabeza cortada, y Nico lo vio de una. */
+    /* La tela sube hasta el menton: alguien durmiendo esta tapado HASTA el
+       cuello, y un cuello a la vista entre la cara y la sabana se lee como un
+       hueco. Ademas asi la piel que queda es solo la cara, que es lo unico
+       que hace falta reconocer. */
+    cx.quadraticCurveTo(fx - E * .49, fy + E * (.088 - alto * .008),
+                        fx - E * .445, fy + E * (.074 - alto * .010));
+    cx.quadraticCurveTo(fx - E * .40, fy + E * (.058 - alto * .012),
+                        fx - E * .34, fy + E * (.050 - alto * .012));
+    cx.quadraticCurveTo(fx - E * .26, fy + E * (.040 - alto * .012),
+                        fx - E * .20, fy + E * (.044 - alto * .012));
+    cx.quadraticCurveTo(fx - E * .06, fy + E * .036, fx + E * .02, fy + E * .086);
+    // la cintura se hunde y la cadera vuelve a subir
+    cx.quadraticCurveTo(fx + E * .14, fy + E * .112, fx + E * .26, fy + E * .056);
+    cx.quadraticCurveTo(fx + an * .55, fy + E * .056, borde, fy + E * .128);
+    cx.quadraticCurveTo(fx + an * .40, fy + E * .228, fx - E * .52, fy + E * .19);
+    cx.closePath(); cx.fill();
+
+    /* El embozo, mas angosto y mas abajo que antes: pegado al pecho en vez de
+       flotando sobre el. Lo que hace ver el grosor de la tela es el par claro
+       arriba / sombra fina justo abajo del doblez, no el tamaño de la franja. */
+    cx.fillStyle = '#fbf7ef';
+    cx.beginPath();
+    cx.moveTo(fx - E * .48, fy + E * .155);
+    cx.quadraticCurveTo(fx - E * .18, fy + E * .066, fx + E * .03, fy + E * .104);
+    cx.lineTo(fx + E * .025, fy + E * .130);
+    cx.quadraticCurveTo(fx - E * .18, fy + E * .094, fx - E * .475, fy + E * .178);
+    cx.closePath(); cx.fill();
+
+    cx.strokeStyle = SOMBRA_TELA;
+    cx.lineWidth = E * .005;
+    cx.beginPath();
+    cx.moveTo(fx - E * .475, fy + E * .178);
+    cx.quadraticCurveTo(fx - E * .18, fy + E * .094, fx + E * .025, fy + E * .130);
+    cx.stroke();
+
+    /* Los pliegues caen desde donde la tela se apoya hacia el hueco de la
+       cintura. No son paralelos: una sabana con lineas paralelas es una
+       persiana. */
+    cx.strokeStyle = SOMBRA_TELA;
+    cx.lineWidth = E * .0045;
+    var PL = [[-.18, .095, -.14, .188], [-.04, .112, .00, .190],
+              [.12, .092, .15, .192], [.28, .072, .31, .193],
+              [.46, .086, .48, .193], [.64, .080, .66, .190]];
+    for (var i = 0; i < PL.length; i++) {
+      cx.beginPath();
+      cx.moveTo(fx + E * PL[i][0], fy + E * PL[i][1]);
+      cx.quadraticCurveTo(fx + E * (PL[i][0] + PL[i][2]) / 2, fy + E * .155,
+                          fx + E * PL[i][2], fy + E * PL[i][3]);
+      cx.stroke();
+    }
+
+    /* La sombra del propio cuerpo dentro de la tela: la tela se aleja de la
+       luz a medida que baja del hombro y de la cadera. Es lo que hace bulto
+       sin dibujar un bulto. */
+    var hueco = cx.createLinearGradient(0, fy + E * .06, 0, fy + E * .17);
+    hueco.addColorStop(0, 'rgba(120,110,100,0)');
+    hueco.addColorStop(1, 'rgba(120,110,100,.26)');
+    cx.fillStyle = hueco;
+    cx.beginPath();
+    cx.moveTo(fx + E * .02, fy + E * .086);
+    cx.quadraticCurveTo(fx + E * .14, fy + E * .112, fx + E * .26, fy + E * .056);
+    cx.quadraticCurveTo(fx + an * .55, fy + E * .056, borde, fy + E * .128);
+    cx.lineTo(borde, fy + E * .17);
+    cx.lineTo(fx + E * .02, fy + E * .17);
+    cx.closePath(); cx.fill();
+
+    var som = cx.createLinearGradient(0, fy + E * .155, 0, fy + E * .195);
+    som.addColorStop(0, 'rgba(48,40,34,0)');
+    som.addColorStop(1, 'rgba(48,40,34,.32)');
+    cx.fillStyle = som;
+    cx.fillRect(fx - E * .30, fy + E * .155, borde - (fx - E * .30), E * .04);
+  }
+
+  function dibujar(c, t) {
+    var cx = c.cx;
+    cx.setTransform(1, 0, 0, 1, 0, 0);
+    var g = cx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#0a0817'); g.addColorStop(1, '#0d0b1c');
+    cx.fillStyle = g; cx.fillRect(0, 0, W, H);
+    Pintores.pintar(cx, 'cama', fx, fy, E, t, { alPiso: piso - fy });
+
+    var id = c.cfg.id;
+    var respirar = Math.sin(t * 1.1) * .5 + .5;
+    cx.save();
+    sabana(cx, respirar);
+    retrato(cx, id === 'i', id === 'j');
+    halo(cx, fx - E * .08, fy + E * .04, E * (.34 + respirar * .03), '210,220,255', .09);
+    cx.restore();
+  }
+
+  var t0 = performance.now();
+  function cuadro(ahora) {
+    var t = (ahora - t0) / 1000;
+    casos.forEach(function (c) { dibujar(c, t); });
+    requestAnimationFrame(cuadro);
+  }
+  requestAnimationFrame(cuadro);
+
+  window.laminas = function () {
+    casos.forEach(function (c) { dibujar(c, 3); });
+    var z = 3, x0 = 350, y0 = 350, ancho = 440, alto = 220;
+    return Promise.all(casos.map(function (c) {
+      var t = document.createElement('canvas');
+      t.width = ancho * z; t.height = alto * z;
+      var tc = t.getContext('2d');
+      tc.imageSmoothingEnabled = false;
+      tc.drawImage(c.cx.canvas, x0, y0, ancho, alto, 0, 0, ancho * z, alto * z);
+      return fetch('/_captura/cama3-' + c.cfg.id + '.png',
+        { method: 'POST', body: t.toDataURL('image/png') });
+    })).then(function () { return 'laminas guardadas'; });
+  };
+})();
+</script>
+</body></html>
