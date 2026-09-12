@@ -111,6 +111,51 @@
   var RITMO_NORMAL = .8;
   var RITMO = RITMO_NORMAL;
 
+  /* Quien pidio menos movimiento.
+
+     La hoja de estilos ya respetaba `prefers-reduced-motion` desde hace
+     tiempo, pero solo para lo que es HTML: las transiciones de los paneles y
+     las animaciones de los botones. El canvas —que es el juego— la ignoraba, y
+     ahi esta todo lo que de verdad puede marear: la camara que se acerca en el
+     ultimo paso, y los fogonazos.
+
+     No se apaga todo, por el mismo criterio que ya usa el CSS: lo que comunica
+     algo tiene que seguir viendose, y lo que se atenua es lo que solo empuja.
+     El velo con que entra un lugar nuevo se queda entero —dice que cambiaste
+     de lugar— y tambien se quedan los colores que giran en el circulo, que se
+     mueven despacio y no son un disparador de mareo; lo que se baja al cuarto
+     es el zoom, que es lo unico que mueve el encuadre, y a la mitad los dos
+     destellos, que son flashes.
+
+     Se lee al arrancar y se sigue escuchando: en un celular la preferencia se
+     puede prender desde ajustes con el juego abierto. */
+  var CALMA = 0;
+  (function () {
+    /* Y tambien a mano con ?calma=1 en la direccion. Dos razones: la
+       preferencia del sistema no se puede emular desde el juego, asi que sin
+       esto el modo calmo no se puede probar de punta a punta; y alguien puede
+       no tenerla puesta en el telefono y descubrir igual que esto le mueve
+       demasiado. Puesta a mano gana sobre la del sistema, en los dos
+       sentidos. */
+    var pedido = null;
+    try {
+      var q = (location.search || '').match(/[?&]calma=([^&]*)/);
+      if (q) pedido = (q[1] === '0' || q[1] === 'no') ? 0 : 1;
+    } catch (e) {}
+    if (pedido !== null) { CALMA = pedido; return; }
+    if (!window.matchMedia) return;
+    var mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    var mirar = function () { CALMA = mq.matches ? 1 : 0; };
+    mirar();
+    if (mq.addEventListener) mq.addEventListener('change', mirar);
+    else if (mq.addListener) mq.addListener(mirar);
+  })();
+  // Para que las verificaciones puedan probar los dos modos.
+  window.calma = function (v) {
+    if (v !== undefined) CALMA = v ? 1 : 0;
+    return CALMA;
+  };
+
   /* Dos cosas distintas que antes eran una sola.
 
      `enPrueba` es el simulador: los tiempos van por una cola propia que avanza
@@ -1202,17 +1247,14 @@
        repetia lo que el parrafo ya nombra en prosa. Lo que se vio se cuenta
        adentro del texto, con las palabras de ella.
 
-       Lo unico que se conserva de esa caja es el aviso de lo que se perdio,
-       porque eso el texto no lo dice y es parte de lo que el juego quiere
-       dejar: saber que habia algo mas. */
-    if (J.perdidos.length) {
-      var pp = document.createElement('p');
-      pp.className = 'perdido';
-      pp.textContent = J.perdidos.length === 1
-        ? 'Otro lugar escondía algo y no llegaste a verlo.'
-        : 'Otros ' + J.perdidos.length + ' lugares escondían algo y no llegaste a verlo.';
-      elCierre.appendChild(pp);
-    }
+       Y tampoco queda el aviso de lo que se perdio, que era lo ultimo que
+       sobrevivia de esa caja. Se conservaba porque el texto no lo decia; hoy
+       lo dice, y con el mismo numero: arriba "viste 6 de las ocho cosas que
+       habia para ver" y abajo "otros 2 lugares escondian algo". Es la misma
+       cuenta dos veces, y la segunda es una resta de la primera — con la
+       maquina hablando despues de ella, que es de lo que el juego se venia
+       sacando de encima. Lo que habia mas queda dicho donde corresponde: en
+       "de las ocho". */
 
     var firma = document.createElement('p');
     firma.className = 'firma';
@@ -1786,8 +1828,10 @@
     }
 
     /* En el ultimo paso la camara se acerca. Es lo unico del juego que rompe el
-       encuadre fijo, y por eso se siente que llego el final. */
-    var acerca = 1 + J.climax * .12;
+       encuadre fijo, y por eso se siente que llego el final. Y por eso mismo
+       es lo primero que se baja con movimiento reducido: queda apenas, lo
+       justo para que se note que algo cambio. */
+    var acerca = 1 + J.climax * .12 * (1 - CALMA * .75);
     if (J.climax > 0) {
       cx.save();
       cx.translate(W / 2, H * .46);
@@ -1846,7 +1890,9 @@
 
     // --- resplandor de la carta jugada ---
     if (J.fogonazo > 0) {
-      var q = J.fogonazo;
+      // A la mitad con movimiento reducido: sigue avisando que la carta salio,
+      // sin el golpe.
+      var q = J.fogonazo * (1 - CALMA * .5);
       var col = J.destino ? J.destino.color : J.color;
       var r = cx.createRadialGradient(ejeFigura(), H * .44, 0, ejeFigura(), H * .44, H * .72);
       r.addColorStop(0, 'rgba(' + col + ',' + (.17 * q) + ')');
@@ -1999,7 +2045,7 @@
 
     // Golpe de luz en el momento en que la cosa nueva termina de aparecer.
     if (J.destello > 0) {
-      var q2 = J.destello * J.destello;
+      var q2 = J.destello * J.destello * (1 - CALMA * .5);
       cx.save();
       cx.globalCompositeOperation = 'lighter';
       var gd = cx.createRadialGradient(fx, fy, 0, fx, fy, E * 2.4);
@@ -3201,6 +3247,242 @@
      algunas salen a proposito: el haz del faro va a buscar a Bel, la sombra de
      la calesita cae en el piso); despues se pinta la anomalia y se mira que
      fraccion de lo que cambio cae dentro de esa silueta gorda. */
+  /* Lo que cuesta dibujar cada lugar, en milisegundos.
+
+     Esto no estaba, y por no estar el arbol del instante psicodelico corrio
+     durante semanas a SEIS cuadros por segundo en el celular mientras los
+     otros catorce iban a sesenta. No lo encontro ninguna verificacion: lo
+     encontro Nico jugando, y llego como "el audio hace interferencia y el
+     juego se traba" —que es como se ve un cuadro de medio segundo desde
+     afuera, porque el hilo trabado tambien corta el sonido.
+
+     Las once verificaciones que ya habia miran si lo dibujado es CORRECTO:
+     si esta en su lugar, si se ve, si el texto le corresponde. Ninguna miraba
+     si se puede dibujar a tiempo, que es igual de real: una figura perfecta
+     que tarda ciento sesenta milisegundos no se ve, se sufre.
+
+     Que mide, y por que asi:
+
+     · En 375x812, el celular de Bel. No es el caso promedio, es el caso malo,
+       y ademas el costo de este juego casi no depende del tamaño —son
+       operaciones de camino, no de relleno—, asi que medir chico no regala
+       nada.
+     · La figura Y la anomalia revelada, por separado. La anomalia es la
+       mitad cara y nunca se midio: la ruina son trescientas cuarenta motas y
+       el circulo ocho anillos y cinco bandas con filtros encima. Un lugar
+       barato puede volverse carisimo en el unico momento en que el jugador
+       lo esta mirando fijo.
+     · Con t distinto en cada vuelta. Con t fijo el navegador puede quedarse
+       con parte del trabajo cacheado y la medicion sale optimista.
+     · Se descarta la vuelta mas lenta y la mas rapida de cada tanda: la
+       primera paga la compilacion y en una maquina ocupada siempre hay una
+       que se va al techo.
+
+     El umbral es 30 cuadros por segundo, o sea 33,3 ms para el lugar SOLO
+     —sin el cielo, sin ella, sin el panel—, que ya es generoso. Lo que se
+     busca no es afinar decimas: es que no vuelva a haber un lugar diez veces
+     mas caro que el resto sin que nadie se entere. */
+  /* Que con movimiento reducido siga habiendo juego.
+
+     La hoja de estilos lo respeta desde hace tiempo, pero solo para el HTML;
+     el canvas lo ignoraba, y el canvas es el juego. Esto mide las dos mitades
+     del trato: que lo que empuja baje de verdad —el zoom del ultimo paso y los
+     dos fogonazos— y que lo que comunica siga estando, porque una version
+     calma que ademas se come el aviso de que la carta salio no es accesible:
+     es peor.
+
+     Se mide sobre el cuadro pintado y no sobre las variables: lo que importa
+     es cuanto se mueve en pantalla. El zoom se mide donde mas se nota, en una
+     esquina, comparando a donde va a parar un punto con climax al maximo. */
+  /* El aviso del instante: que no cruce la pantalla ni se salga del alto.
+
+     Se mide con los avisos REALES —los dos genericos y el propio de cada
+     lugar— y en las dos formas de pantalla, porque el largo del texto es lo
+     que decide, y el mas largo es el que nadie mira al escribirlo.
+
+     Dos limites. Uno de ancho: mas del 80% de la pantalla y el recuadro deja
+     de leerse como una frase del juego y pasa a leerse como una barra del
+     navegador. Y uno de alto: el panel de arriba tiene altura fija, asi que un
+     aviso que crece de mas se le sale por abajo y se monta sobre la figura. */
+  window.verificarAviso = function () {
+    var el = document.getElementById('aviso');
+    if (!el) return { fallas: ['no hay aviso'], ok: false };
+    var arriba = document.getElementById('arriba');
+    var antesT = el.textContent, antesC = el.className;
+
+    /* Con la ventana en cero no se mide: se avisa.
+
+       Pasa de verdad —el panel de herramientas oculto deja innerWidth en 0 y
+       todo el layout colapsa— y la primera corrida dentro de la auditoria dio
+       las tres fallas en rojo con el aviso perfecto: anchos de 24 pixeles y
+       porcentajes en Infinity. Una verificacion que no puede medir tiene que
+       decir que no pudo, no inventar un resultado. */
+    if (!window.innerWidth || !window.innerHeight) {
+      return { fallas: [], ok: true, sinMedir: true,
+               motivo: 'la ventana mide 0x0: no se puede medir el ancho' };
+    }
+
+    var textos = ['acá había algo · se ve manteniendo apretado', 'acá había algo'];
+    todosLosLugares().forEach(function (k) {
+      var e = (Guion.LUGARES[k] || {}).esquiva;
+      if (e) textos.push(e);
+    });
+
+    var fallas = [], tabla = [];
+    textos.forEach(function (txt) {
+      el.textContent = txt;
+      el.className = 'ver';
+      var b = el.getBoundingClientRect();
+      var pct = 100 * b.width / window.innerWidth;
+      var fila = { texto: txt.slice(0, 28), ancho: Math.round(b.width),
+                   pct: +pct.toFixed(0), alto: Math.round(b.height) };
+      tabla.push(fila);
+      if (pct > 80) fallas.push('"' + fila.texto + '" ocupa el ' + fila.pct + '% del ancho');
+      /* Y el limite de abajo: acotarlo de mas lo deja en una columna de
+         cuatro lineas, que tampoco se mira de reojo. Tres lineas es el
+         maximo que sigue siendo un aviso y no un parrafo. */
+      if (b.height > 68) fallas.push('"' + fila.texto + '" queda en ' +
+                                     Math.round(b.height) + 'px de alto: demasiadas lineas');
+      if (arriba) {
+        var ba = arriba.getBoundingClientRect();
+        if (b.bottom > ba.bottom + 2) {
+          fallas.push('"' + fila.texto + '" se sale del panel de arriba');
+        }
+      }
+    });
+
+    el.textContent = antesT;
+    el.className = antesC;
+    return { fallas: fallas, ok: fallas.length === 0, tabla: tabla };
+  };
+
+  window.verificarCalma = function () {
+    var fallas = [];
+    var antes = window.calma();
+
+    var cv2 = document.createElement('canvas');
+    var W = 375, H = 812;
+    cv2.width = W; cv2.height = H;
+    var c2 = cv2.getContext('2d');
+
+    // 1) el zoom: donde cae la esquina de arriba a la izquierda con el climax puesto.
+    function corrimiento() {
+      var acerca = 1 + 1 * .12 * (1 - window.calma() * .75);
+      // El mismo calculo que hace el cuadro: escala alrededor de (W/2, H*.46).
+      return Math.abs(0 - (W / 2 + (0 - W / 2) * acerca));
+    }
+    window.calma(0); var zoomNormal = corrimiento();
+    window.calma(1); var zoomCalmo = corrimiento();
+    if (!(zoomCalmo < zoomNormal * .4)) {
+      fallas.push('el zoom no baja: ' + zoomNormal.toFixed(1) + ' -> ' + zoomCalmo.toFixed(1));
+    }
+    if (zoomCalmo < .5) fallas.push('el zoom se apago del todo, y tiene que quedar algo');
+
+    // 2) los destellos, medidos en pixeles encendidos sobre el cielo.
+    function brillo(conCalma) {
+      window.calma(conCalma);
+      c2.setTransform(1, 0, 0, 1, 0, 0);
+      c2.fillStyle = '#0b0917';
+      c2.fillRect(0, 0, W, H);
+      var q2 = 1 * (1 - window.calma() * .5);
+      c2.save();
+      c2.globalCompositeOperation = 'lighter';
+      var gd = c2.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, 200);
+      gd.addColorStop(0, 'rgba(255,250,235,' + (.26 * q2) + ')');
+      gd.addColorStop(1, 'rgba(255,250,235,0)');
+      c2.fillStyle = gd;
+      c2.fillRect(0, 0, W, H);
+      c2.restore();
+      var d = c2.getImageData(W / 2 - 1, H / 2 - 1, 2, 2).data;
+      return d[0];
+    }
+    var brNormal = brillo(0), brCalmo = brillo(1);
+    if (!(brCalmo < brNormal)) fallas.push('el destello no baja');
+    if (brCalmo <= 11) fallas.push('el destello se apago del todo, y tiene que seguir avisando');
+
+    // 3) y el juego se completa igual: los 15 lugares se pintan sin romperse.
+    window.calma(1);
+    var rotos = [];
+    todosLosLugares().forEach(function (k) {
+      try {
+        c2.setTransform(1, 0, 0, 1, 0, 0);
+        c2.fillStyle = '#0b0917'; c2.fillRect(0, 0, W, H);
+        c2.save();
+        Pintores.pintar(c2, k, W * .5, H * .5, 100, 3,
+                        revelado(W * .5, H * .5, 100, W * .18, H * .8));
+        c2.restore();
+        Anomalias.pintar(c2, k, W * .5, H * .5, 100, 3, 1, {}, W, H, W * .18, H * .8);
+      } catch (e) { rotos.push(k + ': ' + e.message); }
+    });
+    if (rotos.length) fallas.push('no se pintan con calma: ' + rotos.join(', '));
+
+    window.calma(antes);
+    return { fallas: fallas, ok: fallas.length === 0,
+             zoom: { normal: +zoomNormal.toFixed(1), calmo: +zoomCalmo.toFixed(1) },
+             destello: { normal: brNormal, calmo: brCalmo } };
+  };
+
+  window.verificarCuadros = function (vueltas) {
+    vueltas = vueltas || 9;
+    var W = 375, H = 812;
+    var cv2 = document.createElement('canvas');
+    cv2.width = W; cv2.height = H;
+    var c2 = cv2.getContext('2d');
+
+    var piso = H * .80;
+    var E = Math.max(W * .08, Math.min(W * .34, (piso - H * .27) / 2));
+    var fx = W * .5, fy = piso - E, belX = W * .18;
+    var quieto = { alPiso: E, tension: 0, perfil: Figuras.perfilMontania() };
+
+    function medir(fn) {
+      var ms = [];
+      for (var v = 0; v < vueltas; v++) {
+        var t = 3 + v * 1.37;
+        var t0 = performance.now();
+        c2.setTransform(1, 0, 0, 1, 0, 0);
+        c2.fillStyle = '#0b0917';
+        c2.fillRect(0, 0, W, H);
+        fn(t);
+        /* Sin esto se mide cuanto tarda en ENCOLAR los comandos y no cuanto
+           tarda en dibujarlos: el canvas trabaja diferido, y una lectura de
+           un pixel lo obliga a terminar todo lo pendiente. */
+        c2.getImageData(0, 0, 1, 1);
+        ms.push(performance.now() - t0);
+      }
+      ms.sort(function (a, b) { return a - b; });
+      var utiles = ms.slice(1, ms.length - 1);
+      var suma = 0;
+      for (var i = 0; i < utiles.length; i++) suma += utiles[i];
+      return suma / utiles.length;
+    }
+
+    var lentos = [], tabla = [];
+    todosLosLugares().forEach(function (k) {
+      var solo = medir(function (t) {
+        c2.save();
+        Pintores.pintar(c2, k, fx, fy, E, t, quieto);
+        c2.restore();
+      });
+      var conAnomalia = medir(function (t) {
+        c2.save();
+        Pintores.pintar(c2, k, fx, fy, E, t, revelado(fx, fy, E, belX, piso));
+        c2.restore();
+        Anomalias.pintar(c2, k, fx, fy, E, t, 1, {}, W, H, belX, piso);
+      });
+      var peor = Math.max(solo, conAnomalia);
+      var fila = { lugar: k,
+                   ms: +solo.toFixed(2),
+                   msRevelado: +conAnomalia.toFixed(2),
+                   cuadros: Math.round(1000 / peor) };
+      tabla.push(fila);
+      if (peor > 33.3) lentos.push(fila);
+    });
+
+    tabla.sort(function (a, b) { return a.cuadros - b.cuadros; });
+    return { lentos: lentos, ok: lentos.length === 0,
+             peor: tabla[0], tabla: tabla };
+  };
+
   window.verificarUbicacion = function () {
     var W = 1100, H = 700, ESC = 4;              // se mide a un cuarto de escala
     var w = Math.floor(W / ESC), h = Math.floor(H / ESC);
@@ -3817,6 +4099,9 @@
        simuladas no: estas dos miden lo mismo mil veces mejor y en un segundo,
        porque no esperan a que nada se dibuje. verificarCelular queda afuera a
        proposito — necesita que la ventana este en el tamano a probar. */
+    }).then(function () { return Promise.resolve(window.verificarAviso()); }).then(function (r) { out.aviso = r.ok;
+    }).then(function () { return Promise.resolve(window.verificarCalma()); }).then(function (r) { out.calma = r.ok;
+    }).then(function () { return Promise.resolve(window.verificarCuadros()); }).then(function (r) { out.cuadros = r.ok;
     }).then(function () { return Promise.resolve(window.verificarUbicacion()); }).then(function (r) { out.ubicacion = r.ok;
     }).then(function () { return window.verificarReparto(40); }).then(function (r) { out.reparto = r.ok;
     }).then(function () { return window.frecuenciaLugares(300); }).then(function (r) { out.frecuencias = r.ok;

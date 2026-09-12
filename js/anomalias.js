@@ -853,6 +853,79 @@ var Anomalias = (function () {
       cx.save();
       cx.globalAlpha = a;
 
+      /* --- ella, en su cama ---
+
+         Va ANTES de la sabana y no despues, y eso es lo que arregla el
+         cogote.
+
+         Dibujada encima, la piel del cuello quedaba sobre la tela: habia que
+         cerrarla en alguna parte, y cerrarla es lo que hacia la punta. Al 5x
+         se veia lo que era — una cuña beige saliendo del pelo y afilandose
+         hacia abajo. Abajo de la tela el cuello no se cierra: sigue y la
+         sabana lo tapa, que es lo que pasa de verdad cuando alguien esta
+         tapado hasta el cuello. Si alguna vez se vuelve a mover este bloque
+         abajo de la tela, la punta vuelve: no es un detalle de orden, es de
+         donde salia el defecto.
+
+         Y la diferencia SOLO se ve ampliado. Al tamaño en que el juego se
+         juega, la cabeza mide quince pixeles y las dos versiones miden
+         practicamente lo mismo — se probaron tres formas de medirlo (ancho de
+         la piel por filas, cuanto se estira la mancha respecto de su centro, y
+         cuanta piel queda encima de la tela) y ninguna las distingue. Por eso
+         esto no dejo una verificacion automatica: una prueba que no separa el
+         caso bueno del malo no protege nada, tranquiliza. Lo que queda es la
+         lamina al 5x, que es donde el defecto existe.
+
+         Y la cabeza es una elipse. Con un contorno a mano las curvas se
+         encuentran en angulos, y un angulo a veinte pixeles se lee como un
+         pico; una elipse no puede tener esquinas. Va inclinada hacia el
+         hombro, porque una cabeza apoyada de costado no esta derecha. */
+      var r = E * .066;
+      var cxh = almX + an * .06, cyh = almY - E * .052;
+      var rc = r * .92, ra = r * 1.06;     // ancho y alto de la cabeza
+      /* Negativa: en el canvas el giro positivo es horario, asi que con .34 el
+         cuello le salia hacia abajo-IZQUIERDA, que es justo donde la sabana
+         todavia no llego — y quedaba un rectangulo de piel al aire delante de
+         la tela. El cuerpo esta a la derecha y para alla tiene que ir. */
+      var incl = -.30;                     // lo que se le va hacia el hombro
+      var PIEL = '#e0bfa0';
+
+      // El pelo de atras, derramado sobre la almohada.
+      cx.fillStyle = '#3a2318';
+      cx.beginPath();
+      cx.ellipse(cxh - r * 1.05, cyh + r * .58, r * 2.05, r * 1.12, -.16, 0, 6.2832);
+      cx.fill();
+
+      /* El cuello: del menton para abajo, y sigue de largo. No tiene fondo
+         porque no le hace falta — a partir de la linea de la tela ya no se
+         ve. */
+      cx.fillStyle = PIEL;
+      cx.save();
+      cx.translate(cxh, cyh);
+      cx.rotate(incl);
+      cx.beginPath();
+      cx.moveTo(-rc * .42, ra * .48);
+      cx.quadraticCurveTo(-rc * .38, ra * 1.05, -rc * .34, ra * 1.70);
+      cx.lineTo(rc * .48, ra * 1.70);
+      cx.quadraticCurveTo(rc * .54, ra * 1.00, rc * .46, ra * .48);
+      cx.closePath(); cx.fill();
+
+      // La cabeza.
+      cx.beginPath();
+      cx.ellipse(0, 0, rc, ra, 0, 0, 6.2832);
+      cx.fill();
+      /* La sombra de la mandibula, donde la cara deja de dar a la ventana.
+         Sin esto la cabeza y el cuello son una sola mancha del mismo color y
+         no se entiende donde termina una. */
+      var mand = cx.createLinearGradient(0, ra * .30, 0, ra * .95);
+      mand.addColorStop(0, 'rgba(120,86,64,0)');
+      mand.addColorStop(1, 'rgba(120,86,64,.30)');
+      cx.fillStyle = mand;
+      cx.beginPath();
+      cx.ellipse(0, 0, rc, ra, 0, 0, 6.2832);
+      cx.fill();
+      cx.restore();
+
       /* --- la sabana, con la forma del cuerpo adentro --- */
       var tela = cx.createLinearGradient(0, fy - E * .02, 0, fy + E * .19);
       tela.addColorStop(0, '#f4efe6');
@@ -932,54 +1005,33 @@ var Anomalias = (function () {
       cx.fillStyle = som;
       cx.fillRect(fx - E * .50, fy + E * .155, borde - (fx - E * .50), E * .04);
 
-      /* --- ella: el pelo, la cara y el cuello --- */
-      var r = E * .066;
-      var cxh = almX + an * .06, cyh = almY - E * .052;
-
-      // El pelo de atras, derramado sobre la almohada.
+      /* Un mechon por delante del hombro, encima de la tela: es lo que hace
+         que el pelo se lea largo y no como un casco. */
       cx.fillStyle = '#3a2318';
       cx.beginPath();
-      cx.ellipse(cxh - r * 1.05, cyh + r * .58, r * 2.05, r * 1.12, -.16, 0, 6.2832);
-      cx.fill();
-      /* Y un mechon por delante del hombro: es lo que hace que el pelo se lea
-         largo y no como un casco. */
-      cx.beginPath();
-      cx.moveTo(cxh - r * .30, cyh + r * .30);
-      cx.quadraticCurveTo(cxh + r * .30, cyh + r * .92, cxh + r * .34, cyh + r * 1.55);
-      cx.quadraticCurveTo(cxh - r * .20, cyh + r * 1.20, cxh - r * .74, cyh + r * 1.05);
-      cx.closePath(); cx.fill();
-
-      /* La silueta de piel, de la coronilla al hombro, sin levantar el lapiz.
-         El craneo va en cuatro tramos: con dos, las curvas se cruzan en un
-         angulo y la cara sale como un triangulo con punta. */
-      cx.fillStyle = '#e0bfa0';
-      cx.beginPath();
-      cx.moveTo(cxh - r * .95, cyh + r * .30);
-      cx.quadraticCurveTo(cxh - r * 1.02, cyh - r * .52, cxh - r * .62, cyh - r * .86);
-      cx.quadraticCurveTo(cxh - r * .22, cyh - r * 1.06, cxh + r * .20, cyh - r * .92);
-      cx.quadraticCurveTo(cxh + r * .62, cyh - r * .78, cxh + r * .76, cyh - r * .34);
-      cx.quadraticCurveTo(cxh + r * .84, cyh + r * .04, cxh + r * .74, cyh + r * .40);
-      // el cuello, con sus dos lados
-      cx.quadraticCurveTo(cxh + r * .80, cyh + r * .74, cxh + r * .96, cyh + r * 1.02);
-      cx.quadraticCurveTo(cxh + r * 1.12, cyh + r * 1.26, cxh + r * 1.30, cyh + r * 1.44);
-      cx.lineTo(cxh + r * .40, cyh + r * 1.44);
-      cx.quadraticCurveTo(cxh - r * .10, cyh + r * 1.16, cxh - r * .48, cyh + r * .78);
-      cx.quadraticCurveTo(cxh - r * .82, cyh + r * .58, cxh - r * .95, cyh + r * .30);
+      cx.moveTo(cxh - r * .86, cyh + r * .30);
+      cx.quadraticCurveTo(cxh - r * .52, cyh + r * .94, cxh - r * .44, cyh + r * 1.52);
+      cx.quadraticCurveTo(cxh - r * 1.02, cyh + r * 1.20, cxh - r * 1.42, cyh + r * .94);
       cx.closePath(); cx.fill();
 
       /* El pelo de arriba envuelve el craneo y baja hasta la sien: queda a la
-         vista la mejilla y el menton, que es lo unico que se le ve a alguien
-         acostado de costado con el pelo suelto. Va DESPUES de la piel, asi el
-         nacimiento del pelo es un borde de pelo y no una costura. */
-      cx.fillStyle = '#3a2318';
+         vista la frente baja, la mejilla y el menton, que es lo unico que se
+         le ve a alguien acostado de costado con el pelo suelto. Va DESPUES de
+         la piel, asi el nacimiento del pelo es un borde de pelo y no una
+         costura. */
+      cx.save();
+      cx.translate(cxh, cyh);
+      cx.rotate(incl);
       cx.beginPath();
-      cx.moveTo(cxh - r * .98, cyh + r * .34);
-      cx.quadraticCurveTo(cxh - r * 1.06, cyh - r * .54, cxh - r * .64, cyh - r * .90);
-      cx.quadraticCurveTo(cxh - r * .22, cyh - r * 1.10, cxh + r * .22, cyh - r * .96);
-      cx.quadraticCurveTo(cxh + r * .56, cyh - r * .84, cxh + r * .64, cyh - r * .48);
-      cx.quadraticCurveTo(cxh + r * .24, cyh - r * .42, cxh - r * .16, cyh - r * .18);
-      cx.quadraticCurveTo(cxh - r * .54, cyh + r * .10, cxh - r * .66, cyh + r * .60);
+      cx.moveTo(-rc * 1.02, ra * .40);
+      cx.quadraticCurveTo(-rc * 1.12, -ra * .62, -rc * .58, -ra * .98);
+      cx.quadraticCurveTo(-rc * .06, -ra * 1.18, rc * .52, -ra * .90);
+      cx.quadraticCurveTo(rc * .92, -ra * .70, rc * .96, -ra * .30);
+      // y de vuelta por dentro, dejando la cara a la vista
+      cx.quadraticCurveTo(rc * .44, -ra * .40, rc * .02, -ra * .18);
+      cx.quadraticCurveTo(-rc * .46, ra * .08, -rc * .70, ra * .62);
       cx.closePath(); cx.fill();
+      cx.restore();
 
       // La respiracion, que es lo unico que se mueve.
       halo(cx, fx - E * .08, fy + E * .04,

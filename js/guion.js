@@ -367,10 +367,24 @@ var Guion = (function () {
       vuelta: 'La luna de nuevo, todavía más cerca. Cada vez que vuelve está un ' +
               'poco más cerca, y ninguna de las veces me pareció que se hubiera ' +
               'movido.',
+      /* Lo que este lugar tenia que decir, y decia el platillo.
+
+         Los dos eran "alguien quiere decirte algo y no puede": la luna se
+         acomodaba para hablar y no hablaba, el platillo tampoco sabia como. Al
+         platillo se le dio lo suyo —viene, se muestra y se va— y la luna quedo
+         con la frase de los dos.
+
+         Lo que tenia sin usar es que la luna no es un adorno del cielo para
+         ella: es con lo que trabaja, y lo hace mirandola de lejos. Este lugar
+         se la pone encima ocupando medio cielo, que es la unica posicion desde
+         la que no se puede leer. El oficio no se nombra —el juego no nombra
+         nada real— pero el que sabe lo reconoce, y el que no, igual entiende
+         la idea: hay cosas que de tan cerca no se entienden. */
       esconde: 'Los cráteres se mueven. Despacio, pero se mueven, y se acomodan ' +
-               'como se acomoda una cara que está por decir algo y todavía busca ' +
-               'por dónde empezar. Me quedo esperando. No dice nada, pero se ' +
-               'queda mirándome.',
+               'en una cara que conozco de memoria: la miré toda la vida desde ' +
+               'abajo y siempre supe lo que estaba diciendo. Ahora la tengo ' +
+               'encima, ocupando todo, y no le entiendo nada. Parece que a ' +
+               'algunas cosas hay que mirarlas de lejos para poder leerlas.',
       revela: 'laguna'
     },
     puerta: {
@@ -596,7 +610,7 @@ var Guion = (function () {
     arbol: 'El pájaro de un color que no existe',
     circulo: 'El árbol que respiraba en el medio del círculo',
     reloj: 'Los números corridos de su hora',
-    luna: 'La cara que armaban los cráteres',
+    luna: 'La cara que de tan cerca no se dejaba leer',
     puerta: 'La puerta que volví a abrir sabiendo que no',
     ruina: 'El polvo que se quedó a mitad de camino',
     bandada: 'Los pájaros que se ordenaban cuando los miraba',
@@ -714,8 +728,17 @@ var Guion = (function () {
      "con una alcanza para saber que estaba ahi"— y la carta de papel entra
      enseguida, que es la que de verdad viene a hablarle. La Durmiente conserva
      el suyo, "las cosas siguen ahi", porque no pide nada ni trae a nadie. */
+  /* Ocho es un numero que se puede decir, y en la misma frase estaba escrito
+     de las dos maneras: "Viste 8 de las ocho cosas que habia para ver". El
+     digito venia de una cuenta y la palabra de un texto escrito a mano, y
+     juntos delatan que ahi adentro hay una maquina contando. Es la ultima
+     pantalla del juego y esta escrita en la voz de ella. */
+  var CUANTAS = ['ninguna', 'una', 'dos', 'tres', 'cuatro',
+                 'cinco', 'seis', 'siete', 'ocho'];
+
   function cartaDeElla(indicios) {
     var n = indicios.length;
+    var cuantas = CUANTAS[n] || n;
 
     if (n >= 8) {
       return {
@@ -723,8 +746,9 @@ var Guion = (function () {
         lectura: 'Mirar hasta que la cosa se rinde.',
         astro: '☽', astroNombre: 'la Luna',
         parrafos: [
-          'Viste ' + n + ' de las ocho cosas que había para ver. ' +
-          (n === 8 ? 'Todas.' : 'Casi todas.'),
+          (n === 8 ? 'Las viste todas. Las ocho.'
+                   : 'Viste ' + cuantas + ' de las ocho cosas que había para ' +
+                     'ver. Casi todas.'),
           'Eso no es suerte ni puntería. Es que mirás distinto: te quedás en una ' +
           'cosa hasta que la cosa se rinde y te muestra lo que es. Toda la noche ' +
           'estuviste haciendo eso, y a esta altura ya sabés que no lo hacés solo ' +
@@ -742,8 +766,8 @@ var Guion = (function () {
         lectura: 'Quedarse el segundo de más.',
         astro: '☽', astroNombre: 'la Luna',
         parrafos: [
-          'Viste ' + n + ' de las ocho cosas que había para ver. Algunas se te ' +
-          'pasaron.',
+          'Viste ' + cuantas + ' de las ocho cosas que había para ver. Algunas ' +
+          'se te pasaron.',
           'Está bien que se pasen. Nadie mira todo, y las que viste no las viste ' +
           'de casualidad: las viste porque te quedaste el segundo de más que la ' +
           'mayoría no se queda.',
@@ -759,11 +783,21 @@ var Guion = (function () {
     if (n >= 1) {
       return {
         clave: 'despierta', num: 'XXII', nombre: 'La Que Se Despierta',
-        lectura: 'Con una alcanza para saber que se puede.',
+        /* La lectura es el eco del ultimo parrafo, y quedo vieja: el parrafo
+           decia "para saber que se puede" y se corrigio a "que estaba ahi"
+           —era un consejo disfrazado, le explicaba que la proxima puede
+           mejor— pero la lectura se quedo con la version anterior. En la
+           pantalla final las dos se leen juntas, una arriba de la otra. */
+        lectura: 'Con una alcanza para saber que estaba ahí.',
         astro: '☽', astroNombre: 'la Luna',
         parrafos: [
-          'Viste ' + n + (n === 1 ? ' de las ocho cosas que había para ver' : ' de las ocho cosas que había para ver') +
-          '. Se te fue casi todo.',
+          /* Y cuanto se fue, dicho con la verdad: esta carta cubre de una a
+             cuatro, y con cuatro de ocho "se te fue casi todo" es falso —es
+             la mitad— y ademas suena a reproche, que es justo lo que esta
+             carta no tiene que hacer. */
+          'Viste ' + cuantas + ' de las ocho cosas que había para ver. ' +
+          (n <= 2 ? 'Se te fue casi todo.'
+                  : n === 4 ? 'Se te fue la mitad.' : 'Se te fue la mayoría.'),
           'Pasa cuando uno mira sin mirar, que es como andamos la mayor parte del ' +
           'tiempo. Igual algo viste, y esa cosa te la llevás.',
           /* Sin "lo demas es acordarse de frenar, que es lo dificil": eso es

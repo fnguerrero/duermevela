@@ -34,8 +34,109 @@ var Pintores = (function () {
      Antes lo hacia la anomalia poniendo un trapecio OSCURO encima del haz, y
      se veia lo que era: un rectangulo negro pegado sobre la escena, con dos
      bordes rectos que no eran de nada. Un parche encima nunca apaga; tapa. */
+  /* Un lienzo aparte para cuando se va, y no por gusto: por lo que cuesta.
+
+     El desenfoque y la transparencia se hacen con `cx.filter`, y ahi esta la
+     trampa que costo doscientos treinta milisegundos por cuadro: el filtro no
+     se aplica una vez al final, se aplica a CADA operacion de dibujo mientras
+     este puesto. El platillo son mas de cincuenta —el cono, veintiseis motas,
+     el charco, el halo, la cupula, tres ventanas, el casco, el filo, la panza
+     y catorce luces con su halo cada una—, asi que eran mas de cincuenta
+     pasadas de filtro sobre una superficie del tamaño de la pantalla.
+
+     Medido: con apaga en 0 el lugar tarda 0,2 ms. Con apaga en 0,3 —apenas se
+     enciende el filtro— salta a 160. Ochocientas veces mas caro, y justo
+     mientras el jugador mantiene apretado mirando, que es cuando el juego
+     pide que no se mueva. A cuatro cuadros por segundo eso no es una
+     despedida: es un tilde.
+
+     Dibujado en un lienzo propio sin filtro y volcado de una sola vez CON el
+     filtro, el resultado en pantalla es identico y la pasada es una. */
+  var lienzoFiltro = null, filtroCx = null, filtroOcupado = false;
+  function lienzoParaFiltrar(w, h) {
+    if (!lienzoFiltro) {
+      lienzoFiltro = document.createElement('canvas');
+      filtroCx = lienzoFiltro.getContext('2d');
+    }
+    if (lienzoFiltro.width !== w || lienzoFiltro.height !== h) {
+      lienzoFiltro.width = w; lienzoFiltro.height = h;
+    } else {
+      filtroCx.setTransform(1, 0, 0, 1, 0, 0);
+      filtroCx.globalAlpha = 1;
+      filtroCx.globalCompositeOperation = 'source-over';
+      filtroCx.filter = 'none';
+      filtroCx.clearRect(0, 0, w, h);
+    }
+    return filtroCx;
+  }
+
+  /* `dibujar` se hace aparte y se vuelca UNA vez con `filtro` puesto.
+
+     La caja (x0,y0)-(x1,y1) va en coordenadas locales del contexto y tiene que
+     contener todo lo que dibuje, con margen para el propio desenfoque: lo que
+     quede afuera se corta, y un corte se ve como un canto recto.
+
+     Se conserva el modo de composicion del contexto en los dos lados —adentro
+     para que las formas se combinen entre si como lo hacian, y en el volcado
+     para que el conjunto se combine con el cielo igual que antes—, porque
+     varias de estas capas van en `lighter` y sin eso dejarian de sumar luz al
+     fondo para taparlo.
+
+     Si el navegador no tiene `filter` o la caja sale disparatada, se dibuja
+     por el camino de siempre: peor rendimiento, mismo dibujo. */
+  function conFiltro(cx, filtro, x0, y0, x1, y1, dibujar) {
+    var m = (typeof cx.getTransform === 'function') ? cx.getTransform() : null;
+    var esc = m ? (Math.sqrt(Math.abs(m.a * m.d - m.b * m.c)) || 1) : 0;
+    var w = Math.ceil((x1 - x0) * esc), h = Math.ceil((y1 - y0) * esc);
+    /* Un solo lienzo compartido: si un filtrado llamara a otro adentro, el de
+       adentro le borraria el dibujo al de afuera. Hoy no pasa, y si pasa el
+       de adentro se dibuja derecho en vez de romper. */
+    if (typeof cx.filter !== 'string' || !m || filtroOcupado ||
+        !(w >= 2 && h >= 2) || w * h > 12e6) {
+      cx.save();
+      if (typeof cx.filter === 'string') cx.filter = filtro;
+      dibujar(cx);
+      cx.restore();
+      return;
+    }
+    filtroOcupado = true;
+    var lz = lienzoParaFiltrar(w, h);
+    lz.globalCompositeOperation = cx.globalCompositeOperation;
+    lz.setTransform(esc, 0, 0, esc, -x0 * esc, -y0 * esc);
+    dibujar(lz);
+    filtroOcupado = false;
+    cx.save();
+    cx.filter = filtro;
+    cx.drawImage(lienzoFiltro, x0, y0, x1 - x0, y1 - y0);
+    cx.restore();
+  }
+
   function platillo(cx, E, t, alPiso, apaga) {
     var baja = Math.max(0, Math.min(1, apaga || 0));
+    var sube0 = baja * baja;
+    if (sube0 > .003) {
+      var flo = Math.sin(t * .8) * E * .04;
+      var alt = E * 2.4 * sube0;
+      var hasta = ((alPiso && alPiso > E * .4) ? alPiso - flo : E * 1.45) + alt;
+      var k = 1 - sube0 * .52;
+      /* La caja: lo mas ancho es el halo de fondo o la boca del cono, y lo
+         mas alto va del halo de arriba al pie del haz. El 1.06 cubre el ladeo
+         y el margen de E*.12, el desenfoque. */
+      var ancho = Math.max(E * 1.55, E * .55 + hasta * .32) * k * 1.06 + E * .12;
+      var arriba = (flo - alt) - E * 1.55 * k * 1.06 - E * .12;
+      var abajo = (flo - alt) + (E * .12 + hasta) * k * 1.06 + E * .12;
+
+      conFiltro(cx,
+                'opacity(' + (1 - sube0 * .92).toFixed(3) + ') blur(' +
+                (sube0 * E * .020).toFixed(1) + 'px)',
+                -ancho, arriba, ancho, abajo,
+                function (lz) { cuerpoDelPlatillo(lz, E, t, alPiso, baja); });
+      return;
+    }
+    cuerpoDelPlatillo(cx, E, t, alPiso, baja);
+  }
+
+  function cuerpoDelPlatillo(cx, E, t, alPiso, baja) {
     var flota = Math.sin(t * .8) * E * .04;
     /* Y se inclina, muy poco, como algo que se sostiene solo y corrige. Sin
        esto es un disco pegado al aire. */
@@ -59,14 +160,12 @@ var Pintores = (function () {
     var alto = E * 2.4 * sube;
     var hastaPiso = ((alPiso && alPiso > E * .4) ? alPiso - flota : E * 1.45) + alto;
 
+    /* El desenfoque y la transparencia ya no se ponen aca —los pone `platillo`
+       al volcar este dibujo— porque puestos aca los paga cada operacion. Con
+       globalAlpha tampoco: el pintor se pisa el alpha en sus propios
+       save/restore, y ademas el desenfoque es la mitad de "hasta que no lo
+       distingo del cielo". */
     cx.save();
-    if (sube > .003 && typeof cx.filter === 'string') {
-      /* Con `filter` y no con globalAlpha: el pintor se pisa el alpha en sus
-         propios save/restore, y el desenfoque ademas es la mitad de "hasta que
-         no lo distingo del cielo". */
-      cx.filter = 'opacity(' + (1 - sube * .92).toFixed(3) + ') blur(' +
-                  (sube * E * .020).toFixed(1) + 'px)';
-    }
     cx.translate(0, flota - alto);
     cx.scale(1 - sube * .52, 1 - sube * .52);
     cx.rotate(ladeo);
@@ -1116,21 +1215,28 @@ var Pintores = (function () {
          el borde blando a los costados pero arriba y abajo la elipse corta en
          seco, y cinco elipses nitidas una sobre otra se leen como una pila de
          discos. Mismo remedio que el haz del faro: el filtro hace lo que
-         apilar formas no puede. */
-      if (typeof cx.filter === 'string') cx.filter = 'blur(' + (E * .07).toFixed(1) + 'px)';
-      for (var w = 0; w < 5; w++) {
-        var oy2 = cy - E * (.25 + w * .34) + Math.sin(t * .5 + w) * E * .05;
-        var tw = Math.round((t * 21 + w * 62 + 190) % 360);
-        var gw = cx.createLinearGradient(-rx * 1.3, oy2, rx * 1.3, oy2);
-        gw.addColorStop(0, 'hsla(' + tw + ',60%,55%,0)');
-        gw.addColorStop(.5, 'hsla(' + tw + ',85%,58%,' + (h * .17).toFixed(3) + ')');
-        gw.addColorStop(1, 'hsla(' + ((tw + 60) % 360) + ',60%,55%,0)');
-        cx.fillStyle = gw;
-        cx.beginPath();
-        cx.ellipse(Math.sin(t * .37 + w) * E * .2, oy2,
-                   rx * 1.25, E * (.09 + w * .015), 0, 0, 6.2832);
-        cx.fill();
-      }
+         apilar formas no puede.
+
+         Y las cinco se filtran juntas: con el filtro puesto en el contexto,
+         cada una de las cinco pagaba su propia pasada sobre toda la pantalla. */
+      conFiltro(cx, 'blur(' + (E * .07).toFixed(1) + 'px)',
+                -(rx * 1.25 + E * .35), cy - E * 1.90,
+                 (rx * 1.25 + E * .35), cy - E * .02,
+                function (lz) {
+        for (var w = 0; w < 5; w++) {
+          var oy2 = cy - E * (.25 + w * .34) + Math.sin(t * .5 + w) * E * .05;
+          var tw = Math.round((t * 21 + w * 62 + 190) % 360);
+          var gw = lz.createLinearGradient(-rx * 1.3, oy2, rx * 1.3, oy2);
+          gw.addColorStop(0, 'hsla(' + tw + ',60%,55%,0)');
+          gw.addColorStop(.5, 'hsla(' + tw + ',85%,58%,' + (h * .17).toFixed(3) + ')');
+          gw.addColorStop(1, 'hsla(' + ((tw + 60) % 360) + ',60%,55%,0)');
+          lz.fillStyle = gw;
+          lz.beginPath();
+          lz.ellipse(Math.sin(t * .37 + w) * E * .2, oy2,
+                     rx * 1.25, E * (.09 + w * .015), 0, 0, 6.2832);
+          lz.fill();
+        }
+      });
       cx.restore();
     }
 
@@ -1227,31 +1333,40 @@ var Pintores = (function () {
       var copaY = cy - alt * .92;
       var copaR = abre * (1.45 + respira * .06);
       cx.save();
-      if (typeof cx.filter === 'string') {
-        /* Poco desenfoque: con .16 las dieciocho manchas se fundian en una
-           sola nube verde pareja y se perdia el borde irregular, que es lo
-           unico que hace que un verde se lea como hojas. */
-        cx.filter = 'blur(' + (copaR * .075).toFixed(1) + 'px)';
-      }
-      var rndC = sembrado(41);
-      for (var hj = 0; hj < 18; hj++) {
-        var ah = rndC() * 6.2832;
-        var dh = Math.pow(rndC(), .62) * copaR * .74;
-        var hx = Math.cos(ah) * dh;
-        var hy = copaY + Math.sin(ah) * dh * .60 - copaR * .06;
-        var hr = copaR * (.24 + rndC() * .24);
-        /* Mas claras abajo y en el medio, mas oscuras arriba y en los bordes:
-           es donde daria la luz de las puntas si la copa tuviera volumen. */
-        var cerca = 1 - Math.min(1, dh / (copaR * .74));
-        var vr = Math.round(40 + cerca * 34 + rndC() * 10);
-        var vg = Math.round(66 + cerca * 52 + rndC() * 14);
-        var vb = Math.round(56 + cerca * 24);
-        cx.fillStyle = 'rgba(' + vr + ',' + vg + ',' + vb + ',' +
-                       (.30 + cerca * .26 + respira * .05 * ar).toFixed(3) + ')';
-        cx.beginPath();
-        cx.ellipse(hx, hy, hr, hr * .82, ah, 0, 6.2832);
-        cx.fill();
-      }
+      /* Poco desenfoque: con .16 las dieciocho manchas se fundian en una sola
+         nube verde pareja y se perdia el borde irregular, que es lo unico que
+         hace que un verde se lea como hojas.
+
+         Y las dieciocho se filtran juntas. Puesto en el contexto, el filtro se
+         aplica a CADA fill: eran dieciocho pasadas de desenfoque sobre toda la
+         pantalla y costaban 34 de los 36 milisegundos de este lugar —el
+         circulo es el unico donde el juego pide quedarse mirando un rato
+         largo, y era el mas caro de todos. */
+      conFiltro(cx, 'blur(' + (copaR * .075).toFixed(1) + 'px)',
+                -copaR * 1.45, copaY - copaR * 1.25,
+                 copaR * 1.45, copaY + copaR * 1.25,
+                function (lz) {
+        var rndC = sembrado(41);
+        for (var hj = 0; hj < 18; hj++) {
+          var ah = rndC() * 6.2832;
+          var dh = Math.pow(rndC(), .62) * copaR * .74;
+          var hx = Math.cos(ah) * dh;
+          var hy = copaY + Math.sin(ah) * dh * .60 - copaR * .06;
+          var hr = copaR * (.24 + rndC() * .24);
+          /* Mas claras abajo y en el medio, mas oscuras arriba y en los
+             bordes: es donde daria la luz de las puntas si la copa tuviera
+             volumen. */
+          var cerca = 1 - Math.min(1, dh / (copaR * .74));
+          var vr = Math.round(40 + cerca * 34 + rndC() * 10);
+          var vg = Math.round(66 + cerca * 52 + rndC() * 14);
+          var vb = Math.round(56 + cerca * 24);
+          lz.fillStyle = 'rgba(' + vr + ',' + vg + ',' + vb + ',' +
+                         (.30 + cerca * .26 + respira * .05 * ar).toFixed(3) + ')';
+          lz.beginPath();
+          lz.ellipse(hx, hy, hr, hr * .82, ah, 0, 6.2832);
+          lz.fill();
+        }
+      });
       cx.restore();
 
       /* Y las raices, que lo terminan de plantar. Cortas y cayendo: salieron

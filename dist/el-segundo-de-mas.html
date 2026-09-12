@@ -1,6 +1,37 @@
 <!doctype html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>El segundo de más</title>
+
+<!-- Lo que se ve cuando el link se manda por WhatsApp.
+
+     Sin esto, el mensaje llega como una linea de texto azul: ni titulo, ni
+     bajada, ni imagen. El link se manda una vez y esa vista es lo primero que
+     ve quien lo recibe — abrirlo o no se decide ahi.
+
+     La imagen es una captura del juego de verdad (la luna, y ella mirandola),
+     no un cartel: 1200x630 como pide el formato, 14 KB para que cargue en un
+     celular con mala señal. La direccion tiene que ser absoluta, porque quien
+     lee estas etiquetas es el servidor de WhatsApp y no el navegador.
+
+     Y la bajada no nombra a nadie: el link puede terminar en cualquier lado, y
+     lo que el juego tiene para decirle esta adentro. -->
+<meta name="description" content="Un lugar donde las cosas no terminan de ser lo que parecen. Lo que llegues a ver depende de cuánto te quedes mirando.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="El segundo de más">
+<meta property="og:title" content="El segundo de más">
+<meta property="og:description" content="Un lugar donde las cosas no terminan de ser lo que parecen. Lo que llegues a ver depende de cuánto te quedes mirando.">
+<meta property="og:url" content="https://fnguerrero.github.io/el-segundo-de-mas/">
+<meta property="og:image" content="https://fnguerrero.github.io/el-segundo-de-mas/portada.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Una mujer chiquita, de noche, parada frente a una luna enorme.">
+<meta property="og:locale" content="es_AR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="El segundo de más">
+<meta name="twitter:description" content="Un lugar donde las cosas no terminan de ser lo que parecen. Lo que llegues a ver depende de cuánto te quedes mirando.">
+<meta name="twitter:image" content="https://fnguerrero.github.io/el-segundo-de-mas/portada.jpg">
+<meta name="theme-color" content="#05060e">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CjxyZWN0IHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgcng9IjEzIiBmaWxsPSIjMGQwYjFjIi8+CjxjaXJjbGUgY3g9IjMyIiBjeT0iMzMiIHI9IjE5IiBmaWxsPSJub25lIiBzdHJva2U9IiNkY2IyNmMiIHN0cm9rZS13aWR0aD0iNC41IiBvcGFjaXR5PSIuNTUiLz4KPGNpcmNsZSBjeD0iMzIiIGN5PSIzMyIgcj0iMTAuNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZjJlNmNkIiBzdHJva2Utd2lkdGg9IjQiLz4KPGNpcmNsZSBjeD0iMzIiIGN5PSIxNCIgcj0iNiIgZmlsbD0iI2Y2ZTJiYSIvPgo8L3N2Zz4=">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Caveat:wght@400;600&display=swap">
@@ -416,11 +447,21 @@
      lee de reojo: la atencion tiene que estar en el anillo. */
   /* El aviso lleva su propio fondo: sin el, sobre una figura clara el texto
      desaparecia. */
+  /* Y no mas ancho que eso.
+
+     Medido en 375x812: "aca habia algo · se ve manteniendo apretado" salia en
+     una sola linea de 346 pixeles —el 92% del ancho— y el del circulo llegaba
+     a 8 pixeles del borde. Un recuadro que cruza la pantalla de lado a lado no
+     se lee como una frase del juego: se lee como la barra de estado del
+     navegador, que es justo lo unico que este juego no tiene en ningun lado.
+     Partido en dos lineas queda un bloque, y un bloque se mira de reojo, que
+     es para lo que esta. */
   #aviso{margin:0;font-size:clamp(13px,1.65vw,16px);letter-spacing:.14em;
     text-transform:uppercase;color:rgba(255,232,180,.95);
     opacity:0;transition:opacity .35s;pointer-events:none;text-align:center;
     background:rgba(9,7,16,.88);padding:7px 15px;border-radius:2px;
     border:1px solid rgba(220,178,108,.22);
+    max-width:min(54ch,62%);line-height:1.42;
     text-shadow:0 1px 6px rgba(0,0,0,1)}
   #aviso.ver{opacity:1}
   #aviso.bien{color:rgba(190,255,205,.98);border-color:rgba(150,220,170,.4)}
@@ -639,27 +680,12 @@
   #cierre.ver p:nth-child(1){transition-delay:.15s}
   #cierre.ver p:nth-child(2){transition-delay:1.3s}
   #cierre.ver p:nth-child(3){transition-delay:2.45s}
-  /* Y el boton espera a que termine de hablar. */
-  #cierre .perdido,#cierre .boton{opacity:0;transition:opacity 1.1s 4.1s}
-  #cierre.ver .perdido,#cierre.ver .boton{opacity:1}
-  /* Lo que llego a ver, listado: el cierre hablaba de "lo que viste" sin
-     mostrar nunca que habia sido. */
-  #cierre .hallazgos{max-width:60ch;width:100%;display:flex;flex-direction:column;
-    gap:9px;margin:2px 0 0;padding:16px 20px;border-radius:3px;
-    background:rgba(9,7,16,.5);border:1px solid rgba(220,178,108,.18)}
-  #cierre .hallazgos .titu{font-size:11px;letter-spacing:.24em;text-transform:uppercase;
-    color:rgba(220,178,108,.7);text-align:left;max-width:none}
-  #cierre .hallazgos li{font-size:clamp(14px,1.65vw,16px);line-height:1.45;
-    color:rgba(236,230,216,.7);text-align:left;list-style:none;
-    padding-left:16px;position:relative}
-  #cierre .hallazgos li::before{content:'✦';position:absolute;left:0;
-    color:rgba(220,178,108,.6);font-size:11px;top:3px}
-  #cierre .hallazgos ul{margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
-  #cierre .hallazgos .nada{font-style:italic;color:rgba(236,230,216,.45);
-    font-size:15px;text-align:left;max-width:none}
-  #cierre .hallazgos .perdido{font-style:italic;color:rgba(220,160,150,.62);
-    font-size:14px;text-align:left;max-width:none;margin-top:3px;
-    padding-top:9px;border-top:1px solid rgba(220,178,108,.14)}
+  /* Y el boton espera a que termine de hablar. Antes compartia esta regla
+     con el aviso de lo que se perdio; ese aviso ya no esta, y con el se fue
+     lo ultimo que quedaba de la caja .hallazgos —el listado de lo que vio—,
+     asi que su CSS tambien. */
+  #cierre .boton{opacity:0;transition:opacity 1.1s 4.1s}
+  #cierre.ver .boton{opacity:1}
   /* La firma llega al final, con el boton: entraba junto al primer parrafo,
      o sea que el "para Bel" aparecia antes de que ella hubiera leido nada. */
   #cierre .firma{font-style:italic;color:var(--tenue);font-size:clamp(16px,2vw,19px);
@@ -704,7 +730,8 @@
     #arriba{top:clamp(112px,15.5vh,140px);width:96vw;gap:7px;
       min-height:min(28vh,238px);justify-content:flex-end}
     #relato{font-size:clamp(16px,4.2vw,19px);padding:11px 22px 13px}
-    #aviso{font-size:clamp(11px,3vw,13px);letter-spacing:.10em;padding:6px 11px}
+    #aviso{font-size:clamp(11px,3vw,13px);letter-spacing:.10em;padding:6px 11px;
+      max-width:min(46ch,66%)}
     /* El rotulo baja debajo del marcador. Arriba no entran los dos: en celular
        el marcador se aplana a una linea y se lleva el 70% del ancho, asi que el
        nombre del lugar —centrado— le caia justo encima y quedaban las dos cosas
@@ -3386,8 +3413,109 @@ var Pintores = (function () {
      Antes lo hacia la anomalia poniendo un trapecio OSCURO encima del haz, y
      se veia lo que era: un rectangulo negro pegado sobre la escena, con dos
      bordes rectos que no eran de nada. Un parche encima nunca apaga; tapa. */
+  /* Un lienzo aparte para cuando se va, y no por gusto: por lo que cuesta.
+
+     El desenfoque y la transparencia se hacen con `cx.filter`, y ahi esta la
+     trampa que costo doscientos treinta milisegundos por cuadro: el filtro no
+     se aplica una vez al final, se aplica a CADA operacion de dibujo mientras
+     este puesto. El platillo son mas de cincuenta —el cono, veintiseis motas,
+     el charco, el halo, la cupula, tres ventanas, el casco, el filo, la panza
+     y catorce luces con su halo cada una—, asi que eran mas de cincuenta
+     pasadas de filtro sobre una superficie del tamaño de la pantalla.
+
+     Medido: con apaga en 0 el lugar tarda 0,2 ms. Con apaga en 0,3 —apenas se
+     enciende el filtro— salta a 160. Ochocientas veces mas caro, y justo
+     mientras el jugador mantiene apretado mirando, que es cuando el juego
+     pide que no se mueva. A cuatro cuadros por segundo eso no es una
+     despedida: es un tilde.
+
+     Dibujado en un lienzo propio sin filtro y volcado de una sola vez CON el
+     filtro, el resultado en pantalla es identico y la pasada es una. */
+  var lienzoFiltro = null, filtroCx = null, filtroOcupado = false;
+  function lienzoParaFiltrar(w, h) {
+    if (!lienzoFiltro) {
+      lienzoFiltro = document.createElement('canvas');
+      filtroCx = lienzoFiltro.getContext('2d');
+    }
+    if (lienzoFiltro.width !== w || lienzoFiltro.height !== h) {
+      lienzoFiltro.width = w; lienzoFiltro.height = h;
+    } else {
+      filtroCx.setTransform(1, 0, 0, 1, 0, 0);
+      filtroCx.globalAlpha = 1;
+      filtroCx.globalCompositeOperation = 'source-over';
+      filtroCx.filter = 'none';
+      filtroCx.clearRect(0, 0, w, h);
+    }
+    return filtroCx;
+  }
+
+  /* `dibujar` se hace aparte y se vuelca UNA vez con `filtro` puesto.
+
+     La caja (x0,y0)-(x1,y1) va en coordenadas locales del contexto y tiene que
+     contener todo lo que dibuje, con margen para el propio desenfoque: lo que
+     quede afuera se corta, y un corte se ve como un canto recto.
+
+     Se conserva el modo de composicion del contexto en los dos lados —adentro
+     para que las formas se combinen entre si como lo hacian, y en el volcado
+     para que el conjunto se combine con el cielo igual que antes—, porque
+     varias de estas capas van en `lighter` y sin eso dejarian de sumar luz al
+     fondo para taparlo.
+
+     Si el navegador no tiene `filter` o la caja sale disparatada, se dibuja
+     por el camino de siempre: peor rendimiento, mismo dibujo. */
+  function conFiltro(cx, filtro, x0, y0, x1, y1, dibujar) {
+    var m = (typeof cx.getTransform === 'function') ? cx.getTransform() : null;
+    var esc = m ? (Math.sqrt(Math.abs(m.a * m.d - m.b * m.c)) || 1) : 0;
+    var w = Math.ceil((x1 - x0) * esc), h = Math.ceil((y1 - y0) * esc);
+    /* Un solo lienzo compartido: si un filtrado llamara a otro adentro, el de
+       adentro le borraria el dibujo al de afuera. Hoy no pasa, y si pasa el
+       de adentro se dibuja derecho en vez de romper. */
+    if (typeof cx.filter !== 'string' || !m || filtroOcupado ||
+        !(w >= 2 && h >= 2) || w * h > 12e6) {
+      cx.save();
+      if (typeof cx.filter === 'string') cx.filter = filtro;
+      dibujar(cx);
+      cx.restore();
+      return;
+    }
+    filtroOcupado = true;
+    var lz = lienzoParaFiltrar(w, h);
+    lz.globalCompositeOperation = cx.globalCompositeOperation;
+    lz.setTransform(esc, 0, 0, esc, -x0 * esc, -y0 * esc);
+    dibujar(lz);
+    filtroOcupado = false;
+    cx.save();
+    cx.filter = filtro;
+    cx.drawImage(lienzoFiltro, x0, y0, x1 - x0, y1 - y0);
+    cx.restore();
+  }
+
   function platillo(cx, E, t, alPiso, apaga) {
     var baja = Math.max(0, Math.min(1, apaga || 0));
+    var sube0 = baja * baja;
+    if (sube0 > .003) {
+      var flo = Math.sin(t * .8) * E * .04;
+      var alt = E * 2.4 * sube0;
+      var hasta = ((alPiso && alPiso > E * .4) ? alPiso - flo : E * 1.45) + alt;
+      var k = 1 - sube0 * .52;
+      /* La caja: lo mas ancho es el halo de fondo o la boca del cono, y lo
+         mas alto va del halo de arriba al pie del haz. El 1.06 cubre el ladeo
+         y el margen de E*.12, el desenfoque. */
+      var ancho = Math.max(E * 1.55, E * .55 + hasta * .32) * k * 1.06 + E * .12;
+      var arriba = (flo - alt) - E * 1.55 * k * 1.06 - E * .12;
+      var abajo = (flo - alt) + (E * .12 + hasta) * k * 1.06 + E * .12;
+
+      conFiltro(cx,
+                'opacity(' + (1 - sube0 * .92).toFixed(3) + ') blur(' +
+                (sube0 * E * .020).toFixed(1) + 'px)',
+                -ancho, arriba, ancho, abajo,
+                function (lz) { cuerpoDelPlatillo(lz, E, t, alPiso, baja); });
+      return;
+    }
+    cuerpoDelPlatillo(cx, E, t, alPiso, baja);
+  }
+
+  function cuerpoDelPlatillo(cx, E, t, alPiso, baja) {
     var flota = Math.sin(t * .8) * E * .04;
     /* Y se inclina, muy poco, como algo que se sostiene solo y corrige. Sin
        esto es un disco pegado al aire. */
@@ -3411,14 +3539,12 @@ var Pintores = (function () {
     var alto = E * 2.4 * sube;
     var hastaPiso = ((alPiso && alPiso > E * .4) ? alPiso - flota : E * 1.45) + alto;
 
+    /* El desenfoque y la transparencia ya no se ponen aca —los pone `platillo`
+       al volcar este dibujo— porque puestos aca los paga cada operacion. Con
+       globalAlpha tampoco: el pintor se pisa el alpha en sus propios
+       save/restore, y ademas el desenfoque es la mitad de "hasta que no lo
+       distingo del cielo". */
     cx.save();
-    if (sube > .003 && typeof cx.filter === 'string') {
-      /* Con `filter` y no con globalAlpha: el pintor se pisa el alpha en sus
-         propios save/restore, y el desenfoque ademas es la mitad de "hasta que
-         no lo distingo del cielo". */
-      cx.filter = 'opacity(' + (1 - sube * .92).toFixed(3) + ') blur(' +
-                  (sube * E * .020).toFixed(1) + 'px)';
-    }
     cx.translate(0, flota - alto);
     cx.scale(1 - sube * .52, 1 - sube * .52);
     cx.rotate(ladeo);
@@ -4468,21 +4594,28 @@ var Pintores = (function () {
          el borde blando a los costados pero arriba y abajo la elipse corta en
          seco, y cinco elipses nitidas una sobre otra se leen como una pila de
          discos. Mismo remedio que el haz del faro: el filtro hace lo que
-         apilar formas no puede. */
-      if (typeof cx.filter === 'string') cx.filter = 'blur(' + (E * .07).toFixed(1) + 'px)';
-      for (var w = 0; w < 5; w++) {
-        var oy2 = cy - E * (.25 + w * .34) + Math.sin(t * .5 + w) * E * .05;
-        var tw = Math.round((t * 21 + w * 62 + 190) % 360);
-        var gw = cx.createLinearGradient(-rx * 1.3, oy2, rx * 1.3, oy2);
-        gw.addColorStop(0, 'hsla(' + tw + ',60%,55%,0)');
-        gw.addColorStop(.5, 'hsla(' + tw + ',85%,58%,' + (h * .17).toFixed(3) + ')');
-        gw.addColorStop(1, 'hsla(' + ((tw + 60) % 360) + ',60%,55%,0)');
-        cx.fillStyle = gw;
-        cx.beginPath();
-        cx.ellipse(Math.sin(t * .37 + w) * E * .2, oy2,
-                   rx * 1.25, E * (.09 + w * .015), 0, 0, 6.2832);
-        cx.fill();
-      }
+         apilar formas no puede.
+
+         Y las cinco se filtran juntas: con el filtro puesto en el contexto,
+         cada una de las cinco pagaba su propia pasada sobre toda la pantalla. */
+      conFiltro(cx, 'blur(' + (E * .07).toFixed(1) + 'px)',
+                -(rx * 1.25 + E * .35), cy - E * 1.90,
+                 (rx * 1.25 + E * .35), cy - E * .02,
+                function (lz) {
+        for (var w = 0; w < 5; w++) {
+          var oy2 = cy - E * (.25 + w * .34) + Math.sin(t * .5 + w) * E * .05;
+          var tw = Math.round((t * 21 + w * 62 + 190) % 360);
+          var gw = lz.createLinearGradient(-rx * 1.3, oy2, rx * 1.3, oy2);
+          gw.addColorStop(0, 'hsla(' + tw + ',60%,55%,0)');
+          gw.addColorStop(.5, 'hsla(' + tw + ',85%,58%,' + (h * .17).toFixed(3) + ')');
+          gw.addColorStop(1, 'hsla(' + ((tw + 60) % 360) + ',60%,55%,0)');
+          lz.fillStyle = gw;
+          lz.beginPath();
+          lz.ellipse(Math.sin(t * .37 + w) * E * .2, oy2,
+                     rx * 1.25, E * (.09 + w * .015), 0, 0, 6.2832);
+          lz.fill();
+        }
+      });
       cx.restore();
     }
 
@@ -4579,31 +4712,40 @@ var Pintores = (function () {
       var copaY = cy - alt * .92;
       var copaR = abre * (1.45 + respira * .06);
       cx.save();
-      if (typeof cx.filter === 'string') {
-        /* Poco desenfoque: con .16 las dieciocho manchas se fundian en una
-           sola nube verde pareja y se perdia el borde irregular, que es lo
-           unico que hace que un verde se lea como hojas. */
-        cx.filter = 'blur(' + (copaR * .075).toFixed(1) + 'px)';
-      }
-      var rndC = sembrado(41);
-      for (var hj = 0; hj < 18; hj++) {
-        var ah = rndC() * 6.2832;
-        var dh = Math.pow(rndC(), .62) * copaR * .74;
-        var hx = Math.cos(ah) * dh;
-        var hy = copaY + Math.sin(ah) * dh * .60 - copaR * .06;
-        var hr = copaR * (.24 + rndC() * .24);
-        /* Mas claras abajo y en el medio, mas oscuras arriba y en los bordes:
-           es donde daria la luz de las puntas si la copa tuviera volumen. */
-        var cerca = 1 - Math.min(1, dh / (copaR * .74));
-        var vr = Math.round(40 + cerca * 34 + rndC() * 10);
-        var vg = Math.round(66 + cerca * 52 + rndC() * 14);
-        var vb = Math.round(56 + cerca * 24);
-        cx.fillStyle = 'rgba(' + vr + ',' + vg + ',' + vb + ',' +
-                       (.30 + cerca * .26 + respira * .05 * ar).toFixed(3) + ')';
-        cx.beginPath();
-        cx.ellipse(hx, hy, hr, hr * .82, ah, 0, 6.2832);
-        cx.fill();
-      }
+      /* Poco desenfoque: con .16 las dieciocho manchas se fundian en una sola
+         nube verde pareja y se perdia el borde irregular, que es lo unico que
+         hace que un verde se lea como hojas.
+
+         Y las dieciocho se filtran juntas. Puesto en el contexto, el filtro se
+         aplica a CADA fill: eran dieciocho pasadas de desenfoque sobre toda la
+         pantalla y costaban 34 de los 36 milisegundos de este lugar —el
+         circulo es el unico donde el juego pide quedarse mirando un rato
+         largo, y era el mas caro de todos. */
+      conFiltro(cx, 'blur(' + (copaR * .075).toFixed(1) + 'px)',
+                -copaR * 1.45, copaY - copaR * 1.25,
+                 copaR * 1.45, copaY + copaR * 1.25,
+                function (lz) {
+        var rndC = sembrado(41);
+        for (var hj = 0; hj < 18; hj++) {
+          var ah = rndC() * 6.2832;
+          var dh = Math.pow(rndC(), .62) * copaR * .74;
+          var hx = Math.cos(ah) * dh;
+          var hy = copaY + Math.sin(ah) * dh * .60 - copaR * .06;
+          var hr = copaR * (.24 + rndC() * .24);
+          /* Mas claras abajo y en el medio, mas oscuras arriba y en los
+             bordes: es donde daria la luz de las puntas si la copa tuviera
+             volumen. */
+          var cerca = 1 - Math.min(1, dh / (copaR * .74));
+          var vr = Math.round(40 + cerca * 34 + rndC() * 10);
+          var vg = Math.round(66 + cerca * 52 + rndC() * 14);
+          var vb = Math.round(56 + cerca * 24);
+          lz.fillStyle = 'rgba(' + vr + ',' + vg + ',' + vb + ',' +
+                         (.30 + cerca * .26 + respira * .05 * ar).toFixed(3) + ')';
+          lz.beginPath();
+          lz.ellipse(hx, hy, hr, hr * .82, ah, 0, 6.2832);
+          lz.fill();
+        }
+      });
       cx.restore();
 
       /* Y las raices, que lo terminan de plantar. Cortas y cayendo: salieron
@@ -6361,6 +6503,79 @@ var Anomalias = (function () {
       cx.save();
       cx.globalAlpha = a;
 
+      /* --- ella, en su cama ---
+
+         Va ANTES de la sabana y no despues, y eso es lo que arregla el
+         cogote.
+
+         Dibujada encima, la piel del cuello quedaba sobre la tela: habia que
+         cerrarla en alguna parte, y cerrarla es lo que hacia la punta. Al 5x
+         se veia lo que era — una cuña beige saliendo del pelo y afilandose
+         hacia abajo. Abajo de la tela el cuello no se cierra: sigue y la
+         sabana lo tapa, que es lo que pasa de verdad cuando alguien esta
+         tapado hasta el cuello. Si alguna vez se vuelve a mover este bloque
+         abajo de la tela, la punta vuelve: no es un detalle de orden, es de
+         donde salia el defecto.
+
+         Y la diferencia SOLO se ve ampliado. Al tamaño en que el juego se
+         juega, la cabeza mide quince pixeles y las dos versiones miden
+         practicamente lo mismo — se probaron tres formas de medirlo (ancho de
+         la piel por filas, cuanto se estira la mancha respecto de su centro, y
+         cuanta piel queda encima de la tela) y ninguna las distingue. Por eso
+         esto no dejo una verificacion automatica: una prueba que no separa el
+         caso bueno del malo no protege nada, tranquiliza. Lo que queda es la
+         lamina al 5x, que es donde el defecto existe.
+
+         Y la cabeza es una elipse. Con un contorno a mano las curvas se
+         encuentran en angulos, y un angulo a veinte pixeles se lee como un
+         pico; una elipse no puede tener esquinas. Va inclinada hacia el
+         hombro, porque una cabeza apoyada de costado no esta derecha. */
+      var r = E * .066;
+      var cxh = almX + an * .06, cyh = almY - E * .052;
+      var rc = r * .92, ra = r * 1.06;     // ancho y alto de la cabeza
+      /* Negativa: en el canvas el giro positivo es horario, asi que con .34 el
+         cuello le salia hacia abajo-IZQUIERDA, que es justo donde la sabana
+         todavia no llego — y quedaba un rectangulo de piel al aire delante de
+         la tela. El cuerpo esta a la derecha y para alla tiene que ir. */
+      var incl = -.30;                     // lo que se le va hacia el hombro
+      var PIEL = '#e0bfa0';
+
+      // El pelo de atras, derramado sobre la almohada.
+      cx.fillStyle = '#3a2318';
+      cx.beginPath();
+      cx.ellipse(cxh - r * 1.05, cyh + r * .58, r * 2.05, r * 1.12, -.16, 0, 6.2832);
+      cx.fill();
+
+      /* El cuello: del menton para abajo, y sigue de largo. No tiene fondo
+         porque no le hace falta — a partir de la linea de la tela ya no se
+         ve. */
+      cx.fillStyle = PIEL;
+      cx.save();
+      cx.translate(cxh, cyh);
+      cx.rotate(incl);
+      cx.beginPath();
+      cx.moveTo(-rc * .42, ra * .48);
+      cx.quadraticCurveTo(-rc * .38, ra * 1.05, -rc * .34, ra * 1.70);
+      cx.lineTo(rc * .48, ra * 1.70);
+      cx.quadraticCurveTo(rc * .54, ra * 1.00, rc * .46, ra * .48);
+      cx.closePath(); cx.fill();
+
+      // La cabeza.
+      cx.beginPath();
+      cx.ellipse(0, 0, rc, ra, 0, 0, 6.2832);
+      cx.fill();
+      /* La sombra de la mandibula, donde la cara deja de dar a la ventana.
+         Sin esto la cabeza y el cuello son una sola mancha del mismo color y
+         no se entiende donde termina una. */
+      var mand = cx.createLinearGradient(0, ra * .30, 0, ra * .95);
+      mand.addColorStop(0, 'rgba(120,86,64,0)');
+      mand.addColorStop(1, 'rgba(120,86,64,.30)');
+      cx.fillStyle = mand;
+      cx.beginPath();
+      cx.ellipse(0, 0, rc, ra, 0, 0, 6.2832);
+      cx.fill();
+      cx.restore();
+
       /* --- la sabana, con la forma del cuerpo adentro --- */
       var tela = cx.createLinearGradient(0, fy - E * .02, 0, fy + E * .19);
       tela.addColorStop(0, '#f4efe6');
@@ -6440,54 +6655,33 @@ var Anomalias = (function () {
       cx.fillStyle = som;
       cx.fillRect(fx - E * .50, fy + E * .155, borde - (fx - E * .50), E * .04);
 
-      /* --- ella: el pelo, la cara y el cuello --- */
-      var r = E * .066;
-      var cxh = almX + an * .06, cyh = almY - E * .052;
-
-      // El pelo de atras, derramado sobre la almohada.
+      /* Un mechon por delante del hombro, encima de la tela: es lo que hace
+         que el pelo se lea largo y no como un casco. */
       cx.fillStyle = '#3a2318';
       cx.beginPath();
-      cx.ellipse(cxh - r * 1.05, cyh + r * .58, r * 2.05, r * 1.12, -.16, 0, 6.2832);
-      cx.fill();
-      /* Y un mechon por delante del hombro: es lo que hace que el pelo se lea
-         largo y no como un casco. */
-      cx.beginPath();
-      cx.moveTo(cxh - r * .30, cyh + r * .30);
-      cx.quadraticCurveTo(cxh + r * .30, cyh + r * .92, cxh + r * .34, cyh + r * 1.55);
-      cx.quadraticCurveTo(cxh - r * .20, cyh + r * 1.20, cxh - r * .74, cyh + r * 1.05);
-      cx.closePath(); cx.fill();
-
-      /* La silueta de piel, de la coronilla al hombro, sin levantar el lapiz.
-         El craneo va en cuatro tramos: con dos, las curvas se cruzan en un
-         angulo y la cara sale como un triangulo con punta. */
-      cx.fillStyle = '#e0bfa0';
-      cx.beginPath();
-      cx.moveTo(cxh - r * .95, cyh + r * .30);
-      cx.quadraticCurveTo(cxh - r * 1.02, cyh - r * .52, cxh - r * .62, cyh - r * .86);
-      cx.quadraticCurveTo(cxh - r * .22, cyh - r * 1.06, cxh + r * .20, cyh - r * .92);
-      cx.quadraticCurveTo(cxh + r * .62, cyh - r * .78, cxh + r * .76, cyh - r * .34);
-      cx.quadraticCurveTo(cxh + r * .84, cyh + r * .04, cxh + r * .74, cyh + r * .40);
-      // el cuello, con sus dos lados
-      cx.quadraticCurveTo(cxh + r * .80, cyh + r * .74, cxh + r * .96, cyh + r * 1.02);
-      cx.quadraticCurveTo(cxh + r * 1.12, cyh + r * 1.26, cxh + r * 1.30, cyh + r * 1.44);
-      cx.lineTo(cxh + r * .40, cyh + r * 1.44);
-      cx.quadraticCurveTo(cxh - r * .10, cyh + r * 1.16, cxh - r * .48, cyh + r * .78);
-      cx.quadraticCurveTo(cxh - r * .82, cyh + r * .58, cxh - r * .95, cyh + r * .30);
+      cx.moveTo(cxh - r * .86, cyh + r * .30);
+      cx.quadraticCurveTo(cxh - r * .52, cyh + r * .94, cxh - r * .44, cyh + r * 1.52);
+      cx.quadraticCurveTo(cxh - r * 1.02, cyh + r * 1.20, cxh - r * 1.42, cyh + r * .94);
       cx.closePath(); cx.fill();
 
       /* El pelo de arriba envuelve el craneo y baja hasta la sien: queda a la
-         vista la mejilla y el menton, que es lo unico que se le ve a alguien
-         acostado de costado con el pelo suelto. Va DESPUES de la piel, asi el
-         nacimiento del pelo es un borde de pelo y no una costura. */
-      cx.fillStyle = '#3a2318';
+         vista la frente baja, la mejilla y el menton, que es lo unico que se
+         le ve a alguien acostado de costado con el pelo suelto. Va DESPUES de
+         la piel, asi el nacimiento del pelo es un borde de pelo y no una
+         costura. */
+      cx.save();
+      cx.translate(cxh, cyh);
+      cx.rotate(incl);
       cx.beginPath();
-      cx.moveTo(cxh - r * .98, cyh + r * .34);
-      cx.quadraticCurveTo(cxh - r * 1.06, cyh - r * .54, cxh - r * .64, cyh - r * .90);
-      cx.quadraticCurveTo(cxh - r * .22, cyh - r * 1.10, cxh + r * .22, cyh - r * .96);
-      cx.quadraticCurveTo(cxh + r * .56, cyh - r * .84, cxh + r * .64, cyh - r * .48);
-      cx.quadraticCurveTo(cxh + r * .24, cyh - r * .42, cxh - r * .16, cyh - r * .18);
-      cx.quadraticCurveTo(cxh - r * .54, cyh + r * .10, cxh - r * .66, cyh + r * .60);
+      cx.moveTo(-rc * 1.02, ra * .40);
+      cx.quadraticCurveTo(-rc * 1.12, -ra * .62, -rc * .58, -ra * .98);
+      cx.quadraticCurveTo(-rc * .06, -ra * 1.18, rc * .52, -ra * .90);
+      cx.quadraticCurveTo(rc * .92, -ra * .70, rc * .96, -ra * .30);
+      // y de vuelta por dentro, dejando la cara a la vista
+      cx.quadraticCurveTo(rc * .44, -ra * .40, rc * .02, -ra * .18);
+      cx.quadraticCurveTo(-rc * .46, ra * .08, -rc * .70, ra * .62);
       cx.closePath(); cx.fill();
+      cx.restore();
 
       // La respiracion, que es lo unico que se mueve.
       halo(cx, fx - E * .08, fy + E * .04,
@@ -8950,10 +9144,24 @@ var Guion = (function () {
       vuelta: 'La luna de nuevo, todavía más cerca. Cada vez que vuelve está un ' +
               'poco más cerca, y ninguna de las veces me pareció que se hubiera ' +
               'movido.',
+      /* Lo que este lugar tenia que decir, y decia el platillo.
+
+         Los dos eran "alguien quiere decirte algo y no puede": la luna se
+         acomodaba para hablar y no hablaba, el platillo tampoco sabia como. Al
+         platillo se le dio lo suyo —viene, se muestra y se va— y la luna quedo
+         con la frase de los dos.
+
+         Lo que tenia sin usar es que la luna no es un adorno del cielo para
+         ella: es con lo que trabaja, y lo hace mirandola de lejos. Este lugar
+         se la pone encima ocupando medio cielo, que es la unica posicion desde
+         la que no se puede leer. El oficio no se nombra —el juego no nombra
+         nada real— pero el que sabe lo reconoce, y el que no, igual entiende
+         la idea: hay cosas que de tan cerca no se entienden. */
       esconde: 'Los cráteres se mueven. Despacio, pero se mueven, y se acomodan ' +
-               'como se acomoda una cara que está por decir algo y todavía busca ' +
-               'por dónde empezar. Me quedo esperando. No dice nada, pero se ' +
-               'queda mirándome.',
+               'en una cara que conozco de memoria: la miré toda la vida desde ' +
+               'abajo y siempre supe lo que estaba diciendo. Ahora la tengo ' +
+               'encima, ocupando todo, y no le entiendo nada. Parece que a ' +
+               'algunas cosas hay que mirarlas de lejos para poder leerlas.',
       revela: 'laguna'
     },
     puerta: {
@@ -9179,7 +9387,7 @@ var Guion = (function () {
     arbol: 'El pájaro de un color que no existe',
     circulo: 'El árbol que respiraba en el medio del círculo',
     reloj: 'Los números corridos de su hora',
-    luna: 'La cara que armaban los cráteres',
+    luna: 'La cara que de tan cerca no se dejaba leer',
     puerta: 'La puerta que volví a abrir sabiendo que no',
     ruina: 'El polvo que se quedó a mitad de camino',
     bandada: 'Los pájaros que se ordenaban cuando los miraba',
@@ -9297,8 +9505,17 @@ var Guion = (function () {
      "con una alcanza para saber que estaba ahi"— y la carta de papel entra
      enseguida, que es la que de verdad viene a hablarle. La Durmiente conserva
      el suyo, "las cosas siguen ahi", porque no pide nada ni trae a nadie. */
+  /* Ocho es un numero que se puede decir, y en la misma frase estaba escrito
+     de las dos maneras: "Viste 8 de las ocho cosas que habia para ver". El
+     digito venia de una cuenta y la palabra de un texto escrito a mano, y
+     juntos delatan que ahi adentro hay una maquina contando. Es la ultima
+     pantalla del juego y esta escrita en la voz de ella. */
+  var CUANTAS = ['ninguna', 'una', 'dos', 'tres', 'cuatro',
+                 'cinco', 'seis', 'siete', 'ocho'];
+
   function cartaDeElla(indicios) {
     var n = indicios.length;
+    var cuantas = CUANTAS[n] || n;
 
     if (n >= 8) {
       return {
@@ -9306,8 +9523,9 @@ var Guion = (function () {
         lectura: 'Mirar hasta que la cosa se rinde.',
         astro: '☽', astroNombre: 'la Luna',
         parrafos: [
-          'Viste ' + n + ' de las ocho cosas que había para ver. ' +
-          (n === 8 ? 'Todas.' : 'Casi todas.'),
+          (n === 8 ? 'Las viste todas. Las ocho.'
+                   : 'Viste ' + cuantas + ' de las ocho cosas que había para ' +
+                     'ver. Casi todas.'),
           'Eso no es suerte ni puntería. Es que mirás distinto: te quedás en una ' +
           'cosa hasta que la cosa se rinde y te muestra lo que es. Toda la noche ' +
           'estuviste haciendo eso, y a esta altura ya sabés que no lo hacés solo ' +
@@ -9325,8 +9543,8 @@ var Guion = (function () {
         lectura: 'Quedarse el segundo de más.',
         astro: '☽', astroNombre: 'la Luna',
         parrafos: [
-          'Viste ' + n + ' de las ocho cosas que había para ver. Algunas se te ' +
-          'pasaron.',
+          'Viste ' + cuantas + ' de las ocho cosas que había para ver. Algunas ' +
+          'se te pasaron.',
           'Está bien que se pasen. Nadie mira todo, y las que viste no las viste ' +
           'de casualidad: las viste porque te quedaste el segundo de más que la ' +
           'mayoría no se queda.',
@@ -9342,11 +9560,21 @@ var Guion = (function () {
     if (n >= 1) {
       return {
         clave: 'despierta', num: 'XXII', nombre: 'La Que Se Despierta',
-        lectura: 'Con una alcanza para saber que se puede.',
+        /* La lectura es el eco del ultimo parrafo, y quedo vieja: el parrafo
+           decia "para saber que se puede" y se corrigio a "que estaba ahi"
+           —era un consejo disfrazado, le explicaba que la proxima puede
+           mejor— pero la lectura se quedo con la version anterior. En la
+           pantalla final las dos se leen juntas, una arriba de la otra. */
+        lectura: 'Con una alcanza para saber que estaba ahí.',
         astro: '☽', astroNombre: 'la Luna',
         parrafos: [
-          'Viste ' + n + (n === 1 ? ' de las ocho cosas que había para ver' : ' de las ocho cosas que había para ver') +
-          '. Se te fue casi todo.',
+          /* Y cuanto se fue, dicho con la verdad: esta carta cubre de una a
+             cuatro, y con cuatro de ocho "se te fue casi todo" es falso —es
+             la mitad— y ademas suena a reproche, que es justo lo que esta
+             carta no tiene que hacer. */
+          'Viste ' + cuantas + ' de las ocho cosas que había para ver. ' +
+          (n <= 2 ? 'Se te fue casi todo.'
+                  : n === 4 ? 'Se te fue la mitad.' : 'Se te fue la mayoría.'),
           'Pasa cuando uno mira sin mirar, que es como andamos la mayor parte del ' +
           'tiempo. Igual algo viste, y esa cosa te la llevás.',
           /* Sin "lo demas es acordarse de frenar, que es lo dificil": eso es
@@ -9565,6 +9793,51 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
      las esperas entre pasos: iba a un ritmo que no dejaba mirar nada. */
   var RITMO_NORMAL = .8;
   var RITMO = RITMO_NORMAL;
+
+  /* Quien pidio menos movimiento.
+
+     La hoja de estilos ya respetaba `prefers-reduced-motion` desde hace
+     tiempo, pero solo para lo que es HTML: las transiciones de los paneles y
+     las animaciones de los botones. El canvas —que es el juego— la ignoraba, y
+     ahi esta todo lo que de verdad puede marear: la camara que se acerca en el
+     ultimo paso, y los fogonazos.
+
+     No se apaga todo, por el mismo criterio que ya usa el CSS: lo que comunica
+     algo tiene que seguir viendose, y lo que se atenua es lo que solo empuja.
+     El velo con que entra un lugar nuevo se queda entero —dice que cambiaste
+     de lugar— y tambien se quedan los colores que giran en el circulo, que se
+     mueven despacio y no son un disparador de mareo; lo que se baja al cuarto
+     es el zoom, que es lo unico que mueve el encuadre, y a la mitad los dos
+     destellos, que son flashes.
+
+     Se lee al arrancar y se sigue escuchando: en un celular la preferencia se
+     puede prender desde ajustes con el juego abierto. */
+  var CALMA = 0;
+  (function () {
+    /* Y tambien a mano con ?calma=1 en la direccion. Dos razones: la
+       preferencia del sistema no se puede emular desde el juego, asi que sin
+       esto el modo calmo no se puede probar de punta a punta; y alguien puede
+       no tenerla puesta en el telefono y descubrir igual que esto le mueve
+       demasiado. Puesta a mano gana sobre la del sistema, en los dos
+       sentidos. */
+    var pedido = null;
+    try {
+      var q = (location.search || '').match(/[?&]calma=([^&]*)/);
+      if (q) pedido = (q[1] === '0' || q[1] === 'no') ? 0 : 1;
+    } catch (e) {}
+    if (pedido !== null) { CALMA = pedido; return; }
+    if (!window.matchMedia) return;
+    var mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    var mirar = function () { CALMA = mq.matches ? 1 : 0; };
+    mirar();
+    if (mq.addEventListener) mq.addEventListener('change', mirar);
+    else if (mq.addListener) mq.addListener(mirar);
+  })();
+  // Para que las verificaciones puedan probar los dos modos.
+  window.calma = function (v) {
+    if (v !== undefined) CALMA = v ? 1 : 0;
+    return CALMA;
+  };
 
   /* Dos cosas distintas que antes eran una sola.
 
@@ -10657,17 +10930,14 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
        repetia lo que el parrafo ya nombra en prosa. Lo que se vio se cuenta
        adentro del texto, con las palabras de ella.
 
-       Lo unico que se conserva de esa caja es el aviso de lo que se perdio,
-       porque eso el texto no lo dice y es parte de lo que el juego quiere
-       dejar: saber que habia algo mas. */
-    if (J.perdidos.length) {
-      var pp = document.createElement('p');
-      pp.className = 'perdido';
-      pp.textContent = J.perdidos.length === 1
-        ? 'Otro lugar escondía algo y no llegaste a verlo.'
-        : 'Otros ' + J.perdidos.length + ' lugares escondían algo y no llegaste a verlo.';
-      elCierre.appendChild(pp);
-    }
+       Y tampoco queda el aviso de lo que se perdio, que era lo ultimo que
+       sobrevivia de esa caja. Se conservaba porque el texto no lo decia; hoy
+       lo dice, y con el mismo numero: arriba "viste 6 de las ocho cosas que
+       habia para ver" y abajo "otros 2 lugares escondian algo". Es la misma
+       cuenta dos veces, y la segunda es una resta de la primera — con la
+       maquina hablando despues de ella, que es de lo que el juego se venia
+       sacando de encima. Lo que habia mas queda dicho donde corresponde: en
+       "de las ocho". */
 
     var firma = document.createElement('p');
     firma.className = 'firma';
@@ -11241,8 +11511,10 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
     }
 
     /* En el ultimo paso la camara se acerca. Es lo unico del juego que rompe el
-       encuadre fijo, y por eso se siente que llego el final. */
-    var acerca = 1 + J.climax * .12;
+       encuadre fijo, y por eso se siente que llego el final. Y por eso mismo
+       es lo primero que se baja con movimiento reducido: queda apenas, lo
+       justo para que se note que algo cambio. */
+    var acerca = 1 + J.climax * .12 * (1 - CALMA * .75);
     if (J.climax > 0) {
       cx.save();
       cx.translate(W / 2, H * .46);
@@ -11301,7 +11573,9 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
 
     // --- resplandor de la carta jugada ---
     if (J.fogonazo > 0) {
-      var q = J.fogonazo;
+      // A la mitad con movimiento reducido: sigue avisando que la carta salio,
+      // sin el golpe.
+      var q = J.fogonazo * (1 - CALMA * .5);
       var col = J.destino ? J.destino.color : J.color;
       var r = cx.createRadialGradient(ejeFigura(), H * .44, 0, ejeFigura(), H * .44, H * .72);
       r.addColorStop(0, 'rgba(' + col + ',' + (.17 * q) + ')');
@@ -11454,7 +11728,7 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
 
     // Golpe de luz en el momento en que la cosa nueva termina de aparecer.
     if (J.destello > 0) {
-      var q2 = J.destello * J.destello;
+      var q2 = J.destello * J.destello * (1 - CALMA * .5);
       cx.save();
       cx.globalCompositeOperation = 'lighter';
       var gd = cx.createRadialGradient(fx, fy, 0, fx, fy, E * 2.4);
@@ -12656,6 +12930,242 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
      algunas salen a proposito: el haz del faro va a buscar a Bel, la sombra de
      la calesita cae en el piso); despues se pinta la anomalia y se mira que
      fraccion de lo que cambio cae dentro de esa silueta gorda. */
+  /* Lo que cuesta dibujar cada lugar, en milisegundos.
+
+     Esto no estaba, y por no estar el arbol del instante psicodelico corrio
+     durante semanas a SEIS cuadros por segundo en el celular mientras los
+     otros catorce iban a sesenta. No lo encontro ninguna verificacion: lo
+     encontro Nico jugando, y llego como "el audio hace interferencia y el
+     juego se traba" —que es como se ve un cuadro de medio segundo desde
+     afuera, porque el hilo trabado tambien corta el sonido.
+
+     Las once verificaciones que ya habia miran si lo dibujado es CORRECTO:
+     si esta en su lugar, si se ve, si el texto le corresponde. Ninguna miraba
+     si se puede dibujar a tiempo, que es igual de real: una figura perfecta
+     que tarda ciento sesenta milisegundos no se ve, se sufre.
+
+     Que mide, y por que asi:
+
+     · En 375x812, el celular de Bel. No es el caso promedio, es el caso malo,
+       y ademas el costo de este juego casi no depende del tamaño —son
+       operaciones de camino, no de relleno—, asi que medir chico no regala
+       nada.
+     · La figura Y la anomalia revelada, por separado. La anomalia es la
+       mitad cara y nunca se midio: la ruina son trescientas cuarenta motas y
+       el circulo ocho anillos y cinco bandas con filtros encima. Un lugar
+       barato puede volverse carisimo en el unico momento en que el jugador
+       lo esta mirando fijo.
+     · Con t distinto en cada vuelta. Con t fijo el navegador puede quedarse
+       con parte del trabajo cacheado y la medicion sale optimista.
+     · Se descarta la vuelta mas lenta y la mas rapida de cada tanda: la
+       primera paga la compilacion y en una maquina ocupada siempre hay una
+       que se va al techo.
+
+     El umbral es 30 cuadros por segundo, o sea 33,3 ms para el lugar SOLO
+     —sin el cielo, sin ella, sin el panel—, que ya es generoso. Lo que se
+     busca no es afinar decimas: es que no vuelva a haber un lugar diez veces
+     mas caro que el resto sin que nadie se entere. */
+  /* Que con movimiento reducido siga habiendo juego.
+
+     La hoja de estilos lo respeta desde hace tiempo, pero solo para el HTML;
+     el canvas lo ignoraba, y el canvas es el juego. Esto mide las dos mitades
+     del trato: que lo que empuja baje de verdad —el zoom del ultimo paso y los
+     dos fogonazos— y que lo que comunica siga estando, porque una version
+     calma que ademas se come el aviso de que la carta salio no es accesible:
+     es peor.
+
+     Se mide sobre el cuadro pintado y no sobre las variables: lo que importa
+     es cuanto se mueve en pantalla. El zoom se mide donde mas se nota, en una
+     esquina, comparando a donde va a parar un punto con climax al maximo. */
+  /* El aviso del instante: que no cruce la pantalla ni se salga del alto.
+
+     Se mide con los avisos REALES —los dos genericos y el propio de cada
+     lugar— y en las dos formas de pantalla, porque el largo del texto es lo
+     que decide, y el mas largo es el que nadie mira al escribirlo.
+
+     Dos limites. Uno de ancho: mas del 80% de la pantalla y el recuadro deja
+     de leerse como una frase del juego y pasa a leerse como una barra del
+     navegador. Y uno de alto: el panel de arriba tiene altura fija, asi que un
+     aviso que crece de mas se le sale por abajo y se monta sobre la figura. */
+  window.verificarAviso = function () {
+    var el = document.getElementById('aviso');
+    if (!el) return { fallas: ['no hay aviso'], ok: false };
+    var arriba = document.getElementById('arriba');
+    var antesT = el.textContent, antesC = el.className;
+
+    /* Con la ventana en cero no se mide: se avisa.
+
+       Pasa de verdad —el panel de herramientas oculto deja innerWidth en 0 y
+       todo el layout colapsa— y la primera corrida dentro de la auditoria dio
+       las tres fallas en rojo con el aviso perfecto: anchos de 24 pixeles y
+       porcentajes en Infinity. Una verificacion que no puede medir tiene que
+       decir que no pudo, no inventar un resultado. */
+    if (!window.innerWidth || !window.innerHeight) {
+      return { fallas: [], ok: true, sinMedir: true,
+               motivo: 'la ventana mide 0x0: no se puede medir el ancho' };
+    }
+
+    var textos = ['acá había algo · se ve manteniendo apretado', 'acá había algo'];
+    todosLosLugares().forEach(function (k) {
+      var e = (Guion.LUGARES[k] || {}).esquiva;
+      if (e) textos.push(e);
+    });
+
+    var fallas = [], tabla = [];
+    textos.forEach(function (txt) {
+      el.textContent = txt;
+      el.className = 'ver';
+      var b = el.getBoundingClientRect();
+      var pct = 100 * b.width / window.innerWidth;
+      var fila = { texto: txt.slice(0, 28), ancho: Math.round(b.width),
+                   pct: +pct.toFixed(0), alto: Math.round(b.height) };
+      tabla.push(fila);
+      if (pct > 80) fallas.push('"' + fila.texto + '" ocupa el ' + fila.pct + '% del ancho');
+      /* Y el limite de abajo: acotarlo de mas lo deja en una columna de
+         cuatro lineas, que tampoco se mira de reojo. Tres lineas es el
+         maximo que sigue siendo un aviso y no un parrafo. */
+      if (b.height > 68) fallas.push('"' + fila.texto + '" queda en ' +
+                                     Math.round(b.height) + 'px de alto: demasiadas lineas');
+      if (arriba) {
+        var ba = arriba.getBoundingClientRect();
+        if (b.bottom > ba.bottom + 2) {
+          fallas.push('"' + fila.texto + '" se sale del panel de arriba');
+        }
+      }
+    });
+
+    el.textContent = antesT;
+    el.className = antesC;
+    return { fallas: fallas, ok: fallas.length === 0, tabla: tabla };
+  };
+
+  window.verificarCalma = function () {
+    var fallas = [];
+    var antes = window.calma();
+
+    var cv2 = document.createElement('canvas');
+    var W = 375, H = 812;
+    cv2.width = W; cv2.height = H;
+    var c2 = cv2.getContext('2d');
+
+    // 1) el zoom: donde cae la esquina de arriba a la izquierda con el climax puesto.
+    function corrimiento() {
+      var acerca = 1 + 1 * .12 * (1 - window.calma() * .75);
+      // El mismo calculo que hace el cuadro: escala alrededor de (W/2, H*.46).
+      return Math.abs(0 - (W / 2 + (0 - W / 2) * acerca));
+    }
+    window.calma(0); var zoomNormal = corrimiento();
+    window.calma(1); var zoomCalmo = corrimiento();
+    if (!(zoomCalmo < zoomNormal * .4)) {
+      fallas.push('el zoom no baja: ' + zoomNormal.toFixed(1) + ' -> ' + zoomCalmo.toFixed(1));
+    }
+    if (zoomCalmo < .5) fallas.push('el zoom se apago del todo, y tiene que quedar algo');
+
+    // 2) los destellos, medidos en pixeles encendidos sobre el cielo.
+    function brillo(conCalma) {
+      window.calma(conCalma);
+      c2.setTransform(1, 0, 0, 1, 0, 0);
+      c2.fillStyle = '#0b0917';
+      c2.fillRect(0, 0, W, H);
+      var q2 = 1 * (1 - window.calma() * .5);
+      c2.save();
+      c2.globalCompositeOperation = 'lighter';
+      var gd = c2.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, 200);
+      gd.addColorStop(0, 'rgba(255,250,235,' + (.26 * q2) + ')');
+      gd.addColorStop(1, 'rgba(255,250,235,0)');
+      c2.fillStyle = gd;
+      c2.fillRect(0, 0, W, H);
+      c2.restore();
+      var d = c2.getImageData(W / 2 - 1, H / 2 - 1, 2, 2).data;
+      return d[0];
+    }
+    var brNormal = brillo(0), brCalmo = brillo(1);
+    if (!(brCalmo < brNormal)) fallas.push('el destello no baja');
+    if (brCalmo <= 11) fallas.push('el destello se apago del todo, y tiene que seguir avisando');
+
+    // 3) y el juego se completa igual: los 15 lugares se pintan sin romperse.
+    window.calma(1);
+    var rotos = [];
+    todosLosLugares().forEach(function (k) {
+      try {
+        c2.setTransform(1, 0, 0, 1, 0, 0);
+        c2.fillStyle = '#0b0917'; c2.fillRect(0, 0, W, H);
+        c2.save();
+        Pintores.pintar(c2, k, W * .5, H * .5, 100, 3,
+                        revelado(W * .5, H * .5, 100, W * .18, H * .8));
+        c2.restore();
+        Anomalias.pintar(c2, k, W * .5, H * .5, 100, 3, 1, {}, W, H, W * .18, H * .8);
+      } catch (e) { rotos.push(k + ': ' + e.message); }
+    });
+    if (rotos.length) fallas.push('no se pintan con calma: ' + rotos.join(', '));
+
+    window.calma(antes);
+    return { fallas: fallas, ok: fallas.length === 0,
+             zoom: { normal: +zoomNormal.toFixed(1), calmo: +zoomCalmo.toFixed(1) },
+             destello: { normal: brNormal, calmo: brCalmo } };
+  };
+
+  window.verificarCuadros = function (vueltas) {
+    vueltas = vueltas || 9;
+    var W = 375, H = 812;
+    var cv2 = document.createElement('canvas');
+    cv2.width = W; cv2.height = H;
+    var c2 = cv2.getContext('2d');
+
+    var piso = H * .80;
+    var E = Math.max(W * .08, Math.min(W * .34, (piso - H * .27) / 2));
+    var fx = W * .5, fy = piso - E, belX = W * .18;
+    var quieto = { alPiso: E, tension: 0, perfil: Figuras.perfilMontania() };
+
+    function medir(fn) {
+      var ms = [];
+      for (var v = 0; v < vueltas; v++) {
+        var t = 3 + v * 1.37;
+        var t0 = performance.now();
+        c2.setTransform(1, 0, 0, 1, 0, 0);
+        c2.fillStyle = '#0b0917';
+        c2.fillRect(0, 0, W, H);
+        fn(t);
+        /* Sin esto se mide cuanto tarda en ENCOLAR los comandos y no cuanto
+           tarda en dibujarlos: el canvas trabaja diferido, y una lectura de
+           un pixel lo obliga a terminar todo lo pendiente. */
+        c2.getImageData(0, 0, 1, 1);
+        ms.push(performance.now() - t0);
+      }
+      ms.sort(function (a, b) { return a - b; });
+      var utiles = ms.slice(1, ms.length - 1);
+      var suma = 0;
+      for (var i = 0; i < utiles.length; i++) suma += utiles[i];
+      return suma / utiles.length;
+    }
+
+    var lentos = [], tabla = [];
+    todosLosLugares().forEach(function (k) {
+      var solo = medir(function (t) {
+        c2.save();
+        Pintores.pintar(c2, k, fx, fy, E, t, quieto);
+        c2.restore();
+      });
+      var conAnomalia = medir(function (t) {
+        c2.save();
+        Pintores.pintar(c2, k, fx, fy, E, t, revelado(fx, fy, E, belX, piso));
+        c2.restore();
+        Anomalias.pintar(c2, k, fx, fy, E, t, 1, {}, W, H, belX, piso);
+      });
+      var peor = Math.max(solo, conAnomalia);
+      var fila = { lugar: k,
+                   ms: +solo.toFixed(2),
+                   msRevelado: +conAnomalia.toFixed(2),
+                   cuadros: Math.round(1000 / peor) };
+      tabla.push(fila);
+      if (peor > 33.3) lentos.push(fila);
+    });
+
+    tabla.sort(function (a, b) { return a.cuadros - b.cuadros; });
+    return { lentos: lentos, ok: lentos.length === 0,
+             peor: tabla[0], tabla: tabla };
+  };
+
   window.verificarUbicacion = function () {
     var W = 1100, H = 700, ESC = 4;              // se mide a un cuarto de escala
     var w = Math.floor(W / ESC), h = Math.floor(H / ESC);
@@ -13272,6 +13782,9 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = Guion; }
        simuladas no: estas dos miden lo mismo mil veces mejor y en un segundo,
        porque no esperan a que nada se dibuje. verificarCelular queda afuera a
        proposito — necesita que la ventana este en el tamano a probar. */
+    }).then(function () { return Promise.resolve(window.verificarAviso()); }).then(function (r) { out.aviso = r.ok;
+    }).then(function () { return Promise.resolve(window.verificarCalma()); }).then(function (r) { out.calma = r.ok;
+    }).then(function () { return Promise.resolve(window.verificarCuadros()); }).then(function (r) { out.cuadros = r.ok;
     }).then(function () { return Promise.resolve(window.verificarUbicacion()); }).then(function (r) { out.ubicacion = r.ok;
     }).then(function () { return window.verificarReparto(40); }).then(function (r) { out.reparto = r.ok;
     }).then(function () { return window.frecuenciaLugares(300); }).then(function (r) { out.frecuencias = r.ok;
